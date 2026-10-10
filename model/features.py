@@ -15,7 +15,7 @@ DIGIT = re.compile(r"\p{N}")
 FIRST_PERSON = {"i", "me", "my", "mine", "i'm", "i've", "i'd", "i'll", "yo", "mi", "mis", "conmigo", "nosotros", "nosotras", "nuestro", "nuestra"}
 TRANSITIONS = {"además", "asimismo", "sin", "adicionalmente", "igualmente", "finalmente", "furthermore", "moreover",
                "additionally", "however", "overall", "ultimately", "consequently", "therefore", "thus", "notably", "importantly"}
-N_DENSE = 16
+N_DENSE = 15
 
 
 def normalize(text):
@@ -69,14 +69,14 @@ def dense(text, tokens):
     cnt = {}
     for t in tokens:
         cnt[t] = cnt.get(t, 0) + 1
-    first100 = words[:100]
+    first40 = words[:40]
     starts = 0
     for s in sents:
         ws = [t for t in TOK.findall(s.lower()) if HAS_WORD.search(t)]
         if ws and ws[0] in TRANSITIONS:
             starts += 1
+    # Sin la longitud del texto: en los corpus se correlaciona con la etiqueta y sesga el resultado.
     return [
-        math.log1p(len(words)) / 8,
         mean / 30,
         sd / mean if mean else 0.0,
         cnt.get(",", 0) / n * 10,
@@ -87,7 +87,7 @@ def dense(text, tokens):
         len(DIGIT.findall(text)) / nchar * 10,
         len(UPPER.findall(text)) / letters,
         sum(len(w) for w in words) / n / 10,
-        len(set(first100)) / (len(first100) or 1),
+        len(set(first40)) / (len(first40) or 1),
         text.count("\n") / n * 10,
         sum(1 for w in words if "'" in w) / n * 10,
         sum(1 for w in words if w.lower() in FIRST_PERSON) / n * 10,

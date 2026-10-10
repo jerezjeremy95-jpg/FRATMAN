@@ -44,37 +44,68 @@ Las reseñas coinciden en que sirve como filtro inicial, no como prueba. El prop
 - Señales de estilo explicadas (variación entre oraciones, conectores, primera persona, puntuación, vocabulario).
 - Todo se calcula en el navegador: el texto no se envía a ningún servidor.
 
-### Modelo entrenado
+### Modelo entrenado (versión 2)
 
 Lupa usa una regresión logística entrenada (detalles y cómo reentrenarla en `model/README.md`):
 
-- **Rasgos**: palabras, pares de palabras y fragmentos de 3 a 5 letras (hasheados en 262 144 posiciones) + 16 medidas de estilo.
-- **Datos**: unos 125 000 ejemplos de AuTexTification (español e inglés, GPT-3 y BLOOM), Ghostbuster (ensayos, noticias y relatos en inglés, ChatGPT y Claude), Europarl y noticias EFE (español humano formal) y 86 textos en español escritos con un asistente de IA actual.
-- **Pesos**: cuantizados a 8 bits e incrustados en la página (unos 340 KB).
+- **Rasgos**: palabras, pares de palabras y fragmentos de 3 a 5 letras (hasheados en 262 144 posiciones) + 15 medidas de estilo.
+- **Datos**: unos 113 000 fragmentos de AuTexTification (español e inglés, GPT-3 y BLOOM), Ghostbuster (ensayos, noticias y relatos en inglés, ChatGPT y Claude), Europarl y noticias EFE (español humano formal) y 86 textos en español escritos con un asistente de IA actual.
+- **Pesos**: cuantizados a 8 bits e incrustados en la página (unos 340 KB). El navegador reproduce exactamente el cálculo de Python (diferencia máxima 0,000001 en la probabilidad; 0 en la puntuación global).
 
-Precisión con documentos que el modelo nunca vio (umbral 50 %):
+### Auditoría de precisión
 
-| Conjunto de prueba | Aciertos | AUROC | Humanos marcados como IA |
-|---|---|---|---|
-| Español (todos) | 86,1 % | 0,938 | 13,6 % |
-| Inglés (todos) | 87,1 % | 0,946 | 12,9 % |
-| Inglés, artículos de 2024 (GPT-4o, Claude 3.5, o1), fuera del entrenamiento | 67,3 % | 0,710 | 15,3 % |
+`model/evaluate.py` mide la página tal como funciona (separación en oraciones, ventanas de ~40 palabras por oración, bloques de ~150 palabras por documento) sobre 16 125 documentos de prueba congelados (`model/test_groups.json`) que ningún modelo usó para entrenar.
 
-Comparación sobre una muestra equilibrada de 3 336 textos de prueba (textos de 40 palabras o más):
+La auditoría encontró tres fallos en la versión 1, ya corregidos:
 
-| | Detector por reglas anterior | Modelo entrenado |
+1. **Longitud como atajo**: la versión 1 usaba la longitud del texto como rasgo. En los corpus la longitud se correlaciona con la etiqueta, así que el resultado dependía del tamaño del fragmento y no del estilo. La versión 2 no la usa y se entrena con fragmentos tomados de cualquier parte de los documentos (no solo del inicio), con la misma distribución de longitudes para textos humanos y de IA.
+2. **PDF y texto pegado con renglones partidos**: cada salto de línea cortaba la oración. Con renglones de PDF, los textos humanos marcados como IA subían del 17 % al 39 %. Ahora un salto simple no corta la oración y los PDF se reconstruyen por párrafos.
+3. **Resaltado por oración**: en documentos que mezclan párrafos humanos y de IA, la versión 1 marcaba como IA la mitad de las oraciones humanas.
+
+| Misma prueba, lógica de la página | Versión 1 (publicada antes) | Versión 2 (actual) |
 |---|---|---|
-| Español | 75,2 % (AUROC 0,67) | 91,0 % (AUROC 0,97) |
-| Inglés | 51,6 % (AUROC 0,53) | 89,0 % (AUROC 0,96) |
-| Artículos de 2024 | 52,7 % (AUROC 0,64) | 70,0 % (AUROC 0,74) |
+| Documentos de prueba: aciertos | 85,5 % | 85,0 % |
+| Documentos de prueba: AUROC | 0,934 | 0,930 |
+| Humanos marcados como IA (umbral 50 %) | 17,0 % | **13,2 %** |
+| Con renglones de PDF: humanos marcados como IA | 38,9 % | **5,2 %** |
+| Oraciones humanas marcadas como IA en documentos mezclados (umbral 70 %) | 53,5 % | **18,1 %** |
+| Artículos de 2024 (GPT-4o, Claude 3.5, o1-pro), fuera del entrenamiento | 70,0 % | **77,0 %** |
+| — GPT-4o / Claude 3.5 Sonnet | 85,0 % / 73,3 % | **91,7 % / 86,7 %** |
+
+Lo que empeora un poco: textos cortos de modelos antiguos (AuTexTification, GPT-3 y BLOOM): 82–84 % → 80–84 %, porque parte de ese acierto venía de la longitud. También se probaron la versión 1 con la nueva separación en oraciones y la media de ambos modelos; la versión 2 sola fue la mejor con texto de IA reciente y en el resaltado por oración.
+
+Umbrales de la página, elegidos con estos datos (textos de 40 o más palabras):
+
+| Umbral | Humanos marcados como IA (es / en) | IA detectada (es / en) |
+|---|---|---|
+| 70 % («Posiblemente IA», oraciones en rojo) | 5,4 % / 4,4 % | 80,4 % / 75,1 % |
+| 85 % («Probablemente IA») | 2,4 % / 1,6 % | 67,8 % / 59,8 % |
+
+Longitud: en inglés (clases equilibradas), los textos de 40–100 palabras aciertan el 83,9 % y los de más de 200, el 93,3 %. La página avisa cuando el texto tiene menos de 200 palabras.
 
 **Límites, dichos claramente**:
-- Con texto de modelos recientes que no estaban en el entrenamiento baja mucho: 70 % frente al 92 % (AUROC 0,997) que obtiene GPTZero en esos mismos 300 artículos. Falla sobre todo con o1-pro y con texto «humanizado».
-- En textos cortos (tuits, párrafos sueltos) se equivoca más.
-- Entre un 7 % y un 17 % de los textos humanos de prueba salen como IA según el tipo de texto. Por eso la página solo marca «Probable IA» a partir del 70 %.
+- Con texto de modelos recientes que no estaban en el entrenamiento baja: 77 % frente al 92 % (AUROC 0,997) que obtiene GPTZero en esos mismos 300 artículos. Falla sobre todo con o1-pro y con texto «humanizado» (55 %).
+- En textos cortos se equivoca más.
 - Ningún resultado sirve como prueba para acusar a alguien.
 
 Para acercarse a un detector comercial haría falta un modelo de lenguaje (p. ej. un transformer multilingüe afinado o la perplejidad de un modelo abierto), que no cabe en una página estática, y más texto reciente de IA en español.
+
+### Repositorios revisados que no se incorporaron
+
+- `ai-detected/ai-detectors`: lista de detectores de imágenes, video, audio y deepfakes. No aplica a texto.
+- `ai-detected/ai-content-detectors`: lista de detectores de texto comerciales, sin código ni datos. De ahí se comprobaron dos consejos: los textos de menos de 200 palabras dan más falsos positivos (confirmado; ahora la página lo avisa) y «las palabras de duda indican IA» (no se confirma: el modelo aprendió que *may*, *likely* o *podría* apuntan a IA, pero *might*, *seems*, *parece* o *quizás* apuntan a humano, así que no se añadió esa regla).
+
+## 6. Segunda opinión de Claude (gratis para quien lo usa)
+
+La versión publicada en claude.ai incluye **«Revisar con Claude»**. Usa la capacidad `sample` de los artifacts de claude.ai: la página le pide a Claude que puntúe cada oración y explique el motivo, **con la cuenta de Claude de quien abre la página**. No hace falta clave de API ni servidor, y no tiene coste adicional: consume el uso normal del plan de esa persona (también el plan gratuito, con sus límites).
+
+- La primera vez, claude.ai pide permiso para que la página use Claude.
+- La puntuación final combina a partes iguales (en escala logit) el modelo entrenado y el juicio de Claude.
+- Los textos largos se revisan en partes de unas 2 500 palabras, una tras otra; si se alcanza el límite de uso, se conservan las partes ya revisadas.
+- Fuera de claude.ai (p. ej. GitHub Pages) el botón no aparece y el detector funciona solo con el modelo entrenado.
+- La combinación con Claude no está medida en la auditoría (requiere llamadas reales a Claude).
+
+¿Y la API de Anthropic directamente? Requiere una clave de pago y un servidor propio que la esconda; no es gratuita. Un MCP tampoco sirve aquí: los MCP conectan herramientas *a* Claude, no al revés.
 
 ## Fuentes
 

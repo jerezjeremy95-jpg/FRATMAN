@@ -25,9 +25,12 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 sys.path.insert(0, os.path.dirname(__file__))
 from features import D, N_DENSE, TOK, HAS_WORD, featurize, normalize  # noqa: E402
 
-RNG = random.Random(13)
 HERE = os.path.dirname(os.path.abspath(__file__))
-SENT = re.compile(r"(?<=[.!?…])\s+")
+SENT = re.compile(r"(?<=[.!?…])\s+|\n+")
+
+
+def rng_for(name):
+    return random.Random(f"lupa-v2-{name}")
 
 
 def detok(s):
@@ -36,22 +39,46 @@ def detok(s):
     return s
 
 
-def chunks_of(text, lo, hi, limit=None):
-    """Corta un texto en fragmentos de entre lo y hi palabras respetando oraciones."""
-    sents = [s for s in SENT.split(text.strip()) if s.strip()]
+def split_sents(text):
+    return [s.strip() for s in SENT.split(text.strip()) if s.strip()]
+
+
+def chunks_of(text, lo, hi, rng, limit=None):
+    """Corta un texto en fragmentos consecutivos de entre lo y hi palabras respetando oraciones."""
     out, cur, n = [], [], 0
-    target = RNG.randint(lo, hi)
-    for s in sents:
+    target = rng.randint(lo, hi)
+    for s in split_sents(text):
         cur.append(s)
         n += len(s.split())
         if n >= target:
             out.append(" ".join(cur))
-            cur, n, target = [], 0, RNG.randint(lo, hi)
+            cur, n, target = [], 0, rng.randint(lo, hi)
             if limit and len(out) >= limit:
                 break
     if cur and n >= lo:
         out.append(" ".join(cur))
     return out
+
+
+def span(sents, lo, hi, rng):
+    """Un fragmento de lo-hi palabras que empieza en una oración al azar (como las ventanas y bloques de la página)."""
+    if not sents:
+        return None
+    target = rng.randint(lo, hi)
+    start = rng.randrange(len(sents))
+    cur, n = [], 0
+    for s in sents[start:]:
+        cur.append(s)
+        n += len(s.split())
+        if n >= target:
+            break
+    if n < lo:  # demasiado cerca del final: completa hacia atrás
+        for s in reversed(sents[:start]):
+            cur.insert(0, s)
+            n += len(s.split())
+            if n >= lo:
+                break
+    return " ".join(cur) if n >= min(lo, 20) else None
 
 
 def load(args):
@@ -63,28 +90,35 @@ def load(args):
             rows.append((r.text, int(r.label == "generated"), lang, "autext", f"autext-{lang}-{r.id}"))
 
     # Ghostbuster: ensayos, noticias (Reuters) y relatos; humanos vs ChatGPT y Claude.
+    # Se toman fragmentos de cualquier parte del documento (no solo el inicio) y con la misma
+    # distribución de longitudes para ambas clases, igual que los usa la página.
     for dom in ("essay", "reuter", "wp"):
         for sub, label, take in (("human", 0, 3000), ("claude", 1, 1800), ("gpt", 1, 900),
                                  ("gpt_writing", 1, 300), ("gpt_semantic", 1, 300), ("gpt_prompt1", 1, 300)):
+            rng = rng_for(f"{dom}-{sub}")
             files = sorted(glob.glob(f"{args.ghost}/{dom}/{sub}/**/*.txt", recursive=True))
-            RNG.shuffle(files)
+            rng.shuffle(files)
             for f in files[:take]:
                 t = open(f, encoding="utf-8", errors="ignore").read().strip()
                 if len(t.split()) < 30:
                     continue
                 g = f"ghost-{dom}-{os.path.basename(os.path.dirname(f))}-{os.path.basename(f)}-{label}"
-                rows.append((" ".join(t.split()[:350]), label, "en", f"ghost-{dom}", g))
-                for c in chunks_of(t, 30, 160, limit=1):
-                    rows.append((c, label, "en", f"ghost-{dom}", g))
+                sents = split_sents(t)
+                for lo, hi in ((25, 60), (25, 60), (120, 220)):
+                    c = span(sents, lo, hi, rng)
+                    if c:
+                        rows.append((c, label, "en", f"ghost-{dom}", g))
 
     # Español humano formal: Europarl y noticias EFE (CoNLL-2002).
+    rng = rng_for("europarl")
     ep = []
     for f in sorted(glob.glob(f"{args.data}/europarl_raw/spanish/*.es")):
-        txt = detok(" ".join(l.strip() for l in open(f, encoding="utf-8", errors="ignore") if l.strip()))
-        ep.extend((c, os.path.basename(f)) for c in chunks_of(txt, 40, 250))
-    RNG.shuffle(ep)
+        txt = detok("\n".join(l.strip() for l in open(f, encoding="utf-8", errors="ignore") if l.strip()))
+        ep.extend((c, os.path.basename(f)) for c in chunks_of(txt, 25, 220, rng))
+    rng.shuffle(ep)
     for c, f in ep[:5000]:
         rows.append((c, 0, "es", "europarl", f"ep-{f}"))
+    rng = rng_for("efe")
     for split in ("esp.train", "esp.testa", "esp.testb"):
         sent, sents = [], []
         for line in open(f"{args.data}/conll2002/{split}", encoding="latin-1"):
@@ -95,17 +129,28 @@ def load(args):
                 sent = []
             elif not line.startswith("-DOCSTART-"):
                 sent.append(line.split(" ")[0])
-        doc = " ".join(s for s in sents if len(s.split()) > 3)
-        for i, c in enumerate(chunks_of(doc, 40, 200)):
+        doc = "\n".join(s for s in sents if len(s.split()) > 3)
+        for i, c in enumerate(chunks_of(doc, 25, 200, rng)):
             rows.append((c, 0, "es", "efe", f"efe-{split}-{i // 10}"))
 
     # Español de IA actual (escrito con un asistente de IA para este proyecto).
+    rng = rng_for("esai")
     es_ai = [t.strip() for t in open(f"{HERE}/data/es_ia_moderno.txt", encoding="utf-8").read().split("\n===\n") if t.strip()]
     for i, t in enumerate(es_ai):
-        rows.append((t, 1, "es", "es-ia-moderno", f"esai-{i}"))
-        for c in chunks_of(t, 30, 70, limit=2):
-            rows.append((c, 1, "es", "es-ia-moderno", f"esai-{i}"))
+        sents = split_sents(t)
+        rows.append((" ".join(sents), 1, "es", "es-ia-moderno", f"esai-{i}"))
+        for _ in range(2):
+            c = span(sents, 25, 60, rng)
+            if c:
+                rows.append((c, 1, "es", "es-ia-moderno", f"esai-{i}"))
     return rows
+
+
+def is_test(group, test_groups):
+    """Prueba = los documentos congelados en test_groups.json (y un 15 % fijo de EFE)."""
+    if group.startswith("efe-"):
+        return zlib.crc32(group.encode()) % 100 < 15
+    return group in test_groups
 
 
 def feat_row(text):
@@ -151,15 +196,14 @@ def main():
     ap.add_argument("--hd", default="/home/user/jenna-russell/human_detectors/human_detectors.json")
     ap.add_argument("--C", type=float, default=0)
     ap.add_argument("--alpha", type=float, default=0.3)
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
     rows = load(args)
     df = pd.DataFrame(rows, columns=["text", "y", "lang", "source", "group"])
     df = df[df.text.str.split().str.len() >= 8].reset_index(drop=True)
-    groups = sorted(df.group.unique())
-    rnd = random.Random(7)
-    test_groups = {g for g in groups if rnd.random() < 0.15}
-    df["split"] = np.where(df.group.isin(test_groups), "test", "train")
+    test_groups = set(json.load(open(f"{HERE}/test_groups.json")))
+    df["split"] = np.where(df.group.map(lambda g: is_test(g, test_groups)), "test", "train")
     print(df.groupby(["source", "lang", "y", "split"]).size().unstack(fill_value=0))
 
     Xh, Xd = build(df.text.tolist())
@@ -174,7 +218,7 @@ def main():
 
     best = None
     X = stack(Xh, Xd, mu, sd, args.alpha)
-    for C in ([args.C] if args.C else [2.0, 8.0, 32.0]):
+    for C in ([args.C] if args.C else [8.0, 32.0]):
         clf = LogisticRegression(C=C, max_iter=3000, solver="liblinear")
         # Validación interna: 10 % de los grupos de entrenamiento.
         vg = {g for g in df.group[tr].unique() if zlib.crc32(g.encode()) % 10 == 0}
@@ -212,10 +256,10 @@ def main():
 
     # Prueba fuera de distribución: artículos de 2024 (GPT-4o, Claude 3.5 Sonnet, o1) frente a humanos.
     hd = json.load(open(args.hd))
-    ys, ps, comp = [], [], {"gptzero": [], "pangram": [], "binoculars": []}
+    ys, ps = [], []
     for item in hd.values():
         text = item["article"]
-        cs = chunks_of(text, 120, 180) or [text]
+        cs = chunks_of(text, 150, 150, rng_for("hd")) or [text]
         Hh, Hd = build(cs, workers=1)
         z = np.log(predict(Hh, Hd) / (1 - predict(Hh, Hd)))
         ys.append(int(item["ground_truth"] != "Human-written"))
@@ -228,7 +272,7 @@ def main():
         report(f"  modelo {m}", [ys[i] for i in sel], [ps[i] for i in sel])
 
     model = {
-        "version": 1,
+        "version": 2,
         "dBits": int(np.log2(D)),
         "scale": scale,
         "bias": b,
@@ -240,12 +284,13 @@ def main():
         "C": C,
         "metrics": results,
     }
-    json.dump(model, open(f"{HERE}/lupa-model.json", "w"))
+    out = args.out or f"{HERE}/lupa-model.json"
+    json.dump(model, open(out, "w"))
     # Muestras para comprobar que el navegador calcula lo mismo.
     probe = sub.sample(200, random_state=1)
     json.dump([{"text": t, "p": float(pp)} for t, pp in zip(probe.text, probe.p)],
               open(os.environ.get("LUPA_PROBE", "lupa-probe.json"), "w"), ensure_ascii=False)
-    print(f"\nPesos guardados: model/lupa-model.json ({os.path.getsize(f'{HERE}/lupa-model.json') // 1024} KB), C={C}")
+    print(f"\nPesos guardados: {out} ({os.path.getsize(out) // 1024} KB), C={C}")
 
 
 if __name__ == "__main__":
