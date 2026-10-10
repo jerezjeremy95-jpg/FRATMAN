@@ -1,0 +1,543 @@
+<!doctype html><!--wrap-->
+<html lang="es"><!--wrap-->
+<head><!--wrap-->
+<meta charset="utf-8"><!--wrap-->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!--wrap-->
+<title>Lupa Detector</title>
+<meta name="description" content="Detector de texto generado por IA que funciona en tu navegador: puntuación global, análisis por oración y señales explicadas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab bench. Barra superior, mesa de trabajo de dos columnas (texto | informe), luego método y límites. */
+:root {
+  --bg: #f3f4f1;
+  --surface: #ffffff;
+  --ink: #1b2124;
+  --muted: #5b6669;
+  --line: #d9dcd6;
+  --accent: #1f5f6b;
+  --accent-ink: #ffffff;
+  --ai: #c2412d;
+  --ai-wash: #f8dcd5;
+  --mix: #a8740f;
+  --mix-wash: #f7ead0;
+  --human: #2f7a4a;
+  --human-wash: #d9eedf;
+  --focus: #1f5f6b;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121618; --surface: #1a2023; --ink: #e7ebe8; --muted: #9aa6a8; --line: #2c3539;
+    --accent: #6cc3cf; --accent-ink: #0d1b1e;
+    --ai: #f08a76; --ai-wash: #47241e; --mix: #e3b55a; --mix-wash: #3f3218; --human: #7fcf98; --human-wash: #1d3a27;
+    --focus: #6cc3cf; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121618; --surface: #1a2023; --ink: #e7ebe8; --muted: #9aa6a8; --line: #2c3539;
+  --accent: #6cc3cf; --accent-ink: #0d1b1e;
+  --ai: #f08a76; --ai-wash: #47241e; --mix: #e3b55a; --mix-wash: #3f3218; --human: #7fcf98; --human-wash: #1d3a27;
+  --focus: #6cc3cf; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; }
+@media (min-width: 720px) { .wrap { padding-inline: 28px; } }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+.label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Barra superior */
+.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.brand svg { flex: none; }
+.top nav { display: flex; gap: 18px; font-size: 14px; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--ink); }
+
+/* Encabezado */
+.intro { padding-block: 32px 20px; display: grid; gap: 10px; }
+.intro h1 { font-size: clamp(28px, 4.2vw, 44px); font-weight: 700; max-width: 22ch; }
+.intro p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+/* Mesa de trabajo */
+.bench { display: grid; gap: 20px; padding-bottom: 40px; }
+@media (min-width: 960px) { .bench { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.panel-body { padding: 16px; }
+.samples { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px/1 var(--font-body); border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 7px 10px; border-radius: 999px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+textarea#text { width: 100%; min-height: 340px; resize: vertical; border: 0; background: transparent; color: var(--ink); font: 16px/1.65 var(--font-body); padding: 0; }
+textarea#text:focus { outline: none; }
+#marked { font-size: 16px; line-height: 1.75; min-height: 340px; white-space: pre-wrap; overflow-wrap: anywhere; }
+#marked .s { border-radius: 3px; padding: 1px 0; cursor: help; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+#marked .s.ai { background: var(--ai-wash); box-shadow: inset 0 -2px 0 var(--ai); }
+#marked .s.mix { background: var(--mix-wash); box-shadow: inset 0 -2px 0 var(--mix); }
+#marked .s.human { background: transparent; }
+#marked .s.active { outline: 2px solid var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.panel-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.count { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.count.over { color: var(--ai); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: 600 14px/1 var(--font-body); border-radius: 8px; padding: 11px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.file { position: relative; overflow: hidden; }
+.file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.note.err { color: var(--ai); }
+
+/* Informe */
+.report .panel-body { display: grid; gap: 22px; }
+.verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.gauge { width: 148px; max-width: 100%; }
+.gauge text { font-family: var(--font-display); fill: var(--ink); }
+.verdict h2 { font-size: 22px; }
+.verdict p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+.split { display: grid; gap: 8px; }
+.bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); }
+.bar i { display: block; height: 100%; transition: width .5s ease; }
+.split-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.split-legend div { display: grid; gap: 2px; }
+.split-legend b { font: 500 20px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.split-legend small { color: var(--muted); font-size: 12.5px; }
+.signals { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.signals li { display: grid; gap: 5px; }
+.sig-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 500; }
+.sig-top span:last-child { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.meter { height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; transition: width .5s ease; }
+.signals p { margin: 0; color: var(--muted); font-size: 13px; }
+.lean { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+.lean.ai { background: var(--ai-wash); color: var(--ai); }
+.lean.human { background: var(--human-wash); color: var(--human); }
+.lean.neutral { background: var(--line); color: var(--muted); }
+.detail { border-top: 1px dashed var(--line); padding-top: 14px; font-size: 14px; min-height: 64px; }
+.detail .q { margin: 6px 0; font-style: italic; }
+.empty { color: var(--muted); font-size: 14px; }
+
+/* Método */
+.method { border-top: 1px solid var(--line); padding-block: 40px; display: grid; gap: 24px; }
+.method h2 { font-size: 28px; }
+.steps { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+@media (min-width: 760px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.steps li { counter-increment: step; display: grid; gap: 6px; align-content: start; }
+.steps li::before { content: "Paso " counter(step); font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.steps h3 { font-size: 18px; }
+.steps p, .limits p { margin: 0; color: var(--muted); max-width: 62ch; }
+.limits { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--mix); border-radius: 8px; padding: 16px 18px; }
+.limits h3 { font-size: 17px; }
+footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var(--muted); font-size: 13px; }
+@media (max-width: 520px) {
+  .top nav { display: none; }
+  .verdict { grid-template-columns: 1fr; justify-items: start; }
+}
+@media (prefers-reduced-motion: reduce) { .bar i, .meter i, .gauge * { transition: none !important; } }
+</style>
+</head><!--wrap-->
+<body><!--wrap-->
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke="var(--accent)" stroke-width="2.6"/><path d="M16.5 16.5 L23 23" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><path d="M7.5 11h7" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Lupa
+    </div>
+    <nav aria-label="Secciones">
+      <a href="#detector">Detector</a>
+      <a href="#metodo">Cómo funciona</a>
+      <a href="#limites">Límites</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap intro">
+    <span class="label">Detector de texto IA · Español e inglés</span>
+    <h1>Revisa si un texto suena escrito por una máquina</h1>
+    <p>Pega un texto o sube un archivo. Lupa puntúa el documento completo, marca cada oración y te explica qué señales pesaron. Todo se calcula en tu navegador: el texto no sale de tu equipo.</p>
+  </section>
+
+  <section class="wrap bench" id="detector">
+    <div class="panel editor">
+      <div class="panel-head">
+        <span class="label" id="mode-label">Texto marcado</span>
+        <div class="samples" role="group" aria-label="Ejemplos">
+          <button class="chip" type="button" data-sample="es-ai" id="s-es-ai">Ejemplo IA (ES)</button>
+          <button class="chip" type="button" data-sample="es-human" id="s-es-human">Ejemplo humano (ES)</button>
+          <button class="chip" type="button" data-sample="en-ai" id="s-en-ai">AI sample (EN)</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <label for="text" class="label" hidden>Texto a analizar</label>
+        <textarea id="text" spellcheck="false" placeholder="Pega aquí al menos 40 palabras…" hidden></textarea>
+        <div id="marked" aria-live="polite"></div>
+      </div>
+      <div class="panel-foot">
+        <div class="legend" aria-label="Leyenda">
+          <span><i class="sw" style="background:var(--ai-wash);box-shadow:inset 0 -2px 0 var(--ai)"></i>Probable IA</span>
+          <span><i class="sw" style="background:var(--mix-wash);box-shadow:inset 0 -2px 0 var(--mix)"></i>Revisar</span>
+          <span><i class="sw" style="border:1px solid var(--line)"></i>Probable humano</span>
+        </div>
+        <span class="count" id="count">0 / 15 000 palabras</span>
+      </div>
+      <div class="panel-foot">
+        <div class="actions">
+          <button class="btn" type="button" id="edit">Editar texto</button>
+          <label class="btn file" for="file">Subir .txt, .docx o .pdf<input type="file" id="file" accept=".txt,.md,.docx,.pdf,text/plain"></label>
+          <button class="btn" type="button" id="clear">Vaciar</button>
+        </div>
+        <button class="btn primary" type="button" id="run">Analizar texto</button>
+      </div>
+      <div class="panel-foot" id="msg-row" hidden><p class="note" id="msg"></p></div>
+    </div>
+
+    <aside class="panel report" aria-labelledby="report-title">
+      <div class="panel-head"><span class="label" id="report-title">Informe</span><span class="label" id="lang"></span></div>
+      <div class="panel-body">
+        <div class="verdict">
+          <svg class="gauge" viewBox="0 0 160 96" role="img" aria-labelledby="gauge-t">
+            <title id="gauge-t">Probabilidad de IA</title>
+            <path d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
+            <path id="arc" d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--ai)" stroke-width="14" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="transition: stroke-dasharray .6s ease"/>
+            <text x="80" y="76" text-anchor="middle" font-size="30" font-weight="700" id="pct">–</text>
+            <text x="80" y="93" text-anchor="middle" font-size="10" style="fill:var(--muted);font-family:var(--font-mono)">PROB. IA</text>
+          </svg>
+          <div>
+            <h2 id="verdict">Sin analizar</h2>
+            <p id="verdict-sub">Pulsa «Analizar texto» para obtener el informe.</p>
+          </div>
+        </div>
+
+        <div class="split">
+          <span class="label">Reparto del texto por palabras</span>
+          <div class="bar" aria-hidden="true"><i id="b-ai" style="background:var(--ai);width:0"></i><i id="b-mix" style="background:var(--mix);width:0"></i><i id="b-hu" style="background:var(--human);width:0"></i></div>
+          <div class="split-legend">
+            <div><b id="n-ai">–</b><small>Probable IA</small></div>
+            <div><b id="n-mix">–</b><small>Revisar</small></div>
+            <div><b id="n-hu">–</b><small>Probable humano</small></div>
+          </div>
+        </div>
+
+        <div>
+          <span class="label">Señales del documento</span>
+          <ul class="signals" id="signals" style="margin-top:10px"></ul>
+        </div>
+
+        <div class="detail" id="detail"><span class="empty">Toca una oración marcada para ver por qué recibió esa puntuación.</span></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="wrap method" id="metodo">
+    <h2>Cómo funciona</h2>
+    <ol class="steps">
+      <li><h3>Divide y mide</h3><p>El texto se separa en oraciones. Para cada una se miden longitud, puntuación, conectores, voz personal y expresiones que los modelos de lenguaje repiten con frecuencia.</p></li>
+      <li><h3>Compara con el conjunto</h3><p>Los textos humanos alternan oraciones cortas y largas; los generados suelen ser regulares. Lupa calcula esa variación (burstiness), la diversidad del vocabulario y la repetición de frases.</p></li>
+      <li><h3>Combina en una probabilidad</h3><p>Cada oración recibe una probabilidad con una función logística. La cifra global mezcla el promedio por palabras con las señales del documento entero.</p></li>
+    </ol>
+    <div class="limits" id="limites">
+      <h3>Antes de sacar conclusiones</h3>
+      <p>Ningún detector es exacto. Este usa heurísticas lingüísticas, no un modelo entrenado, y falla en ambos sentidos: un texto humano muy formal puede salir alto, y un texto de IA editado puede salir bajo. Úsalo para decidir qué revisar, nunca como prueba para acusar a alguien.</p>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">Lupa analiza localmente en tu navegador. Límite: 15 000 palabras por análisis, mínimo 40.</div></footer>
+
+<script>
+(function () {
+  "use strict";
+  var MAX_WORDS = 15000, MIN_WORDS = 40;
+
+  var SAMPLES = {
+    "es-ai": "En el mundo actual, la inteligencia artificial juega un papel fundamental en la transformación de la educación. Es importante destacar que estas herramientas ofrecen oportunidades significativas para personalizar el aprendizaje de cada estudiante. Además, permiten a los docentes optimizar su tiempo y centrarse en aspectos clave de la enseñanza. Sin embargo, también plantean desafíos importantes relacionados con la ética y la privacidad de los datos. Por otro lado, resulta crucial que las instituciones educativas desarrollen políticas claras para su uso responsable. Asimismo, la formación continua del profesorado se convierte en un elemento esencial para aprovechar todo su potencial. En conclusión, la integración de la inteligencia artificial en la educación representa una oportunidad única para construir un futuro más inclusivo, eficiente y sostenible.",
+    "es-human": "Ayer volví a la biblioteca del barrio después de casi dos años. No sé por qué tardé tanto. La señora del mostrador, la de las gafas rojas, se acordaba de mí (¡increíble!) y me preguntó si seguía leyendo novelas policiacas. Le dije que no, que ahora me ha dado por la historia, sobre todo la de Santiago en los años cincuenta. Me miró raro. Bueno, el caso es que me llevé tres libros y uno ya lo terminé anoche, a las dos de la mañana, con el café frío al lado. ¿Vale la pena? Sí. Aunque el autor se repite bastante en los capítulos del medio, y el final me pareció apresurado, como si el editor le hubiera puesto una fecha límite imposible.",
+    "en-ai": "In today's fast-paced digital landscape, effective time management has become more crucial than ever. It is important to note that productivity is not merely about working harder, but rather about working smarter. Furthermore, leveraging the right tools can significantly enhance your ability to stay organized and focused. Additionally, setting clear goals allows individuals to prioritize tasks and allocate resources efficiently. Moreover, maintaining a healthy work-life balance plays a vital role in sustaining long-term success. By embracing these strategies, professionals can unlock their full potential and navigate the complexities of modern work with confidence. Ultimately, mastering time management is a transformative journey that empowers individuals to achieve their goals."
+  };
+
+  // Expresiones y vocabulario frecuentes en texto generado (minúsculas).
+  var PHRASES = {
+    es: ["es importante destacar","es importante señalar","es importante tener en cuenta","cabe destacar","cabe señalar","cabe mencionar","juega un papel","desempeña un papel","papel fundamental","papel crucial","en el mundo actual","en la actualidad","en la era digital","en conclusión","en resumen","en definitiva","en última instancia","sin lugar a dudas","una amplia gama","una gran variedad","oportunidad única","de manera significativa","de manera eficiente","de forma eficaz","aspectos clave","elemento esencial","todo su potencial","un futuro más","no solo","sino también","a medida que","por otro lado","resulta crucial","resulta fundamental","se convierte en","en este sentido","a lo largo de","explorar","fomentar","potenciar","optimizar","sinergia","panorama","transformador","innovador","integral","inclusivo","sostenible","crucial","fundamental","esencial","significativas","significativo","enriquecedor","holístico","adentrarse","sumergirse"],
+    en: ["it is important to note","it's important to note","it is worth noting","it's worth noting","plays a vital role","plays a crucial role","plays a key role","in today's","fast-paced","digital landscape","ever-evolving","in conclusion","in summary","ultimately","not merely","but rather","a wide range of","a testament to","navigate the complexities","unlock","full potential","delve","delves","tapestry","landscape","realm","leverage","leveraging","seamless","seamlessly","robust","crucial","pivotal","vital","transformative","empower","empowers","embrace","embracing","foster","fostering","enhance","significantly","comprehensive","holistic","intricate","multifaceted","journey","furthermore","moreover","additionally","in addition","overall","harness","elevate","paramount","nuanced","meticulous","myriad"]
+  };
+  var OPENERS = {
+    es: ["además","asimismo","por otro lado","sin embargo","en conclusión","en resumen","por lo tanto","por consiguiente","en primer lugar","en segundo lugar","finalmente","en definitiva","de igual manera","del mismo modo","no obstante","en este sentido"],
+    en: ["furthermore","moreover","additionally","in addition","however","in conclusion","overall","ultimately","therefore","consequently","firstly","secondly","finally","similarly","by embracing","as a result","in summary","notably"]
+  };
+  var CASUAL = {
+    es: ["jaja","jeje","pues","o sea","bueno","vale","tipo","la verdad","no sé","qué","oye","mira","ojalá","vaya","menos mal","total","el caso es","me dio","me ha dado","anoche","ayer","creo que","me parece"],
+    en: ["lol","gonna","wanna","kinda","sorta","honestly","tbh","yeah","nope","okay","ok","anyway","i guess","i think","i mean","stuff","weird","yesterday","last night","damn","pretty much"]
+  };
+  var STOP = {
+    es: ["el","la","los","las","de","que","y","en","un","una","es","por","con","para","se","del","al","lo","como","más","pero","sus","su","le","ya","o","este","sí","porque","esta","entre","cuando","muy","sin","sobre","también"],
+    en: ["the","and","of","to","in","is","that","it","for","on","with","as","was","are","be","this","by","or","at","from","an","have","not","but","they","you","which","their","can","has"]
+  };
+  var FIRST = { es: /\b(yo|me|mi|mis|conmigo|nosotros|nos)\b/i, en: /\b(i|me|my|mine|we|us|our)\b/i };
+  var CONTR = /\b\w+'(s|t|re|ve|ll|d|m)\b|\b(can't|won't|don't|isn't|i'm)\b/i;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var ta = $("text"), marked = $("marked");
+  var lastResult = null;
+
+  function words(s) { return (s.match(/[\p{L}\p{N}'’-]+/gu) || []); }
+  function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function detectLang(text) {
+    var w = words(text.toLowerCase()), es = 0, en = 0;
+    w.forEach(function (x) { if (STOP.es.indexOf(x) > -1) es++; if (STOP.en.indexOf(x) > -1) en++; });
+    if (/[ñáéíóú¿¡]/i.test(text)) es += 3;
+    return es >= en ? "es" : "en";
+  }
+
+  // Divide el texto en oraciones conservando la posición original.
+  function splitSentences(text) {
+    var out = [], re = /[^.!?…\n]+(?:[.!?…]+["'”»)\]]*|$)|\n+/g, m;
+    while ((m = re.exec(text))) {
+      if (!m[0]) { re.lastIndex++; continue; }
+      out.push({ text: m[0], start: m.index, isBreak: /^\n+$/.test(m[0]) || !/[\p{L}\p{N}]/u.test(m[0]) });
+    }
+    return out;
+  }
+
+  function countHits(lower, list) {
+    var hits = [];
+    list.forEach(function (p) {
+      var re = new RegExp("(^|[^\\p{L}])" + p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?=$|[^\\p{L}])", "giu");
+      var c = (lower.match(re) || []).length;
+      if (c) hits.push({ p: p, c: c });
+    });
+    return hits;
+  }
+
+  function scoreSentence(s, lang, meanLen) {
+    var lower = s.toLowerCase().trim(), w = words(s), n = w.length, reasons = [], z = -0.35;
+    var hits = countHits(lower, PHRASES[lang]);
+    var hitCount = hits.reduce(function (a, h) { return a + h.c; }, 0);
+    if (hitCount) { z += Math.min(2.4, 0.85 * hitCount); reasons.push({ t: "Expresiones típicas de IA: «" + hits.map(function (h) { return h.p; }).slice(0, 4).join("», «") + "»", d: 1 }); }
+    var opener = OPENERS[lang].filter(function (o) { return lower.replace(/^[¿¡"«(\s]+/, "").indexOf(o) === 0; })[0];
+    if (opener) { z += 0.7; reasons.push({ t: "Empieza con un conector formal («" + opener + "»)", d: 1 }); }
+    if (n >= 14 && n <= 34) { z += 0.35; reasons.push({ t: "Longitud estándar (" + n + " palabras)", d: 1 }); }
+    if (n < 8) { z -= 0.7; reasons.push({ t: "Oración muy corta (" + n + " palabras)", d: -1 }); }
+    if (n > 45) { z -= 0.4; reasons.push({ t: "Oración muy larga (" + n + " palabras)", d: -1 }); }
+    if (meanLen && Math.abs(n - meanLen) / meanLen < 0.25 && n >= 10) { z += 0.25; }
+    if (FIRST[lang].test(s)) { z -= 0.8; reasons.push({ t: "Voz en primera persona", d: -1 }); }
+    if (lang === "en" && CONTR.test(s)) { z -= 0.6; reasons.push({ t: "Usa contracciones", d: -1 }); }
+    if (/[?!¿¡]/.test(s)) { z -= 0.6; reasons.push({ t: "Pregunta o exclamación", d: -1 }); }
+    if (/\(|…|\.\.\.|—\s*\w+\s*—/.test(s)) { z -= 0.35; reasons.push({ t: "Paréntesis o puntos suspensivos", d: -1 }); }
+    var casual = countHits(lower, CASUAL[lang]);
+    if (casual.length) { z -= Math.min(1.6, 0.7 * casual.length); reasons.push({ t: "Lenguaje coloquial: «" + casual.map(function (h) { return h.p; }).slice(0, 3).join("», «") + "»", d: -1 }); }
+    if (/\d/.test(s)) { z -= 0.3; reasons.push({ t: "Datos concretos (cifras o fechas)", d: -1 }); }
+    var commas = (s.match(/,/g) || []).length;
+    if (n >= 12 && commas >= 2 && /,\s*(y|e|and)\s+\w+[.!?]?\s*$/i.test(s.trim()) ) { z += 0.4; reasons.push({ t: "Enumeración de tres elementos al cierre", d: 1 }); }
+    return { p: sigmoid(z), reasons: reasons, words: n, hits: hitCount };
+  }
+
+  function stdev(a) { var m = a.reduce(function (x, y) { return x + y; }, 0) / a.length; return Math.sqrt(a.reduce(function (x, y) { return x + (y - m) * (y - m); }, 0) / a.length); }
+
+  function analyze(text) {
+    var lang = detectLang(text);
+    var parts = splitSentences(text);
+    var sents = parts.filter(function (p) { return !p.isBreak && words(p.text).length > 0; });
+    var lens = sents.map(function (p) { return words(p.text).length; });
+    var meanLen = lens.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, lens.length);
+    sents.forEach(function (p) { var r = scoreSentence(p.text, lang, meanLen); p.p = r.p; p.reasons = r.reasons; p.words = r.words; p.hits = r.hits; });
+
+    var all = words(text.toLowerCase()), total = all.length;
+    // Variación de longitud (coeficiente de variación).
+    var cv = lens.length > 2 ? stdev(lens) / meanLen : 0.5;
+    // Diversidad léxica con ventana móvil (MATTR, ventana 50).
+    var win = Math.min(50, total), mattr = 0, k = 0;
+    for (var i = 0; i + win <= total; i += 5) { var set = {}; for (var j = i; j < i + win; j++) set[all[j]] = 1; mattr += Object.keys(set).length / win; k++; }
+    mattr = k ? mattr / k : 0;
+    var hitsTotal = sents.reduce(function (a, p) { return a + p.hits; }, 0);
+    var density = total ? hitsTotal / total * 100 : 0;
+    var openerShare = sents.filter(function (p) { return p.reasons.some(function (r) { return r.t.indexOf("conector") > -1; }); }).length / Math.max(1, sents.length);
+    var humanMarks = sents.filter(function (p) { return p.reasons.some(function (r) { return r.d < 0; }); }).length / Math.max(1, sents.length);
+
+    var dz = 0;
+    dz += (0.45 - cv) * 4;             // regularidad
+    dz += (density - 2) * 0.45;        // densidad de expresiones
+    dz += (openerShare - 0.15) * 3;    // conectores
+    dz += (0.35 - humanMarks) * 3;     // voz humana
+    var docP = sigmoid(dz);
+    var wsum = sents.reduce(function (a, p) { return a + p.words; }, 0) || 1;
+    var meanP = sents.reduce(function (a, p) { return a + p.p * p.words; }, 0) / wsum;
+    var score = clamp(0.55 * meanP + 0.45 * docP, 0.01, 0.99);
+
+    var share = { ai: 0, mix: 0, hu: 0 };
+    sents.forEach(function (p) { p.cls = p.p >= 0.62 ? "ai" : p.p >= 0.4 ? "mix" : "human"; share[p.cls === "human" ? "hu" : p.cls] += p.words; });
+
+    return {
+      lang: lang, parts: parts, sents: sents, total: total, score: score,
+      share: { ai: share.ai / wsum, mix: share.mix / wsum, hu: share.hu / wsum },
+      signals: [
+        { name: "Variación entre oraciones", value: cv.toFixed(2), bar: clamp(cv / 0.9, 0, 1), lean: cv < 0.35 ? "ai" : cv > 0.55 ? "human" : "neutral",
+          note: "Coeficiente de variación de la longitud. Por debajo de 0,35 el ritmo es muy regular, algo típico de texto generado." },
+        { name: "Expresiones típicas de IA", value: density.toFixed(1) + " /100 pal.", bar: clamp(density / 6, 0, 1), lean: density > 2.5 ? "ai" : density < 1 ? "human" : "neutral",
+          note: hitsTotal + " coincidencias con giros que los modelos usan con frecuencia («cabe destacar», «juega un papel», «furthermore»…)." },
+        { name: "Conectores al inicio", value: Math.round(openerShare * 100) + " %", bar: openerShare, lean: openerShare > 0.25 ? "ai" : openerShare < 0.1 ? "human" : "neutral",
+          note: "Oraciones que arrancan con «Además», «Sin embargo», «Moreover»… Los modelos encadenan párrafos así." },
+        { name: "Marcas de voz humana", value: Math.round(humanMarks * 100) + " %", bar: humanMarks, lean: humanMarks > 0.4 ? "human" : humanMarks < 0.2 ? "ai" : "neutral",
+          note: "Oraciones con primera persona, preguntas, coloquialismos, cifras concretas o paréntesis." },
+        { name: "Diversidad léxica", value: mattr.toFixed(2), bar: mattr, lean: "neutral",
+          note: "Proporción de palabras distintas por ventana de 50 (MATTR). Sirve de contexto: por sí sola no separa bien humano de IA." }
+      ]
+    };
+  }
+
+  function verdictText(s) {
+    if (s >= 0.75) return ["Probablemente generado por IA", "El texto reúne varias señales fuertes de escritura automática."];
+    if (s >= 0.5) return ["Posible uso de IA", "Hay pasajes con rasgos de texto generado. Revisa las oraciones marcadas."];
+    if (s >= 0.3) return ["Mayormente humano", "Predominan los rasgos humanos, con algunos pasajes formulaicos."];
+    return ["Probablemente humano", "El ritmo y la voz del texto encajan con escritura humana."];
+  }
+
+  function render(r) {
+    lastResult = r;
+    var html = "", si = 0, sentIdx = new Map();
+    r.sents.forEach(function (p, i) { sentIdx.set(p, i); });
+    var cursor = 0, src = ta.value;
+    r.parts.forEach(function (p) {
+      if (p.start > cursor) html += esc(src.slice(cursor, p.start));
+      if (p.isBreak || !sentIdx.has(p)) html += esc(p.text);
+      else html += '<span class="s ' + p.cls + '" tabindex="0" data-i="' + sentIdx.get(p) + '">' + esc(p.text) + "</span>";
+      cursor = p.start + p.text.length;
+    });
+    if (cursor < src.length) html += esc(src.slice(cursor));
+    marked.innerHTML = html;
+
+    var pct = Math.round(r.score * 100);
+    $("pct").textContent = pct + "%";
+    $("arc").setAttribute("stroke-dasharray", pct + " 100");
+    $("arc").setAttribute("stroke", r.score >= 0.5 ? "var(--ai)" : r.score >= 0.3 ? "var(--mix)" : "var(--human)");
+    var v = verdictText(r.score);
+    $("verdict").textContent = v[0];
+    $("verdict-sub").textContent = v[1] + " " + r.sents.length + " oraciones, " + r.total + " palabras.";
+    $("lang").textContent = r.lang === "es" ? "Idioma: español" : "Idioma: inglés";
+    [["ai", "b-ai", "n-ai"], ["mix", "b-mix", "n-mix"], ["hu", "b-hu", "n-hu"]].forEach(function (x) {
+      var val = Math.round(r.share[x[0]] * 100);
+      $(x[1]).style.width = val + "%"; $(x[2]).textContent = val + "%";
+    });
+    var leanTxt = { ai: "IA", human: "Humano", neutral: "Neutro" };
+    var colors = { ai: "var(--ai)", human: "var(--human)", neutral: "var(--muted)" };
+    $("signals").innerHTML = r.signals.map(function (s) {
+      return '<li><div class="sig-top"><span>' + esc(s.name) + '<span class="lean ' + s.lean + '">' + leanTxt[s.lean] + '</span></span><span>' + esc(s.value) + '</span></div>' +
+        '<div class="meter"><i style="width:' + Math.round(s.bar * 100) + '%;background:' + colors[s.lean] + '"></i></div><p>' + esc(s.note) + "</p></li>";
+    }).join("");
+    $("detail").innerHTML = '<span class="empty">Toca una oración marcada para ver por qué recibió esa puntuación.</span>';
+    showMarked(true);
+  }
+
+  function showDetail(i) {
+    var p = lastResult && lastResult.sents[i]; if (!p) return;
+    marked.querySelectorAll(".s.active").forEach(function (el) { el.classList.remove("active"); });
+    var el = marked.querySelector('[data-i="' + i + '"]'); if (el) el.classList.add("active");
+    var label = p.cls === "ai" ? "Probable IA" : p.cls === "mix" ? "Revisar" : "Probable humano";
+    var list = p.reasons.length ? "<ul style='margin:6px 0 0;padding-left:18px'>" + p.reasons.map(function (r) {
+      return "<li>" + (r.d > 0 ? "↑ " : "↓ ") + esc(r.t) + "</li>"; }).join("") + "</ul>" : "<p class='note'>Sin señales destacadas; puntuación cercana a la base.</p>";
+    $("detail").innerHTML = '<span class="label">Oración ' + (i + 1) + " · " + label + " · " + Math.round(p.p * 100) + '% IA</span><p class="q">' + esc(p.text.trim()) + "</p>" + list;
+  }
+
+  function showMarked(on) {
+    marked.hidden = !on; ta.hidden = on;
+    $("mode-label").textContent = on ? "Texto marcado" : "Texto";
+    $("edit").textContent = on ? "Editar texto" : "Ver marcas";
+    $("edit").disabled = !lastResult && !on && false;
+    if (!on) ta.focus();
+  }
+
+  function updateCount() {
+    var n = words(ta.value).length;
+    $("count").textContent = n.toLocaleString("es") + " / 15 000 palabras";
+    $("count").classList.toggle("over", n > MAX_WORDS);
+    return n;
+  }
+
+  function note(text, err) { $("msg-row").hidden = !text; $("msg").textContent = text || ""; $("msg").classList.toggle("err", !!err); }
+
+  function run() {
+    var n = updateCount();
+    if (n < MIN_WORDS) { note("Añade más texto: hacen falta al menos " + MIN_WORDS + " palabras para un resultado fiable (ahora hay " + n + ").", true); showMarked(false); return; }
+    if (n > MAX_WORDS) { note("El texto supera las 15 000 palabras. Divídelo en partes y analiza cada una.", true); return; }
+    note("");
+    render(analyze(ta.value));
+  }
+
+  function loadSample(key) {
+    ta.value = SAMPLES[key];
+    document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.sample === key ? "true" : "false"); });
+    updateCount(); run();
+  }
+
+  function readFile(file) {
+    var name = file.name.toLowerCase();
+    note("Leyendo " + file.name + "…");
+    var done = function (t) { ta.value = t.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim(); updateCount(); document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); run(); };
+    var fail = function (e) { note("No se pudo leer " + file.name + ". Prueba a copiar y pegar el texto. (" + (e && e.message || e) + ")", true); };
+    if (/\.(txt|md)$/.test(name) || file.type === "text/plain") { file.text().then(done, fail); return; }
+    if (/\.docx$/.test(name)) {
+      loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js").then(function () {
+        return file.arrayBuffer().then(function (buf) { return window.mammoth.extractRawText({ arrayBuffer: buf }); });
+      }).then(function (r) { done(r.value); }, fail);
+      return;
+    }
+    if (/\.pdf$/.test(name)) {
+      var base = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+      loadScript(base + "pdf.min.js").then(function () {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js";
+        return file.arrayBuffer();
+      }).then(function (buf) { return window.pdfjsLib.getDocument({ data: buf }).promise; })
+        .then(function (pdf) {
+          var jobs = []; for (var i = 1; i <= pdf.numPages; i++) jobs.push(pdf.getPage(i).then(function (pg) { return pg.getTextContent(); }).then(function (c) { return c.items.map(function (it) { return it.str + (it.hasEOL ? "\n" : ""); }).join(" "); }));
+          return Promise.all(jobs);
+        }).then(function (pages) { done(pages.join("\n\n").replace(/[ \t]+/g, " ")); }, fail);
+      return;
+    }
+    note("Formato no admitido. Usa .txt, .docx o .pdf.", true);
+  }
+
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function () { delete loaded[src]; rej(new Error("no se pudo cargar el lector")); }; document.head.appendChild(s); });
+    return loaded[src];
+  }
+
+  // Eventos
+  $("run").addEventListener("click", run);
+  $("edit").addEventListener("click", function () { if (marked.hidden) { run(); } else { showMarked(false); } });
+  $("clear").addEventListener("click", function () { ta.value = ""; updateCount(); note(""); lastResult = null; marked.innerHTML = ""; document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); showMarked(false); });
+  ta.addEventListener("input", function () { updateCount(); try { localStorage.setItem("lupa-draft", ta.value); } catch (e) {} });
+  ta.addEventListener("keydown", function (e) { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") run(); });
+  document.querySelectorAll("[data-sample]").forEach(function (b) { b.addEventListener("click", function () { loadSample(b.dataset.sample); }); });
+  $("file").addEventListener("change", function (e) { var f = e.target.files[0]; if (f) readFile(f); e.target.value = ""; });
+  marked.addEventListener("click", function (e) { var s = e.target.closest(".s"); if (s) showDetail(+s.dataset.i); });
+  marked.addEventListener("keydown", function (e) { if (e.key === "Enter") { var s = e.target.closest(".s"); if (s) showDetail(+s.dataset.i); } });
+  ["dragover", "drop"].forEach(function (ev) { document.querySelector(".editor").addEventListener(ev, function (e) { e.preventDefault(); if (ev === "drop" && e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); }); });
+
+  // Estado inicial: un ejemplo cargado y analizado.
+  loadSample("es-ai");
+  window.LupaAnalyze = analyze;
+})();
+</script>
+</body><!--wrap-->
+</html><!--wrap-->
