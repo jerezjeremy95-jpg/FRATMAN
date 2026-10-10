@@ -35,32 +35,46 @@ Las reseñas coinciden en que sirve como filtro inicial, no como prueba. El prop
 
 ## 5. Nuestra versión: Lupa
 
-`index.html` es una herramienta propia (marca, textos y diseño originales) que reproduce el flujo funcional:
+`index.html` es una herramienta propia (marca, textos y diseño originales), **gratis, sin registro y sin límite de usos**:
 
 - Entrada por texto pegado, arrastrar archivo o subir `.txt`, `.docx` (mammoth) y `.pdf` (pdf.js).
-- Límite de 15 000 palabras y mínimo de 40.
-- Probabilidad global en un indicador semicircular, reparto IA / revisar / humano por palabras.
-- Resaltado por oración; al tocar una oración se ven las razones de su puntuación.
-- Cinco señales del documento explicadas: variación entre oraciones, densidad de expresiones típicas de IA, conectores al inicio, marcas de voz humana y diversidad léxica (MATTR).
-- Español e inglés, con detección automática del idioma.
+- Hasta **50 000 palabras** por análisis (mínimo 40). Un texto de 50 000 palabras se analiza en unos 2 segundos.
+- Probabilidad global, reparto IA / revisar / humano por palabras y resaltado por oración.
+- Las palabras y pares de palabras que más empujaron hacia IA o hacia humano, en el documento y en cada oración.
+- Señales de estilo explicadas (variación entre oraciones, conectores, primera persona, puntuación, vocabulario).
+- Todo se calcula en el navegador: el texto no se envía a ningún servidor.
 
-**Diferencias deliberadas**: todo se calcula en el navegador (privacidad, sin servidor, sin coste), no hay muro de pago ni humanizador, y el aviso de límites es visible.
+### Modelo entrenado
 
-**Limitación honesta**: usa heurísticas, no un modelo entrenado ni perplejidad real. Para acercarse a la precisión de un servicio comercial, el siguiente paso sería un backend que:
-- calcule la perplejidad por token con un modelo abierto (p. ej. GPT-2 o Llama pequeño), o
-- use un clasificador entrenado (p. ej. un RoBERTa afinado en textos humanos/IA en español), o
-- pida a un LLM vía API que evalúe el texto, combinando su juicio con las señales actuales.
+Lupa usa una regresión logística entrenada (detalles y cómo reentrenarla en `model/README.md`):
 
-## 6. Conexión con Claude (gratis para quien lo usa)
+- **Rasgos**: palabras, pares de palabras y fragmentos de 3 a 5 letras (hasheados en 262 144 posiciones) + 16 medidas de estilo.
+- **Datos**: unos 125 000 ejemplos de AuTexTification (español e inglés, GPT-3 y BLOOM), Ghostbuster (ensayos, noticias y relatos en inglés, ChatGPT y Claude), Europarl y noticias EFE (español humano formal) y 86 textos en español escritos con un asistente de IA actual.
+- **Pesos**: cuantizados a 8 bits e incrustados en la página (unos 340 KB).
 
-La versión publicada en claude.ai incluye **«Revisar con Claude»**. Usa la capacidad `sample` de los artifacts de claude.ai: la página le pide a Claude que puntúe cada oración y explique el motivo, **con la cuenta de Claude de quien abre la página**. No hace falta clave de API ni servidor, y no tiene coste adicional: consume el uso normal del plan de esa persona (también el plan gratuito, con sus límites).
+Precisión con documentos que el modelo nunca vio (umbral 50 %):
 
-- La primera vez, claude.ai pide permiso para que la página use Claude.
-- La puntuación final mezcla 75 % el juicio de Claude y 25 % las señales automáticas.
-- Hasta 6 000 palabras por revisión.
-- Fuera de claude.ai (p. ej. GitHub Pages) el botón no aparece y el detector funciona solo con heurísticas.
+| Conjunto de prueba | Aciertos | AUROC | Humanos marcados como IA |
+|---|---|---|---|
+| Español (todos) | 86,1 % | 0,938 | 13,6 % |
+| Inglés (todos) | 87,1 % | 0,946 | 12,9 % |
+| Inglés, artículos de 2024 (GPT-4o, Claude 3.5, o1), fuera del entrenamiento | 67,3 % | 0,710 | 15,3 % |
 
-¿Y la API de Anthropic directamente? Requiere una clave de pago y un servidor propio que la esconda; no es gratuita. Un MCP tampoco sirve aquí: los MCP conectan herramientas *a* Claude, no al revés.
+Comparación sobre una muestra equilibrada de 3 336 textos de prueba (textos de 40 palabras o más):
+
+| | Detector por reglas anterior | Modelo entrenado |
+|---|---|---|
+| Español | 75,2 % (AUROC 0,67) | 91,0 % (AUROC 0,97) |
+| Inglés | 51,6 % (AUROC 0,53) | 89,0 % (AUROC 0,96) |
+| Artículos de 2024 | 52,7 % (AUROC 0,64) | 70,0 % (AUROC 0,74) |
+
+**Límites, dichos claramente**:
+- Con texto de modelos recientes que no estaban en el entrenamiento baja mucho: 70 % frente al 92 % (AUROC 0,997) que obtiene GPTZero en esos mismos 300 artículos. Falla sobre todo con o1-pro y con texto «humanizado».
+- En textos cortos (tuits, párrafos sueltos) se equivoca más.
+- Entre un 7 % y un 17 % de los textos humanos de prueba salen como IA según el tipo de texto. Por eso la página solo marca «Probable IA» a partir del 70 %.
+- Ningún resultado sirve como prueba para acusar a alguien.
+
+Para acercarse a un detector comercial haría falta un modelo de lenguaje (p. ej. un transformer multilingüe afinado o la perplejidad de un modelo abierto), que no cabe en una página estática, y más texto reciente de IA en español.
 
 ## Fuentes
 

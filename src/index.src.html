@@ -1,0 +1,820 @@
+<!doctype html><!--wrap-->
+<html lang="es"><!--wrap-->
+<head><!--wrap-->
+<meta charset="utf-8"><!--wrap-->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!--wrap-->
+<title>Lupa Detector</title>
+<meta name="description" content="Detector gratuito de texto generado por IA, con un modelo entrenado que funciona en tu navegador: puntuación global, análisis por oración y palabras que explican el resultado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab bench. Barra superior, mesa de trabajo de dos columnas (texto | informe), luego método y límites. */
+:root {
+  --bg: #f3f4f1;
+  --surface: #ffffff;
+  --ink: #1b2124;
+  --muted: #5b6669;
+  --line: #d9dcd6;
+  --accent: #1f5f6b;
+  --accent-ink: #ffffff;
+  --ai: #c2412d;
+  --ai-wash: #f8dcd5;
+  --mix: #a8740f;
+  --mix-wash: #f7ead0;
+  --human: #2f7a4a;
+  --human-wash: #d9eedf;
+  --focus: #1f5f6b;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121618; --surface: #1a2023; --ink: #e7ebe8; --muted: #9aa6a8; --line: #2c3539;
+    --accent: #6cc3cf; --accent-ink: #0d1b1e;
+    --ai: #f08a76; --ai-wash: #47241e; --mix: #e3b55a; --mix-wash: #3f3218; --human: #7fcf98; --human-wash: #1d3a27;
+    --focus: #6cc3cf; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121618; --surface: #1a2023; --ink: #e7ebe8; --muted: #9aa6a8; --line: #2c3539;
+  --accent: #6cc3cf; --accent-ink: #0d1b1e;
+  --ai: #f08a76; --ai-wash: #47241e; --mix: #e3b55a; --mix-wash: #3f3218; --human: #7fcf98; --human-wash: #1d3a27;
+  --focus: #6cc3cf; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; }
+@media (min-width: 720px) { .wrap { padding-inline: 28px; } }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+.label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Barra superior */
+.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.brand svg { flex: none; }
+.top nav { display: flex; gap: 18px; font-size: 14px; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--ink); }
+
+/* Encabezado */
+.intro { padding-block: 32px 20px; display: grid; gap: 10px; }
+.intro h1 { font-size: clamp(28px, 4.2vw, 44px); font-weight: 700; max-width: 22ch; }
+.intro p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+/* Mesa de trabajo */
+.bench { display: grid; gap: 20px; padding-bottom: 40px; }
+@media (min-width: 960px) { .bench { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.panel-body { padding: 16px; }
+.samples { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px/1 var(--font-body); border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 7px 10px; border-radius: 999px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+textarea#text { width: 100%; min-height: 340px; resize: vertical; border: 0; background: transparent; color: var(--ink); font: 16px/1.65 var(--font-body); padding: 0; }
+textarea#text:focus { outline: none; }
+#marked { font-size: 16px; line-height: 1.75; min-height: 340px; white-space: pre-wrap; overflow-wrap: anywhere; }
+#marked .s { border-radius: 3px; padding: 1px 0; cursor: help; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+#marked .s.ai { background: var(--ai-wash); box-shadow: inset 0 -2px 0 var(--ai); }
+#marked .s.mix { background: var(--mix-wash); box-shadow: inset 0 -2px 0 var(--mix); }
+#marked .s.human { background: transparent; }
+#marked .s.active { outline: 2px solid var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.panel-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.count { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.count.over { color: var(--ai); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: 600 14px/1 var(--font-body); border-radius: 8px; padding: 11px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.file { position: relative; overflow: hidden; }
+.file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.note.err { color: var(--ai); }
+
+/* Informe */
+.report .panel-body { display: grid; gap: 22px; }
+.verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.gauge { width: 148px; max-width: 100%; }
+.gauge text { font-family: var(--font-display); fill: var(--ink); }
+.verdict h2 { font-size: 22px; }
+.verdict p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+.split { display: grid; gap: 8px; }
+.bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); }
+.bar i { display: block; height: 100%; transition: width .5s ease; }
+.split-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.split-legend div { display: grid; gap: 2px; }
+.split-legend b { font: 500 20px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.split-legend small { color: var(--muted); font-size: 12.5px; }
+.signals { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.signals li { display: grid; gap: 5px; }
+.sig-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 500; }
+.sig-top span:last-child { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.meter { height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; transition: width .5s ease; }
+.signals p { margin: 0; color: var(--muted); font-size: 13px; }
+.lean { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+.lean.ai { background: var(--ai-wash); color: var(--ai); }
+.lean.human { background: var(--human-wash); color: var(--human); }
+.lean.neutral { background: var(--line); color: var(--muted); }
+.detail { border-top: 1px dashed var(--line); padding-top: 14px; font-size: 14px; min-height: 64px; }
+.detail .q { margin: 6px 0; font-style: italic; }
+.empty { color: var(--muted); font-size: 14px; }
+.claude-box { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
+.claude-box .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.claude-box h3 { font-size: 15px; }
+.claude-box p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.claude-box .summary { color: var(--ink); font-size: 14px; }
+.src { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); }
+.src.h { background: var(--line); color: var(--muted); }
+
+/* Método */
+.method { border-top: 1px solid var(--line); padding-block: 40px; display: grid; gap: 24px; }
+.method h2 { font-size: 28px; }
+.steps { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+@media (min-width: 760px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.steps li { counter-increment: step; display: grid; gap: 6px; align-content: start; }
+.steps li::before { content: "Paso " counter(step); font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.steps h3 { font-size: 18px; }
+.steps p, .limits p { margin: 0; color: var(--muted); max-width: 62ch; }
+.limits { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--mix); border-radius: 8px; padding: 16px 18px; }
+.limits h3 { font-size: 17px; }
+footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var(--muted); font-size: 13px; }
+@media (max-width: 520px) {
+  .top nav { display: none; }
+  .verdict { grid-template-columns: 1fr; justify-items: start; }
+}
+@media (prefers-reduced-motion: reduce) { .bar i, .meter i, .gauge * { transition: none !important; } }
+.terms-box { display: grid; gap: 8px; }
+.terms { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.terms small { color: var(--muted); font-size: 12.5px; min-width: 92px; }
+.term { font: 500 13px/1.2 var(--font-mono); padding: 3px 7px; border-radius: 4px; }
+.term.ai { background: var(--ai-wash); color: var(--ai); }
+.term.human { background: var(--human-wash); color: var(--human); }
+.metrics { display: grid; gap: 10px; }
+.metrics h3 { font-size: 18px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.metrics table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+.metrics th, .metrics td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.metrics th { font: 500 11.5px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.metrics td:not(:first-child), .metrics th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.metrics tr:last-child td { border-bottom: 0; }
+</style>
+</head><!--wrap-->
+<body><!--wrap-->
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke="var(--accent)" stroke-width="2.6"/><path d="M16.5 16.5 L23 23" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><path d="M7.5 11h7" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Lupa
+    </div>
+    <nav aria-label="Secciones">
+      <a href="#detector">Detector</a>
+      <a href="#metodo">Cómo funciona</a>
+      <a href="#precision">Precisión</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap intro">
+    <span class="label">Detector de texto IA · Gratis · Español e inglés</span>
+    <h1>Revisa si un texto suena escrito por una máquina</h1>
+    <p>Pega un texto o sube un archivo de hasta 50 000 palabras. Un modelo entrenado con más de 90 000 textos humanos y generados puntúa el documento, marca cada oración y te muestra qué palabras pesaron. Es gratis, sin registro y sin límite de usos. El análisis se hace en tu navegador: el texto no sale de tu equipo.</p>
+  </section>
+
+  <section class="wrap bench" id="detector">
+    <div class="panel editor">
+      <div class="panel-head">
+        <span class="label" id="mode-label">Texto marcado</span>
+        <div class="samples" role="group" aria-label="Ejemplos">
+          <button class="chip" type="button" data-sample="es-ai" id="s-es-ai">Ejemplo IA (ES)</button>
+          <button class="chip" type="button" data-sample="es-human" id="s-es-human">Humano: Cervantes (ES)</button>
+          <button class="chip" type="button" data-sample="en-ai" id="s-en-ai">AI sample (EN)</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <label for="text" class="label" hidden>Texto a analizar</label>
+        <textarea id="text" spellcheck="false" placeholder="Pega aquí al menos 40 palabras…" hidden></textarea>
+        <div id="marked" aria-live="polite"></div>
+      </div>
+      <div class="panel-foot">
+        <div class="legend" aria-label="Leyenda">
+          <span><i class="sw" style="background:var(--ai-wash);box-shadow:inset 0 -2px 0 var(--ai)"></i>Probable IA</span>
+          <span><i class="sw" style="background:var(--mix-wash);box-shadow:inset 0 -2px 0 var(--mix)"></i>Revisar</span>
+          <span><i class="sw" style="border:1px solid var(--line)"></i>Probable humano</span>
+        </div>
+        <span class="count" id="count">0 / 50 000 palabras</span>
+      </div>
+      <div class="panel-foot">
+        <div class="actions">
+          <button class="btn" type="button" id="edit">Editar texto</button>
+          <label class="btn file" for="file">Subir .txt, .docx o .pdf<input type="file" id="file" accept=".txt,.md,.docx,.pdf,text/plain"></label>
+          <button class="btn" type="button" id="clear">Vaciar</button>
+        </div>
+        <button class="btn primary" type="button" id="run">Analizar texto</button>
+      </div>
+      <div class="panel-foot" id="msg-row" hidden><p class="note" id="msg"></p></div>
+    </div>
+
+    <aside class="panel report" aria-labelledby="report-title">
+      <div class="panel-head"><span class="label" id="report-title">Informe <span class="src h" id="src">Modelo</span></span><span class="label" id="lang"></span></div>
+      <div class="panel-body">
+        <div class="verdict">
+          <svg class="gauge" viewBox="0 0 160 96" role="img" aria-labelledby="gauge-t">
+            <title id="gauge-t">Probabilidad de IA</title>
+            <path d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
+            <path id="arc" d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--ai)" stroke-width="14" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="transition: stroke-dasharray .6s ease"/>
+            <text x="80" y="76" text-anchor="middle" font-size="30" font-weight="700" id="pct">–</text>
+            <text x="80" y="93" text-anchor="middle" font-size="10" style="fill:var(--muted);font-family:var(--font-mono)">PROB. IA</text>
+          </svg>
+          <div>
+            <h2 id="verdict">Sin analizar</h2>
+            <p id="verdict-sub">Pulsa «Analizar texto» para obtener el informe.</p>
+          </div>
+        </div>
+
+        <div class="split">
+          <span class="label">Reparto del texto por palabras</span>
+          <div class="bar" aria-hidden="true"><i id="b-ai" style="background:var(--ai);width:0"></i><i id="b-mix" style="background:var(--mix);width:0"></i><i id="b-hu" style="background:var(--human);width:0"></i></div>
+          <div class="split-legend">
+            <div><b id="n-ai">–</b><small>Probable IA</small></div>
+            <div><b id="n-mix">–</b><small>Revisar</small></div>
+            <div><b id="n-hu">–</b><small>Probable humano</small></div>
+          </div>
+        </div>
+
+        <div class="terms-box">
+          <span class="label">Lo que más pesó en la decisión</span>
+          <div class="terms" id="terms-ai" aria-label="Hacia IA"></div>
+          <div class="terms" id="terms-hu" aria-label="Hacia humano"></div>
+        </div>
+
+        <div class="claude-box" id="ai-row" hidden>
+          <div class="row">
+            <h3>Segunda opinión de Claude</h3>
+            <div class="actions">
+              <button class="btn" type="button" id="ai-stop" hidden>Detener</button>
+              <button class="btn primary" type="button" id="ai-run">Revisar con Claude</button>
+            </div>
+          </div>
+          <p id="ai-status">Claude lee el texto por partes y puntúa cada oración. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.</p>
+          <p class="summary" id="ai-summary" hidden></p>
+        </div>
+
+        <div>
+          <span class="label">Señales de estilo</span>
+          <ul class="signals" id="signals" style="margin-top:10px"></ul>
+        </div>
+
+        <div class="detail" id="detail"><span class="empty">Toca una oración marcada para ver su puntuación y las palabras que la explican.</span></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="wrap method" id="metodo">
+    <h2>Cómo funciona</h2>
+    <ol class="steps">
+      <li><h3>Convierte el texto en rasgos</h3><p>Lupa extrae palabras, pares de palabras, fragmentos de 3 a 5 letras y 16 medidas de estilo, como la variación entre oraciones, la puntuación o el uso de la primera persona.</p></li>
+      <li><h3>Aplica el modelo entrenado</h3><p>Una regresión logística con 262 144 pesos, entrenada con textos humanos y de ChatGPT, Claude, GPT-3 y BLOOM en español e inglés, convierte esos rasgos en una probabilidad.</p></li>
+      <li><h3>Puntúa por partes</h3><p>Cada oración se evalúa junto a sus vecinas, y el documento se divide en bloques de unas 150 palabras. La cifra global promedia todos los bloques, así un texto mezclado se refleja como tal.</p></li>
+    </ol>
+    <div class="metrics" id="precision">
+      <h3>Precisión medida con textos que el modelo nunca vio</h3>
+      <div class="table-wrap"><table id="metrics-table"><thead><tr><th>Conjunto de prueba</th><th>Textos</th><th>Aciertos</th><th>AUROC</th><th>Humanos marcados como IA</th></tr></thead><tbody></tbody></table></div>
+      <p class="note">AUROC mide cuánto separa el modelo ambos tipos de texto: 1,0 es perfecto y 0,5 equivale a lanzar una moneda.</p>
+    </div>
+    <div class="limits" id="limites">
+      <h3>Antes de sacar conclusiones</h3>
+      <p>Ningún detector es exacto. Este falla más con textos muy cortos, con texto de IA editado a mano o parafraseado, y con modelos o estilos distintos a los de su entrenamiento. Un texto humano muy formal también puede salir alto. Úsalo para decidir qué revisar, nunca como prueba para acusar a alguien.</p>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">Lupa es gratis y analiza localmente en tu navegador. Hasta 50 000 palabras por análisis, mínimo 40.</div></footer>
+
+<script type="application/json" id="lupa-model">__LUPA_MODEL__</script>
+<script>
+(function () {
+  "use strict";
+  var MAX_WORDS = 50000, MIN_WORDS = 40, T_AI = 0.7, T_MIX = 0.4;
+
+  var SAMPLES = {
+    "es-ai": "En el mundo actual, la inteligencia artificial juega un papel fundamental en la transformación de la educación. Es importante destacar que estas herramientas ofrecen oportunidades significativas para personalizar el aprendizaje de cada estudiante. Además, permiten a los docentes optimizar su tiempo y centrarse en aspectos clave de la enseñanza. Sin embargo, también plantean desafíos importantes relacionados con la ética y la privacidad de los datos. Por otro lado, resulta crucial que las instituciones educativas desarrollen políticas claras para su uso responsable. Asimismo, la formación continua del profesorado se convierte en un elemento esencial para aprovechar todo su potencial. En conclusión, la integración de la inteligencia artificial en la educación representa una oportunidad única para construir un futuro más inclusivo, eficiente y sostenible.",
+    "es-human": "En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor. Una olla de algo más vaca que carnero, salpicón las más noches, duelos y quebrantos los sábados, lentejas los viernes, algún palomino de añadidura los domingos, consumían las tres partes de su hacienda. El resto della concluían sayo de velarte, calzas de velludo para las fiestas, con sus pantuflos de lo mesmo, y los días de entre semana se honraba con su vellorí de lo más fino. Tenía en su casa una ama que pasaba de los cuarenta, y una sobrina que no llegaba a los veinte, y un mozo de campo y plaza, que así ensillaba el rocín como tomaba la podadera.",
+    "en-ai": "In today's fast-paced digital landscape, effective time management has become more crucial than ever. It is important to note that productivity is not merely about working harder, but rather about working smarter. Furthermore, leveraging the right tools can significantly enhance your ability to stay organized and focused. Additionally, setting clear goals allows individuals to prioritize tasks and allocate resources efficiently. Moreover, maintaining a healthy work-life balance plays a vital role in sustaining long-term success. By embracing these strategies, professionals can unlock their full potential and navigate the complexities of modern work with confidence. Ultimately, mastering time management is a transformative journey that empowers individuals to achieve their goals."
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var ta = $("text"), marked = $("marked");
+  var lastResult = null;
+
+  function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+  function logit(p) { p = clamp(p, 1e-4, 1 - 1e-4); return Math.log(p / (1 - p)); }
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function words(s) { return (s.match(/[\p{L}\p{M}\p{N}]+(?:'[\p{L}\p{M}]+)*/gu) || []); }
+
+  // ---------- Rasgos: copia exacta de model/features.py ----------
+  var TOK = /[\p{L}\p{M}\p{N}]+(?:'[\p{L}\p{M}]+)*|[^\s\p{L}\p{M}\p{N}]/gu;
+  var HAS_WORD = /[\p{L}\p{M}\p{N}]/u;
+  var SENT_SPLIT = /[.!?…]+|\n+/u;
+  var FIRST_PERSON = new Set(["i", "me", "my", "mine", "i'm", "i've", "i'd", "i'll", "yo", "mi", "mis", "conmigo", "nosotros", "nosotras", "nuestro", "nuestra"]);
+  var TRANSITIONS = new Set(["además", "asimismo", "sin", "adicionalmente", "igualmente", "finalmente", "furthermore", "moreover", "additionally", "however", "overall", "ultimately", "consequently", "therefore", "thus", "notably", "importantly"]);
+  var NORM = [["’", "'"], ["‘", "'"], ["“", '"'], ["”", '"'], ["«", '"'], ["»", '"'], [" ", " "], ["﻿", ""], ["\r", ""]];
+
+  function normalizeText(t) {
+    t = t.normalize("NFC");
+    NORM.forEach(function (p) { t = t.split(p[0]).join(p[1]); });
+    return t;
+  }
+  function tokens(t) { return t.match(TOK) || []; }
+  function fnv(s) {
+    var h = 0x811c9dc5;
+    for (var ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  }
+  function cpLen(s) { var n = 0; for (var ch of s) n++; return n; }
+
+  function hashed(toks, mask, keep) {
+    var counts = new Map(), labels = keep ? new Map() : null;
+    function add(f, label) {
+      var i = fnv(f) & mask;
+      counts.set(i, (counts.get(i) || 0) + 1);
+      if (label && labels && !labels.has(i)) labels.set(i, label);
+    }
+    var prev = null;
+    for (var t of toks) {
+      var isWord = HAS_WORD.test(t);
+      add("u" + t, isWord ? t : null);
+      if (prev !== null) add("b" + prev + "\u0001" + t, isWord && HAS_WORD.test(prev) ? prev + " " + t : null);
+      prev = t;
+      if (isWord) {
+        var cps = Array.from("<" + t + ">");
+        if (cps.length - 2 <= 30) {
+          for (var n = 3; n <= 5; n++) for (var k = 0; k + n <= cps.length; k++) add("c" + cps.slice(k, k + n).join(""), null);
+        }
+      }
+    }
+    var norm = 0, vals = new Map();
+    counts.forEach(function (c, i) { var v = Math.log1p(c); vals.set(i, v); norm += v * v; });
+    norm = Math.sqrt(norm) || 1;
+    vals.forEach(function (v, i) { vals.set(i, v / norm); });
+    return { vals: vals, labels: labels };
+  }
+
+  function dense(text, toks) {
+    var ws = toks.filter(function (t) { return HAS_WORD.test(t); });
+    var n = ws.length || 1;
+    var sents = text.split(SENT_SPLIT).filter(function (s) { return HAS_WORD.test(s); });
+    var lens = sents.map(function (s) { return tokens(s).filter(function (t) { return HAS_WORD.test(t); }).length; });
+    if (!lens.length) lens = [n];
+    var mean = lens.reduce(function (a, b) { return a + b; }, 0) / lens.length;
+    var sd = Math.sqrt(lens.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / lens.length);
+    var nchar = cpLen(text) || 1;
+    var letters = (text.match(/\p{L}/gu) || []).length || 1;
+    var cnt = new Map();
+    toks.forEach(function (t) { cnt.set(t, (cnt.get(t) || 0) + 1); });
+    var c = function (k) { return cnt.get(k) || 0; };
+    var first100 = ws.slice(0, 100);
+    var starts = 0;
+    sents.forEach(function (s) {
+      var w0 = tokens(s.toLowerCase()).filter(function (t) { return HAS_WORD.test(t); })[0];
+      if (w0 && TRANSITIONS.has(w0)) starts++;
+    });
+    return [
+      Math.log1p(ws.length) / 8,
+      mean / 30,
+      mean ? sd / mean : 0,
+      c(",") / n * 10,
+      (c(";") + c(":")) / n * 10,
+      (c("?") + c("!") + c("¿") + c("¡")) / lens.length,
+      (c("(") + c('"')) / n * 10,
+      (c("-") + c("—") + c("–")) / n * 10,
+      (text.match(/\p{N}/gu) || []).length / nchar * 10,
+      (text.match(/\p{Lu}/gu) || []).length / letters,
+      ws.reduce(function (a, w) { return a + cpLen(w); }, 0) / n / 10,
+      new Set(first100).size / (first100.length || 1),
+      (text.split("\n").length - 1) / n * 10,
+      ws.filter(function (w) { return w.indexOf("'") > -1; }).length / n * 10,
+      ws.filter(function (w) { return FIRST_PERSON.has(w.toLowerCase()); }).length / n * 10,
+      starts / lens.length
+    ];
+  }
+
+  // ---------- Modelo ----------
+  var MODEL = null;
+  try {
+    var raw = JSON.parse($("lupa-model").textContent);
+    var bin = atob(raw.w), w = new Int8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) w[i] = (bin.charCodeAt(i) << 24) >> 24;
+    MODEL = { w: w, mask: (1 << raw.dBits) - 1, scale: raw.scale, bias: raw.bias, alpha: raw.alpha, mu: raw.mu, sd: raw.sd, wd: raw.wd, metrics: raw.metrics || {} };
+  } catch (e) { MODEL = null; }
+
+  // Devuelve el logit del modelo para un texto; con explain=true, también las palabras que más aportan.
+  function scoreText(text, explain) {
+    var t = normalizeText(text);
+    var h = hashed(tokens(t.toLowerCase()), MODEL.mask, explain);
+    var d = dense(t, tokens(t));
+    var z = MODEL.bias;
+    h.vals.forEach(function (v, i) { z += v * MODEL.w[i] * MODEL.scale; });
+    for (var j = 0; j < d.length; j++) z += (d[j] - MODEL.mu[j]) / MODEL.sd[j] * MODEL.alpha * MODEL.wd[j];
+    if (!explain) return { z: z };
+    var contrib = [];
+    h.labels.forEach(function (label, i) {
+      if (!informative(label)) return;
+      var c = h.vals.get(i) * MODEL.w[i] * MODEL.scale;
+      if (Math.abs(c) > 0.02) contrib.push({ t: label, c: c });
+    });
+    contrib.sort(function (a, b) { return b.c - a.c; });
+    return { z: z, ai: contrib.filter(function (x) { return x.c > 0; }).slice(0, 8), hu: contrib.filter(function (x) { return x.c < 0; }).reverse().slice(0, 8) };
+  }
+
+  var EMPTY = new Set(("a al algo ante así aun aunque cada como con cual cuando de del desde donde dos e el ella ellas ellos en entre era es esa ese eso esta este esto fue ha han hay la las le les lo los más me mi muy ni no nos o otra otro para pero por que qué se ser si sí sin sobre son su sus también te tu un una uno y ya " +
+    "a about all an and any are as at be been but by can could did do for from had has have he her his how i if in into is it its just me more my no not of on one or our out she so some than that the their them then there these they this to up was we were what when which who will with would you your").split(" "));
+  function informative(label) {
+    var ws = label.split(" ");
+    var good = ws.filter(function (w) { return !EMPTY.has(w) && cpLen(w) > 2 && !/^\p{N}+$/u.test(w); });
+    return good.length > 0 && (ws.length === 1 || good.length >= 1);
+  }
+
+  // ---------- Señales de estilo (explicativas) ----------
+  var STOP = {
+    es: ["el","la","los","las","de","que","y","en","un","una","es","por","con","para","se","del","al","lo","como","más","pero","sus","su","le","ya","o","este","sí","porque","esta","entre","cuando","muy","sin","sobre","también"],
+    en: ["the","and","of","to","in","is","that","it","for","on","with","as","was","are","be","this","by","or","at","from","an","have","not","but","they","you","which","their","can","has"]
+  };
+  function detectLang(text) {
+    var es = 0, en = 0;
+    words(text.toLowerCase()).slice(0, 3000).forEach(function (x) { if (STOP.es.indexOf(x) > -1) es++; if (STOP.en.indexOf(x) > -1) en++; });
+    if (/[ñáéíóú¿¡]/i.test(text)) es += 3;
+    return es >= en ? "es" : "en";
+  }
+
+  function splitSentences(text) {
+    var out = [], re = /[^.!?…\n]+(?:[.!?…]+["'”»)\]]*|$)|\n+/g, m;
+    while ((m = re.exec(text))) {
+      if (!m[0]) { re.lastIndex++; continue; }
+      out.push({ text: m[0], start: m.index, isBreak: /^\n+$/.test(m[0]) || !/[\p{L}\p{N}]/u.test(m[0]) });
+    }
+    return out;
+  }
+
+  function stdev(a) { var m = a.reduce(function (x, y) { return x + y; }, 0) / a.length; return Math.sqrt(a.reduce(function (x, y) { return x + (y - m) * (y - m); }, 0) / a.length); }
+
+  function analyze(text) {
+    var lang = detectLang(text);
+    var parts = splitSentences(text);
+    var sents = parts.filter(function (p) { return !p.isBreak && words(p.text).length > 0; });
+    sents.forEach(function (p) { p.words = words(p.text).length; });
+    var total = sents.reduce(function (a, p) { return a + p.words; }, 0);
+
+    // Oración: se puntúa junto a sus vecinas hasta reunir unas 40 palabras.
+    sents.forEach(function (p, i) {
+      var lo = i, hi = i, n = p.words;
+      while (n < 40 && (lo > 0 || hi < sents.length - 1) && hi - lo < 6) {
+        if (hi < sents.length - 1) { hi++; n += sents[hi].words; }
+        if (n < 40 && lo > 0) { lo--; n += sents[lo].words; }
+      }
+      var win = sents.slice(lo, hi + 1).map(function (s) { return s.text.trim(); }).join(" ");
+      p.zM = scoreText(win).z;
+      p.p = sigmoid(p.zM);
+    });
+
+    // Documento: bloques de unas 150 palabras, promediados por palabras.
+    var blocks = [], cur = [], cn = 0;
+    sents.forEach(function (p) {
+      cur.push(p.text.trim()); cn += p.words;
+      if (cn >= 150) { blocks.push({ t: cur.join(" "), n: cn }); cur = []; cn = 0; }
+    });
+    if (cur.length) { if (blocks.length && cn < 60) { var last = blocks[blocks.length - 1]; last.t += " " + cur.join(" "); last.n += cn; } else blocks.push({ t: cur.join(" "), n: cn }); }
+    var zs = 0, ns = 0;
+    blocks.forEach(function (b) { var z = scoreText(b.t).z; zs += z * b.n; ns += b.n; });
+    var zDoc = zs / (ns || 1);
+    var expl = scoreText(text.length > 400000 ? text.slice(0, 400000) : text, true);
+
+    // Señales de estilo para el panel.
+    var lens = sents.map(function (p) { return p.words; });
+    var meanLen = lens.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, lens.length);
+    var cv = lens.length > 2 ? stdev(lens) / meanLen : 0;
+    var nt = normalizeText(text), dv = dense(nt, tokens(nt));
+    var r = {
+      lang: lang, parts: parts, sents: sents, total: total, zModel: zDoc, score: sigmoid(zDoc), claude: null, expl: expl,
+      signals: [
+        { name: "Variación entre oraciones", value: cv.toFixed(2), bar: clamp(cv / 0.9, 0, 1), lean: cv < 0.35 ? "ai" : cv > 0.55 ? "human" : "neutral",
+          note: "Coeficiente de variación de la longitud de las oraciones. Un ritmo muy regular (menos de 0,35) es típico de texto generado." },
+        { name: "Conectores al inicio de oración", value: Math.round(dv[15] * 100) + " %", bar: clamp(dv[15] * 2, 0, 1), lean: dv[15] > 0.2 ? "ai" : dv[15] < 0.06 ? "human" : "neutral",
+          note: "Oraciones que empiezan con «Además», «Asimismo», «Sin embargo», «Moreover»…" },
+        { name: "Primera persona", value: (dv[14] * 10).toFixed(1) + " /100 pal.", bar: clamp(dv[14] / 0.6, 0, 1), lean: dv[14] > 0.25 ? "human" : dv[14] < 0.05 ? "ai" : "neutral",
+          note: "Uso de yo, me, mi, nosotros, I, my… Los asistentes de IA rara vez hablan desde la experiencia propia." },
+        { name: "Comas por palabra", value: (dv[3] * 10).toFixed(1) + " /100 pal.", bar: clamp(dv[3] / 1.5, 0, 1), lean: "neutral",
+          note: "Los textos generados suelen tener una puntuación regular y cuidada." },
+        { name: "Diversidad de vocabulario", value: dv[11].toFixed(2), bar: dv[11], lean: "neutral",
+          note: "Palabras distintas entre las primeras 100. Sirve de contexto, no decide por sí sola." }
+      ]
+    };
+    classify(r);
+    return r;
+  }
+
+  function classify(r) {
+    var share = { ai: 0, mix: 0, hu: 0 }, wsum = 0;
+    r.sents.forEach(function (p) {
+      p.cls = p.p >= T_AI ? "ai" : p.p >= T_MIX ? "mix" : "human";
+      share[p.cls === "human" ? "hu" : p.cls] += p.words; wsum += p.words;
+    });
+    r.share = { ai: share.ai / (wsum || 1), mix: share.mix / (wsum || 1), hu: share.hu / (wsum || 1) };
+  }
+
+  function verdictText(s) {
+    if (s >= 0.85) return ["Probablemente generado por IA", "El modelo encuentra rasgos fuertes de escritura automática en casi todo el texto."];
+    if (s >= T_AI) return ["Posiblemente generado por IA", "Hay bastantes rasgos de texto generado. Revisa las oraciones marcadas."];
+    if (s >= T_MIX) return ["Resultado mixto", "El texto combina rasgos humanos y de IA, o el modelo no tiene suficiente seguridad."];
+    if (s >= 0.15) return ["Mayormente humano", "Predominan los rasgos de escritura humana."];
+    return ["Probablemente humano", "El estilo encaja con escritura humana."];
+  }
+
+  function chips(list, cls) {
+    return list.length ? list.map(function (x) { return '<span class="term ' + cls + '">' + esc(x.t) + "</span>"; }).join("") : '<span class="note">Nada destacado</span>';
+  }
+
+  function render(r) {
+    lastResult = r;
+    var html = "", sentIdx = new Map(), src = ta.value, cursor = 0;
+    r.sents.forEach(function (p, i) { sentIdx.set(p, i); });
+    r.parts.forEach(function (p) {
+      if (p.start > cursor) html += esc(src.slice(cursor, p.start));
+      if (p.isBreak || !sentIdx.has(p)) html += esc(p.text);
+      else html += '<span class="s ' + p.cls + '" tabindex="0" data-i="' + sentIdx.get(p) + '">' + esc(p.text) + "</span>";
+      cursor = p.start + p.text.length;
+    });
+    if (cursor < src.length) html += esc(src.slice(cursor));
+    marked.innerHTML = html;
+
+    $("src").textContent = r.claude ? "Modelo + Claude" : "Modelo";
+    $("src").classList.toggle("h", !r.claude);
+    $("ai-summary").hidden = !r.claude;
+    $("ai-summary").textContent = r.claude ? r.claude.summary : "";
+    if (!r.claude && !aiBusy) $("ai-status").textContent = AI_IDLE;
+    var pct = Math.round(r.score * 100);
+    $("pct").textContent = pct + "%";
+    $("arc").setAttribute("stroke-dasharray", pct + " 100");
+    $("arc").setAttribute("stroke", r.score >= T_AI ? "var(--ai)" : r.score >= T_MIX ? "var(--mix)" : "var(--human)");
+    var v = verdictText(r.score);
+    $("verdict").textContent = v[0];
+    $("verdict-sub").textContent = (r.claude ? "Modelo " + Math.round(sigmoid(r.zModel) * 100) + " % y Claude " + Math.round(r.claude.overall) + " %, combinados. " : v[1] + " ") + r.sents.length.toLocaleString("es") + " oraciones, " + r.total.toLocaleString("es") + " palabras.";
+    $("lang").textContent = r.lang === "es" ? "Idioma: español" : "Idioma: inglés";
+    [["ai", "b-ai", "n-ai"], ["mix", "b-mix", "n-mix"], ["hu", "b-hu", "n-hu"]].forEach(function (x) {
+      var val = Math.round(r.share[x[0]] * 100);
+      $(x[1]).style.width = val + "%"; $(x[2]).textContent = val + "%";
+    });
+    $("terms-ai").innerHTML = '<small>Hacia IA</small>' + chips(r.expl.ai, "ai");
+    $("terms-hu").innerHTML = '<small>Hacia humano</small>' + chips(r.expl.hu, "human");
+    var leanTxt = { ai: "IA", human: "Humano", neutral: "Neutro" };
+    var colors = { ai: "var(--ai)", human: "var(--human)", neutral: "var(--muted)" };
+    $("signals").innerHTML = r.signals.map(function (s) {
+      return '<li><div class="sig-top"><span>' + esc(s.name) + '<span class="lean ' + s.lean + '">' + leanTxt[s.lean] + '</span></span><span>' + esc(s.value) + '</span></div>' +
+        '<div class="meter"><i style="width:' + Math.round(s.bar * 100) + '%;background:' + colors[s.lean] + '"></i></div><p>' + esc(s.note) + "</p></li>";
+    }).join("");
+    $("detail").innerHTML = '<span class="empty">Toca una oración marcada para ver su puntuación y las palabras que la explican.</span>';
+    showMarked(true);
+  }
+
+  function showDetail(i) {
+    var p = lastResult && lastResult.sents[i]; if (!p) return;
+    marked.querySelectorAll(".s.active").forEach(function (el) { el.classList.remove("active"); });
+    var el = marked.querySelector('[data-i="' + i + '"]'); if (el) el.classList.add("active");
+    var label = p.cls === "ai" ? "Probable IA" : p.cls === "mix" ? "Revisar" : "Probable humano";
+    var ex = scoreText(p.text, true);
+    var why = p.claudeWhy ? '<p style="margin:6px 0 0"><span class="src">Claude ' + Math.round(p.claudeAi) + ' %</span> ' + esc(p.claudeWhy) + "</p>" : "";
+    $("detail").innerHTML = '<span class="label">Oración ' + (i + 1) + " · " + label + " · " + Math.round(p.p * 100) + '% IA</span><p class="q">' + esc(p.text.trim()) + "</p>" + why +
+      '<div class="terms" style="margin-top:8px"><small>Hacia IA</small>' + chips(ex.ai.slice(0, 5), "ai") + '</div><div class="terms"><small>Hacia humano</small>' + chips(ex.hu.slice(0, 5), "human") + "</div>" +
+      '<p class="note" style="margin-top:8px">La puntuación de la oración tiene en cuenta las oraciones vecinas.</p>';
+  }
+
+  function showMarked(on) {
+    marked.hidden = !on; ta.hidden = on;
+    $("mode-label").textContent = on ? "Texto marcado" : "Texto";
+    $("edit").textContent = on ? "Editar texto" : "Ver marcas";
+    if (!on) ta.focus();
+  }
+
+  function updateCount() {
+    var n = words(ta.value).length;
+    $("count").textContent = n.toLocaleString("es") + " / 50 000 palabras";
+    $("count").classList.toggle("over", n > MAX_WORDS);
+    return n;
+  }
+
+  function note(text, err) { $("msg-row").hidden = !text; $("msg").textContent = text || ""; $("msg").classList.toggle("err", !!err); }
+
+  function run() {
+    if (aiBusy) return;
+    if (!MODEL) { note("No se pudo cargar el modelo. Recarga la página.", true); return; }
+    var n = updateCount();
+    if (n < MIN_WORDS) { note("Añade más texto: hacen falta al menos " + MIN_WORDS + " palabras para un resultado fiable (ahora hay " + n + ").", true); showMarked(false); return; }
+    if (n > MAX_WORDS) { note("El texto supera las 50 000 palabras. Divídelo en partes y analiza cada una.", true); return; }
+    note(n > 8000 ? "Analizando " + n.toLocaleString("es") + " palabras…" : "");
+    $("run").disabled = true;
+    setTimeout(function () {
+      try { render(analyze(ta.value)); note(""); }
+      catch (e) { note("No se pudo analizar el texto: " + (e && e.message || e), true); }
+      $("run").disabled = false;
+    }, 30);
+  }
+
+  function loadSample(key) {
+    ta.value = SAMPLES[key];
+    document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.sample === key ? "true" : "false"); });
+    updateCount(); run();
+  }
+
+  function readFile(file) {
+    var name = file.name.toLowerCase();
+    note("Leyendo " + file.name + "…");
+    var done = function (t) { ta.value = t.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim(); updateCount(); document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); run(); };
+    var fail = function (e) { note("No se pudo leer " + file.name + ". Prueba a copiar y pegar el texto. (" + (e && e.message || e) + ")", true); };
+    if (/\.(txt|md)$/.test(name) || file.type === "text/plain") { file.text().then(done, fail); return; }
+    if (/\.docx$/.test(name)) {
+      loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js").then(function () {
+        return file.arrayBuffer().then(function (buf) { return window.mammoth.extractRawText({ arrayBuffer: buf }); });
+      }).then(function (r) { done(r.value); }, fail);
+      return;
+    }
+    if (/\.pdf$/.test(name)) {
+      var base = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+      loadScript(base + "pdf.min.js").then(function () {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js";
+        return file.arrayBuffer();
+      }).then(function (buf) { return window.pdfjsLib.getDocument({ data: buf }).promise; })
+        .then(function (pdf) {
+          var jobs = []; for (var i = 1; i <= pdf.numPages; i++) jobs.push(pdf.getPage(i).then(function (pg) { return pg.getTextContent(); }).then(function (c) { return c.items.map(function (it) { return it.str + (it.hasEOL ? "\n" : ""); }).join(" "); }));
+          return Promise.all(jobs);
+        }).then(function (pages) { done(pages.join("\n\n").replace(/[ \t]+/g, " ")); }, fail);
+      return;
+    }
+    note("Formato no admitido. Usa .txt, .docx o .pdf.", true);
+  }
+
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function () { delete loaded[src]; rej(new Error("no se pudo cargar el lector")); }; document.head.appendChild(s); });
+    return loaded[src];
+  }
+
+  // ---------- Segunda opinión de Claude (capacidad "sample" de claude.ai) ----------
+  var sampleFn = null, aiBusy = false, aiCtl = null, PART_WORDS = 2500;
+  var AI_IDLE = "Claude lee el texto por partes y puntúa cada oración. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.";
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("sample").then(function (s) { sampleFn = s; $("ai-row").hidden = !s; }, function () {});
+  }
+  var AI_ERRORS = {
+    not_granted: "No diste permiso para usar Claude en esta página. Recarga si cambias de opinión.",
+    sampling_disabled: "Claude no está disponible para tu cuenta u organización.",
+    rate_limited: "Llegaste al límite de uso de Claude por ahora. Las partes ya revisadas se mantienen; vuelve a intentarlo más tarde.",
+    session_expired: "Tu sesión de Claude caducó. Vuelve a iniciar sesión y reintenta.",
+    prompt_too_large: "Una parte del texto es demasiado larga para Claude.",
+    invalid_json: "Claude respondió en un formato inesperado. Pulsa de nuevo para reintentar.",
+    refused: "Claude no quiso evaluar este texto.",
+    upstream_error: "Se cortó la conexión con Claude. Pulsa de nuevo para reintentar."
+  };
+  var HIDE_CODES = ["sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+
+  function claudeParts(r) {
+    var parts = [], cur = [], n = 0;
+    r.sents.forEach(function (p, i) {
+      cur.push(i); n += p.words;
+      if (n >= PART_WORDS) { parts.push(cur); cur = []; n = 0; }
+    });
+    if (cur.length) parts.push(cur);
+    return parts;
+  }
+
+  function buildPrompt(r, idx, k, total) {
+    var lines = idx.map(function (i) { return i + "\t" + r.sents[i].text.trim().replace(/\s+/g, " "); }).join("\n");
+    return "Eres un analista forense de textos. Estima si cada oración fue escrita por un modelo de lenguaje (IA) o por una persona." +
+      (total > 1 ? " Este es el fragmento " + (k + 1) + " de " + total + " de un documento más largo." : "") + "\n" +
+      "Fíjate en: ritmo y variación de las oraciones, giros genéricos, conectores formales encadenados, falta de detalles concretos o experiencias personales, tono neutro y pulido, enumeraciones de tres, cierres moralizantes. Sé prudente: un texto humano formal no es IA por ser formal.\n" +
+      "Responde SOLO con un objeto JSON con esta forma exacta:\n" +
+      '{"overall": 0-100, "summary": "2 frases en español que expliquen tu valoración", "sentences": [{"i": 0, "ai": 0-100, "why": "motivo en español, máx. 12 palabras"}]}\n' +
+      "Incluye una entrada por cada oración, con el mismo índice i. \"ai\" es la probabilidad de que la oración sea de IA.\n\n" +
+      "Oraciones (índice, tabulador, texto):\n" + lines;
+  }
+
+  function applyPart(r, idx, j) {
+    if (!j || typeof j !== "object" || !Array.isArray(j.sentences)) throw { code: "invalid_json" };
+    var allowed = new Set(idx);
+    j.sentences.forEach(function (s) {
+      var i = Number(s && s.i), ai = clamp(Number(s && s.ai), 0, 100);
+      if (!allowed.has(i) || isNaN(ai)) return;
+      var p = r.sents[i];
+      p.claudeAi = ai; p.claudeWhy = String(s.why || "").slice(0, 200);
+      p.p = sigmoid(0.5 * p.zM + 0.5 * logit(ai / 100));
+    });
+    var words_ = idx.reduce(function (a, i) { return a + r.sents[i].words; }, 0);
+    var overall = clamp(Number(j.overall), 0, 100);
+    return { overall: isNaN(overall) ? null : overall, words: words_, summary: String(j.summary || "").slice(0, 400) };
+  }
+
+  function finishClaude(r, done, totalParts) {
+    var got = done.filter(function (d) { return d.overall !== null; });
+    if (!got.length) return;
+    var wsum = got.reduce(function (a, d) { return a + d.words; }, 0);
+    var overall = got.reduce(function (a, d) { return a + d.overall * d.words; }, 0) / wsum;
+    r.score = sigmoid(0.5 * r.zModel + 0.5 * logit(overall / 100));
+    var sums = got.map(function (d, k) { return (got.length > 1 ? "Parte " + (k + 1) + ": " : "") + d.summary; }).slice(0, 4).join(" ");
+    r.claude = { overall: overall, summary: sums + (done.length < totalParts ? " (Claude revisó " + done.length + " de " + totalParts + " partes.)" : "") };
+    classify(r);
+  }
+
+  function setAiBusy(on) {
+    aiBusy = on; $("ai-run").disabled = on; $("ai-stop").hidden = !on; $("run").disabled = on;
+  }
+
+  function askClaude() {
+    if (!sampleFn || !lastResult || aiBusy) return;
+    var r = lastResult, parts = claudeParts(r), done = [];
+    aiCtl = new AbortController();
+    setAiBusy(true);
+    var step = function (k) {
+      if (lastResult !== r) return Promise.resolve();
+      if (k >= parts.length) return Promise.resolve();
+      $("ai-status").textContent = parts.length > 1
+        ? "Claude está leyendo la parte " + (k + 1) + " de " + parts.length + "… Cada parte tarda entre 10 y 60 segundos."
+        : "Claude está leyendo el texto… Suele tardar entre 10 y 60 segundos.";
+      return sampleFn.json(buildPrompt(r, parts[k], k, parts.length), { signal: aiCtl.signal, modelTier: "default" }).then(function (j) {
+        done.push(applyPart(r, parts[k], j));
+        finishClaude(r, done, parts.length);
+        render(r);
+        return step(k + 1);
+      });
+    };
+    step(0).then(function () {
+      if (lastResult === r) $("ai-status").textContent = "Revisión de Claude aplicada" + (parts.length > 1 ? " a las " + parts.length + " partes" : "") + ". Toca una oración para ver su motivo.";
+    }).catch(function (e) {
+      var code = e && e.code;
+      if (done.length && lastResult === r) { finishClaude(r, done, parts.length); render(r); }
+      if (code === "cancelled") { $("ai-status").textContent = "Revisión detenida" + (done.length ? " tras " + done.length + " de " + parts.length + " partes." : "."); return; }
+      if (HIDE_CODES.indexOf(code) > -1) { $("ai-row").hidden = true; return; }
+      $("ai-status").textContent = AI_ERRORS[code] || AI_ERRORS.upstream_error;
+      if (code === "not_granted") $("ai-run").hidden = true;
+    }).then(function () { setAiBusy(false); });
+  }
+
+  // ---------- Tabla de precisión ----------
+  function fillMetrics() {
+    var m = MODEL && MODEL.metrics, body = document.querySelector("#metrics-table tbody");
+    if (!m || !body) return;
+    var rows = [
+      ["idioma-es", "Español, todos los textos de prueba"],
+      ["autext-es", "Español: tuits, manuales y textos legales (AuTexTification)"],
+      ["europarl-es", "Español humano formal: debates parlamentarios"],
+      ["efe-es", "Español humano: noticias de agencia"],
+      ["es-ia-moderno-es", "Español generado con un asistente de IA actual"],
+      ["idioma-en", "Inglés, todos los textos de prueba"],
+      ["ghost-essay-en", "Inglés: ensayos (humanos, ChatGPT y Claude)"],
+      ["ghost-reuter-en", "Inglés: noticias (humanos, ChatGPT y Claude)"],
+      ["ghost-wp-en", "Inglés: relatos (humanos, ChatGPT y Claude)"],
+      ["human_detectors-2024", "Inglés, artículos de 2024 (GPT-4o, Claude 3.5, o1): fuera del entrenamiento"]
+    ];
+    var pc = function (x) { return x == null ? "–" : (x * 100).toFixed(1).replace(".", ",") + " %"; };
+    body.innerHTML = rows.filter(function (r) { return m[r[0]]; }).map(function (r) {
+      var x = m[r[0]];
+      return "<tr><td>" + esc(r[1]) + "</td><td>" + x.n.toLocaleString("es") + "</td><td>" + pc(x.acc) + "</td><td>" + (x.auroc == null ? "–" : x.auroc.toFixed(3).replace(".", ",")) + "</td><td>" + pc(x.fpr_humano) + "</td></tr>";
+    }).join("");
+  }
+
+  // ---------- Eventos ----------
+  $("ai-run").addEventListener("click", askClaude);
+  $("ai-stop").addEventListener("click", function () { if (aiCtl) aiCtl.abort(); });
+  $("run").addEventListener("click", run);
+  $("edit").addEventListener("click", function () { if (marked.hidden) { run(); } else { showMarked(false); } });
+  $("clear").addEventListener("click", function () { if (aiBusy) return; ta.value = ""; updateCount(); note(""); lastResult = null; marked.innerHTML = ""; document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); showMarked(false); });
+  ta.addEventListener("input", updateCount);
+  ta.addEventListener("keydown", function (e) { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") run(); });
+  document.querySelectorAll("[data-sample]").forEach(function (b) { b.addEventListener("click", function () { if (!aiBusy) loadSample(b.dataset.sample); }); });
+  $("file").addEventListener("change", function (e) { var f = e.target.files[0]; if (f && !aiBusy) readFile(f); e.target.value = ""; });
+  marked.addEventListener("click", function (e) { var s = e.target.closest(".s"); if (s) showDetail(+s.dataset.i); });
+  marked.addEventListener("keydown", function (e) { if (e.key === "Enter") { var s = e.target.closest(".s"); if (s) showDetail(+s.dataset.i); } });
+  ["dragover", "drop"].forEach(function (ev) { document.querySelector(".editor").addEventListener(ev, function (e) { e.preventDefault(); if (ev === "drop" && e.dataTransfer.files[0] && !aiBusy) readFile(e.dataTransfer.files[0]); }); });
+
+  fillMetrics();
+  if (MODEL) loadSample("es-ai"); else note("No se pudo cargar el modelo. Recarga la página.", true);
+  window.LupaScore = function (t) { return MODEL ? sigmoid(scoreText(t).z) : null; };
+  window.LupaDoc = function (t) { return MODEL ? analyze(t).score : null; };
+})();
+</script>
+</body><!--wrap-->
+</html><!--wrap-->
