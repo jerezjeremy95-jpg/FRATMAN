@@ -51,6 +51,17 @@ Las reseñas coinciden en que sirve como filtro inicial, no como prueba. El prop
 - use un clasificador entrenado (p. ej. un RoBERTa afinado en textos humanos/IA en español), o
 - pida a un LLM vía API que evalúe el texto, combinando su juicio con las señales actuales.
 
+## 6. Conexión con Claude (gratis para quien lo usa)
+
+La versión publicada en claude.ai incluye **«Revisar con Claude»**. Usa la capacidad `sample` de los artifacts de claude.ai: la página le pide a Claude que puntúe cada oración y explique el motivo, **con la cuenta de Claude de quien abre la página**. No hace falta clave de API ni servidor, y no tiene coste adicional: consume el uso normal del plan de esa persona (también el plan gratuito, con sus límites).
+
+- La primera vez, claude.ai pide permiso para que la página use Claude.
+- La puntuación final mezcla 75 % el juicio de Claude y 25 % las señales automáticas.
+- Hasta 6 000 palabras por revisión.
+- Fuera de claude.ai (p. ej. GitHub Pages) el botón no aparece y el detector funciona solo con heurísticas.
+
+¿Y la API de Anthropic directamente? Requiere una clave de pago y un servidor propio que la esconda; no es gratuita. Un MCP tampoco sirve aquí: los MCP conectan herramientas *a* Claude, no al revés.
+
 ## Fuentes
 
 - https://gptzero.me/news/justdone-ai-review/

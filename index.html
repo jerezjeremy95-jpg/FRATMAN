@@ -132,6 +132,13 @@ textarea#text:focus { outline: none; }
 .detail { border-top: 1px dashed var(--line); padding-top: 14px; font-size: 14px; min-height: 64px; }
 .detail .q { margin: 6px 0; font-style: italic; }
 .empty { color: var(--muted); font-size: 14px; }
+.claude-box { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
+.claude-box .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.claude-box h3 { font-size: 15px; }
+.claude-box p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.claude-box .summary { color: var(--ink); font-size: 14px; }
+.src { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); }
+.src.h { background: var(--line); color: var(--muted); }
 
 /* Método */
 .method { border-top: 1px solid var(--line); padding-block: 40px; display: grid; gap: 24px; }
@@ -209,8 +216,19 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     </div>
 
     <aside class="panel report" aria-labelledby="report-title">
-      <div class="panel-head"><span class="label" id="report-title">Informe</span><span class="label" id="lang"></span></div>
+      <div class="panel-head"><span class="label" id="report-title">Informe <span class="src h" id="src">Señales</span></span><span class="label" id="lang"></span></div>
       <div class="panel-body">
+        <div class="claude-box" id="ai-row" hidden>
+          <div class="row">
+            <h3>Segunda opinión de Claude</h3>
+            <div class="actions">
+              <button class="btn" type="button" id="ai-stop" hidden>Detener</button>
+              <button class="btn primary" type="button" id="ai-run">Revisar con Claude</button>
+            </div>
+          </div>
+          <p id="ai-status">Claude lee cada oración y la puntúa. Usa tu propia cuenta de Claude, sin coste extra ni clave de API.</p>
+          <p class="summary" id="ai-summary" hidden></p>
+        </div>
         <div class="verdict">
           <svg class="gauge" viewBox="0 0 160 96" role="img" aria-labelledby="gauge-t">
             <title id="gauge-t">Probabilidad de IA</title>
@@ -359,7 +377,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     var sents = parts.filter(function (p) { return !p.isBreak && words(p.text).length > 0; });
     var lens = sents.map(function (p) { return words(p.text).length; });
     var meanLen = lens.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, lens.length);
-    sents.forEach(function (p) { var r = scoreSentence(p.text, lang, meanLen); p.p = r.p; p.reasons = r.reasons; p.words = r.words; p.hits = r.hits; });
+    sents.forEach(function (p) { var r = scoreSentence(p.text, lang, meanLen); p.p = r.p; p.hP = r.p; p.reasons = r.reasons; p.words = r.words; p.hits = r.hits; });
 
     var all = words(text.toLowerCase()), total = all.length;
     // Variación de longitud (coeficiente de variación).
@@ -387,7 +405,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     sents.forEach(function (p) { p.cls = p.p >= 0.62 ? "ai" : p.p >= 0.4 ? "mix" : "human"; share[p.cls === "human" ? "hu" : p.cls] += p.words; });
 
     return {
-      lang: lang, parts: parts, sents: sents, total: total, score: score,
+      lang: lang, parts: parts, sents: sents, total: total, score: score, hScore: score, claude: null,
       share: { ai: share.ai / wsum, mix: share.mix / wsum, hu: share.hu / wsum },
       signals: [
         { name: "Variación entre oraciones", value: cv.toFixed(2), bar: clamp(cv / 0.9, 0, 1), lean: cv < 0.35 ? "ai" : cv > 0.55 ? "human" : "neutral",
@@ -425,13 +443,18 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     if (cursor < src.length) html += esc(src.slice(cursor));
     marked.innerHTML = html;
 
+    $("src").textContent = r.claude ? "Claude + señales" : "Señales";
+    $("src").classList.toggle("h", !r.claude);
+    $("ai-summary").hidden = !r.claude;
+    $("ai-summary").textContent = r.claude ? r.claude.summary : "";
+    if (!r.claude && !aiBusy) $("ai-status").textContent = "Claude lee cada oración y la puntúa. Usa tu propia cuenta de Claude, sin coste extra ni clave de API.";
     var pct = Math.round(r.score * 100);
     $("pct").textContent = pct + "%";
     $("arc").setAttribute("stroke-dasharray", pct + " 100");
     $("arc").setAttribute("stroke", r.score >= 0.5 ? "var(--ai)" : r.score >= 0.3 ? "var(--mix)" : "var(--human)");
     var v = verdictText(r.score);
-    $("verdict").textContent = v[0];
-    $("verdict-sub").textContent = v[1] + " " + r.sents.length + " oraciones, " + r.total + " palabras.";
+    $("verdict").textContent = r.claude && r.claude.verdict ? r.claude.verdict : v[0];
+    $("verdict-sub").textContent = (r.claude ? "Valoración de Claude. Las señales automáticas daban " + Math.round(r.hScore * 100) + " %." : v[1]) + " " + r.sents.length + " oraciones, " + r.total + " palabras.";
     $("lang").textContent = r.lang === "es" ? "Idioma: español" : "Idioma: inglés";
     [["ai", "b-ai", "n-ai"], ["mix", "b-mix", "n-mix"], ["hu", "b-hu", "n-hu"]].forEach(function (x) {
       var val = Math.round(r.share[x[0]] * 100);
@@ -452,8 +475,9 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     marked.querySelectorAll(".s.active").forEach(function (el) { el.classList.remove("active"); });
     var el = marked.querySelector('[data-i="' + i + '"]'); if (el) el.classList.add("active");
     var label = p.cls === "ai" ? "Probable IA" : p.cls === "mix" ? "Revisar" : "Probable humano";
-    var list = p.reasons.length ? "<ul style='margin:6px 0 0;padding-left:18px'>" + p.reasons.map(function (r) {
-      return "<li>" + (r.d > 0 ? "↑ " : "↓ ") + esc(r.t) + "</li>"; }).join("") + "</ul>" : "<p class='note'>Sin señales destacadas; puntuación cercana a la base.</p>";
+    var why = p.claudeWhy ? '<p style="margin:6px 0 0"><span class="src">Claude</span> ' + esc(p.claudeWhy) + "</p>" : "";
+    var list = why + (p.reasons.length ? "<ul style='margin:6px 0 0;padding-left:18px'>" + p.reasons.map(function (r) {
+      return "<li>" + (r.d > 0 ? "↑ " : "↓ ") + esc(r.t) + "</li>"; }).join("") + "</ul>" : "<p class='note'>Sin señales destacadas; puntuación cercana a la base.</p>");
     $("detail").innerHTML = '<span class="label">Oración ' + (i + 1) + " · " + label + " · " + Math.round(p.p * 100) + '% IA</span><p class="q">' + esc(p.text.trim()) + "</p>" + list;
   }
 
@@ -522,7 +546,84 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     return loaded[src];
   }
 
+  // Segunda opinión de Claude (capacidad "sample" de claude.ai: usa la cuenta de quien abre la página).
+  var sampleFn = null, aiBusy = false, aiCtl = null, CLAUDE_MAX_WORDS = 6000;
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("sample").then(function (s) { sampleFn = s; $("ai-row").hidden = !s; }, function () {});
+  }
+  var AI_ERRORS = {
+    not_granted: "No diste permiso para usar Claude en esta página. Recarga si cambias de opinión.",
+    sampling_disabled: "Claude no está disponible para tu cuenta u organización.",
+    rate_limited: "Has alcanzado el límite de uso de Claude por ahora. Inténtalo más tarde.",
+    session_expired: "Tu sesión de Claude caducó. Vuelve a iniciar sesión y reintenta.",
+    prompt_too_large: "El texto es demasiado largo para Claude. Analiza una parte.",
+    invalid_json: "Claude respondió en un formato inesperado. Pulsa de nuevo para reintentar.",
+    refused: "Claude no quiso evaluar este texto.",
+    upstream_error: "Se cortó la conexión con Claude. Pulsa de nuevo para reintentar."
+  };
+  var HIDE_CODES = ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+
+  function buildPrompt(r) {
+    var lines = r.sents.map(function (p, i) { return i + "\t" + p.text.trim().replace(/\s+/g, " "); }).join("\n");
+    var sig = r.signals.map(function (s) { return "- " + s.name + ": " + s.value; }).join("\n");
+    return "Eres un analista forense de textos. Estima si cada oración fue escrita por un modelo de lenguaje (IA) o por una persona.\n" +
+      "Fíjate en: ritmo y variación de las oraciones, giros genéricos, conectores formales encadenados, falta de detalles concretos o experiencias personales, tono neutro y pulido, enumeraciones de tres, cierres moralizantes. Sé prudente: un texto humano formal no es IA por ser formal.\n" +
+      "Señales automáticas (orientativas, poco fiables por sí solas):\n" + sig + "\n\n" +
+      "Responde SOLO con un objeto JSON con esta forma exacta:\n" +
+      '{"overall": 0-100, "verdict": "veredicto breve en español (máx. 5 palabras)", "summary": "2 o 3 frases en español que expliquen el veredicto", "sentences": [{"i": 0, "ai": 0-100, "why": "motivo en español, máx. 14 palabras"}]}\n' +
+      "Incluye una entrada por cada oración, con el mismo índice i. \"ai\" es la probabilidad de que la oración sea de IA.\n\n" +
+      "Oraciones (índice, tabulador, texto):\n" + lines;
+  }
+
+  function applyClaude(r, j) {
+    if (!j || typeof j !== "object" || !Array.isArray(j.sentences)) throw { code: "invalid_json" };
+    var share = { ai: 0, mix: 0, hu: 0 }, wsum = 0;
+    j.sentences.forEach(function (s) {
+      var p = r.sents[Number(s && s.i)];
+      if (!p) return;
+      var ai = clamp(Number(s.ai), 0, 100);
+      if (isNaN(ai)) return;
+      p.claudeAi = ai; p.claudeWhy = String(s.why || "").slice(0, 200);
+    });
+    r.sents.forEach(function (p) {
+      if (p.claudeAi != null) p.p = clamp(0.75 * p.claudeAi / 100 + 0.25 * p.hP, 0, 1);
+      p.cls = p.p >= 0.62 ? "ai" : p.p >= 0.4 ? "mix" : "human";
+      share[p.cls === "human" ? "hu" : p.cls] += p.words; wsum += p.words;
+    });
+    var overall = clamp(Number(j.overall), 0, 100);
+    r.score = isNaN(overall) ? r.hScore : clamp(0.75 * overall / 100 + 0.25 * r.hScore, 0.01, 0.99);
+    r.share = { ai: share.ai / (wsum || 1), mix: share.mix / (wsum || 1), hu: share.hu / (wsum || 1) };
+    r.claude = { verdict: String(j.verdict || "").slice(0, 60), summary: String(j.summary || "").slice(0, 600) };
+  }
+
+  function setAiBusy(on) {
+    aiBusy = on; $("ai-run").disabled = on; $("ai-stop").hidden = !on; $("run").disabled = on;
+  }
+
+  function askClaude() {
+    if (!sampleFn || !lastResult || aiBusy) return;
+    var r = lastResult;
+    if (r.total > CLAUDE_MAX_WORDS) { $("ai-status").textContent = "Claude revisa hasta " + CLAUDE_MAX_WORDS.toLocaleString("es") + " palabras por vez. Analiza el texto por partes."; return; }
+    aiCtl = new AbortController();
+    setAiBusy(true);
+    $("ai-status").textContent = "Claude está leyendo el texto… Suele tardar entre 10 y 60 segundos.";
+    sampleFn.json(buildPrompt(r), { signal: aiCtl.signal, modelTier: "default" }).then(function (j) {
+      if (lastResult !== r) return;
+      applyClaude(r, j);
+      $("ai-status").textContent = "Revisión de Claude aplicada. Toca una oración para ver su motivo.";
+      render(r);
+    }).catch(function (e) {
+      var code = e && e.code;
+      if (code === "cancelled") { $("ai-status").textContent = "Revisión detenida."; return; }
+      if (HIDE_CODES.indexOf(code) > -1 && code !== "not_granted") { $("ai-row").hidden = true; return; }
+      $("ai-status").textContent = AI_ERRORS[code] || AI_ERRORS.upstream_error;
+      if (code === "not_granted") $("ai-run").hidden = true;
+    }).then(function () { setAiBusy(false); });
+  }
+
   // Eventos
+  $("ai-run").addEventListener("click", askClaude);
+  $("ai-stop").addEventListener("click", function () { if (aiCtl) aiCtl.abort(); });
   $("run").addEventListener("click", run);
   $("edit").addEventListener("click", function () { if (marked.hidden) { run(); } else { showMarked(false); } });
   $("clear").addEventListener("click", function () { ta.value = ""; updateCount(); note(""); lastResult = null; marked.innerHTML = ""; document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); showMarked(false); });
