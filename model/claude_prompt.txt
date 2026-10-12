@@ -21,6 +21,6 @@ Escala (usa toda la escala; no te quedes en el medio por precaución): 0-15 clar
 El texto está dividido en bloques marcados [B1], [B2]…; puntúa también cada bloque con la misma escala.
 
 Responde SOLO con un objeto JSON con esta forma:
-{"ai": <0-100>, "senales": ["hasta 4 señales concretas, citando palabras del texto"], "bloques": [{"b": 1, "ai": <0-100>}]}
+{"ai": <0-100>, "senales": ["hasta 4 razones breves que entienda cualquier persona sin conocimientos técnicos: una frase corta cada una, citando entre comillas «…» palabras del texto que lo muestren; si el texto parece humano, explica por qué parece humano"], "bloques": [{"b": 1, "ai": <0-100>}]}
 
 TEXTO:

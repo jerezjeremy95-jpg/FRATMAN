@@ -43,6 +43,7 @@ Las reseñas coinciden en que sirve como filtro inicial, no como prueba. El prop
 - Las palabras y pares de palabras que más empujaron hacia IA o hacia humano, en el documento y en cada oración.
 - Señales de estilo explicadas (variación entre oraciones, conectores, primera persona, puntuación, vocabulario).
 - Todo se calcula en el navegador: el texto no se envía a ningún servidor.
+- Explicación en lenguaje sencillo: veredicto en palabras («Probablemente escrito con IA»), una lista «¿Por qué?» con razones que citan el propio texto (las de Claude y las que detecta la página: expresiones de asistente, frases que empiezan con palabras de enlace, cierre que resume, ritmo uniforme, falta de datos concretos; o, al revés, experiencia propia, datos concretos, ritmo irregular, tono espontáneo) y, al tocar una frase, qué tiene de IA o de humano. Lo técnico queda en «Detalles técnicos».
 
 ### Versión actual: Claude como detector principal + modelo en español
 

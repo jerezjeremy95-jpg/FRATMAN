@@ -133,6 +133,18 @@ textarea#text:focus { outline: none; }
 .detail .q { margin: 6px 0; font-style: italic; }
 .empty { color: var(--muted); font-size: 14px; }
 .note.warn { color: var(--ink); background: var(--mix-wash); border-radius: 6px; padding: 8px 10px; }
+.why { display: grid; gap: 8px; }
+.why h3 { font-size: 17px; }
+.why-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.why-list li { position: relative; padding-left: 22px; font-size: 15px; line-height: 1.5; }
+.why-list li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 9px; height: 9px; border-radius: 50%; background: var(--ai); }
+.why-list li.h::before { background: var(--human); }
+.why-list li.n::before { background: var(--mix); }
+.why-list q { font-style: italic; quotes: "«" "»"; }
+.why-other { margin: 0; font-size: 14px; color: var(--muted); }
+details.tech { border-top: 1px solid var(--line); padding-top: 12px; }
+details.tech summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.tech-body { display: grid; gap: 18px; margin-top: 14px; }
 .claude-box { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
 .claude-box .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .claude-box h3 { font-size: 15px; }
@@ -192,8 +204,8 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 <main>
   <section class="wrap intro">
     <span class="label">Detector de texto IA · Gratis · Español</span>
-    <h1>Revisa si un texto suena escrito por una máquina</h1>
-    <p>Pega un texto en español o sube un archivo de hasta 50 000 palabras. En claude.ai, Claude Sonnet 5.5 lo revisa por bloques y un modelo entrenado con más de 60 000 textos humanos y de IA en español aporta una segunda señal; la nota final los combina con pesos medidos. Es gratis y sin límite de usos; la revisión de Claude usa tu propia cuenta.</p>
+    <h1>¿Este texto lo escribió una persona o una IA?</h1>
+    <p>Pega un texto en español o sube un archivo. Lupa te dice qué tan probable es que lo haya escrito una IA, marca las frases sospechosas y te explica por qué, con ejemplos del propio texto. Es gratis y sin límite de usos.</p>
   </section>
 
   <section class="wrap bench" id="detector">
@@ -212,9 +224,9 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
       </div>
       <div class="panel-foot">
         <div class="legend" aria-label="Leyenda">
-          <span><i class="sw" style="background:var(--ai-wash);box-shadow:inset 0 -2px 0 var(--ai)"></i>Probable IA</span>
-          <span><i class="sw" style="background:var(--mix-wash);box-shadow:inset 0 -2px 0 var(--mix)"></i>Revisar</span>
-          <span><i class="sw" style="border:1px solid var(--line)"></i>Probable humano</span>
+          <span><i class="sw" style="background:var(--ai-wash);box-shadow:inset 0 -2px 0 var(--ai)"></i>Parece IA</span>
+          <span><i class="sw" style="background:var(--mix-wash);box-shadow:inset 0 -2px 0 var(--mix)"></i>Dudosa</span>
+          <span><i class="sw" style="border:1px solid var(--line)"></i>Parece humana</span>
         </div>
         <span class="count" id="count">0 / 50 000 palabras</span>
       </div>
@@ -230,57 +242,67 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     </div>
 
     <aside class="panel report" aria-labelledby="report-title">
-      <div class="panel-head"><span class="label" id="report-title">Informe <span class="src h" id="src">Modelo</span></span><span class="label" id="lang"></span></div>
+      <div class="panel-head"><span class="label" id="report-title">Resultado <span class="src h" id="src">Detector automático</span></span><span class="label" id="lang"></span></div>
       <div class="panel-body">
         <div class="verdict">
           <svg class="gauge" viewBox="0 0 160 96" role="img" aria-labelledby="gauge-t">
-            <title id="gauge-t">Probabilidad de IA</title>
+            <title id="gauge-t">Probabilidad de que sea IA</title>
             <path d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
             <path id="arc" d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--ai)" stroke-width="14" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="transition: stroke-dasharray .6s ease"/>
             <text x="80" y="76" text-anchor="middle" font-size="30" font-weight="700" id="pct">–</text>
-            <text x="80" y="93" text-anchor="middle" font-size="10" style="fill:var(--muted);font-family:var(--font-mono)">PROB. IA</text>
+            <text x="80" y="93" text-anchor="middle" font-size="10" style="fill:var(--muted);font-family:var(--font-mono)">DE QUE SEA IA</text>
           </svg>
           <div>
             <h2 id="verdict">Sin analizar</h2>
-            <p id="verdict-sub">Pulsa «Analizar texto» para obtener el informe.</p>
+            <p id="verdict-sub">Pulsa «Analizar texto» para ver el resultado.</p>
           </div>
         </div>
         <p class="note warn" id="short-note" hidden></p>
 
-        <div class="split">
-          <span class="label">Reparto del texto por palabras</span>
-          <div class="bar" aria-hidden="true"><i id="b-ai" style="background:var(--ai);width:0"></i><i id="b-mix" style="background:var(--mix);width:0"></i><i id="b-hu" style="background:var(--human);width:0"></i></div>
-          <div class="split-legend">
-            <div><b id="n-ai">–</b><small>Probable IA</small></div>
-            <div><b id="n-mix">–</b><small>Revisar</small></div>
-            <div><b id="n-hu">–</b><small>Probable humano</small></div>
-          </div>
-        </div>
-
-        <div class="terms-box">
-          <span class="label">Lo que más pesó en la decisión</span>
-          <div class="terms" id="terms-ai" aria-label="Hacia IA"></div>
-          <div class="terms" id="terms-hu" aria-label="Hacia humano"></div>
+        <div class="why">
+          <h3 id="why-title">¿Por qué?</h3>
+          <ul class="why-list" id="why-list"></ul>
+          <p class="why-other" id="why-other" hidden></p>
         </div>
 
         <div class="claude-box" id="ai-row" hidden>
           <div class="row">
-            <h3>Revisión con Claude (detector principal)</h3>
+            <h3>Revisión con Claude</h3>
             <div class="actions">
               <button class="btn" type="button" id="ai-stop" hidden>Detener</button>
               <button class="btn primary" type="button" id="ai-run">Revisar con Claude</button>
             </div>
           </div>
-          <p id="ai-status">Al analizar, Claude Sonnet 5.5 (esfuerzo medio) lee el texto por bloques; su opinión es la que más pesa en la nota final. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.</p>
-          <p class="summary" id="ai-summary" hidden></p>
+          <p id="ai-status">Al analizar, Claude lee el texto y da su opinión. Es gratis: usa tu cuenta de Claude.</p>
         </div>
 
-        <div>
-          <span class="label">Señales de estilo</span>
-          <ul class="signals" id="signals" style="margin-top:10px"></ul>
-        </div>
+        <div class="detail" id="detail"><span class="empty">Toca una frase coloreada para ver qué tiene de IA o de humano.</span></div>
 
-        <div class="detail" id="detail"><span class="empty">Toca una oración marcada para ver su puntuación y las palabras que la explican.</span></div>
+        <details class="tech">
+          <summary>Detalles técnicos</summary>
+          <div class="tech-body">
+            <p class="note" id="tech-scores"></p>
+            <div class="split">
+              <span class="label">Reparto del texto por palabras</span>
+              <div class="bar" aria-hidden="true"><i id="b-ai" style="background:var(--ai);width:0"></i><i id="b-mix" style="background:var(--mix);width:0"></i><i id="b-hu" style="background:var(--human);width:0"></i></div>
+              <div class="split-legend">
+                <div><b id="n-ai">–</b><small>Parece IA</small></div>
+                <div><b id="n-mix">–</b><small>Dudoso</small></div>
+                <div><b id="n-hu">–</b><small>Parece humano</small></div>
+              </div>
+            </div>
+            <div class="terms-box">
+              <span class="label">Palabras que más pesaron en el detector automático</span>
+              <div class="terms" id="terms-ai" aria-label="Hacia IA"></div>
+              <div class="terms" id="terms-hu" aria-label="Hacia humano"></div>
+            </div>
+            <div>
+              <span class="label">Medidas de estilo</span>
+              <ul class="signals" id="signals" style="margin-top:10px"></ul>
+            </div>
+          </div>
+        </details>
+        <p class="note">Ningún detector es infalible: usa el resultado como orientación, no como prueba.</p>
       </div>
     </aside>
   </section>
@@ -288,15 +310,18 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
   <section class="wrap method" id="metodo">
     <h2>Cómo funciona</h2>
     <ol class="steps">
-      <li><h3>Claude lee el texto</h3><p>En claude.ai, Claude Sonnet 5.5 (esfuerzo medio) revisa el texto en bloques de unas 150 palabras con una guía de señales de IA y de escritura humana en español, sin el sesgo de la instrucción anterior hacia «humano».</p></li>
-      <li><h3>El modelo local aporta otra señal</h3><p>Una regresión logística entrenada solo con textos en español (noticias, ensayos de estudiantes, textos web, debates, tuits y textos de GPT-3, BLOOM, Haiku, Sonnet y Opus) puntúa palabras, pares de palabras, fragmentos de letras y 15 medidas de estilo.</p></li>
-      <li><h3>Se combinan con pesos medidos</h3><p>En una prueba con textos de etiqueta conocida, Claude acertó mucho más que el modelo local, así que su opinión pesa unas cuatro veces más. Los pesos y la escala salen de esa prueba, no de un promedio a ciegas.</p></li>
+      <li><h3>Claude lee el texto</h3><p>Claude revisa el texto por partes buscando las marcas típicas de la IA (expresiones de asistente, estructura de plantilla, ausencia de datos concretos) y las de una persona (experiencias propias, detalles, irregularidades).</p></li>
+      <li><h3>Un detector automático da una segunda opinión</h3><p>Un programa entrenado con más de 60 000 textos en español, escritos por personas y por IA, compara las palabras y el estilo de tu texto con los que aprendió.</p></li>
+      <li><h3>Se juntan las dos opiniones</h3><p>Como Claude acertó más en nuestras pruebas, su opinión pesa más. El resultado viene con las razones que lo explican, para que puedas comprobarlas tú.</p></li>
     </ol>
     <div class="metrics" id="precision">
-      <h3>Precisión medida con textos que el modelo nunca vio</h3>
+      <h3>¿Qué tan fiable es?</h3>
+      <p id="plain-acc"></p>
+      <details class="tech"><summary>Ver todas las pruebas</summary>
       <p class="note">Textos en español nunca usados para entrenar. Umbral de 50 %, salvo donde se indica.</p>
       <div class="table-wrap"><table id="metrics-table"><thead><tr><th>Conjunto de prueba</th><th>Textos</th><th>Aciertos</th><th>AUROC</th><th>IA detectada</th><th>Humanos marcados como IA</th></tr></thead><tbody></tbody></table></div>
       <p class="note">AUROC mide cuánto separa el modelo ambos tipos de texto: 1,0 es perfecto y 0,5 equivale a lanzar una moneda.</p>
+      </details>
     </div>
     <div class="limits" id="limites">
       <h3>Antes de sacar conclusiones</h3>
@@ -312,7 +337,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 (function () {
   "use strict";
   var MAX_WORDS = 50000, MIN_WORDS = 40, T_AI = 0.7, T_MIX = 0.4;
-  var CLAUDE_PROMPT = "Eres un experto en detectar textos en español escritos por modelos de lenguaje (ChatGPT, Claude, Gemini, Llama, Copilot…). Estima la probabilidad de que el TEXTO de abajo haya sido generado por IA (tal cual o con pocos retoques) en lugar de escrito por una persona.\n\nLee el texto completo y pondera todas estas señales; ninguna basta por sí sola.\n\nSeñales de IA:\n- Vocabulario de asistente: «en el mundo actual», «en la era digital», «juega un papel fundamental» o «crucial», «cabe destacar», «es importante señalar», «no solo… sino también», «en conclusión», «en resumen», «en definitiva», «aspectos clave», «una amplia gama», «fomentar», «potenciar», «optimizar», «abordar», «desafíos y oportunidades», «integral», «enriquecedor», «transformador», «sinergia», «panorama», «sin lugar a dudas», «resulta fundamental».\n- Estructura de plantilla: introducción general, bloques simétricos y un cierre que resume o moraliza; párrafos de largo parecido; conectores encadenados al inicio de las oraciones (Además, Asimismo, Por otro lado, Sin embargo, Finalmente); enumeraciones de tres elementos; listas con títulos.\n- Estilo: tono neutro, pulido y positivo; equilibrio forzado («si bien…, también…»); generalidades sin datos comprobables; adjetivos en pares («eficiente y sostenible»); ortografía y puntuación impecables; ritmo uniforme; voz impersonal, o una experiencia personal genérica sin detalles verificables.\n- Imitación de lo humano: coloquialismos, emojis o «errores» repartidos de forma demasiado regular también pueden ser de IA.\n\nSeñales humanas:\n- Detalles concretos y verificables: nombres propios, fechas, cifras precisas, lugares, citas textuales atribuidas, referencias a hechos específicos.\n- Irregularidad: faltas de ortografía, tildes o concordancia; puntuación inconsistente; frases muy cortas junto a otras muy largas; repeticiones, digresiones, ideas sin cerrar.\n- Voz propia: opiniones con aristas, humor, ironía, regionalismos, jerga, anécdotas con detalles específicos.\n- Formatos humanos típicos: noticia con fuentes y datos; texto legal o parlamentario técnico y repetitivo; redacción de estudiante con errores de aprendiz.\n\nTen en cuenta el género: que un texto sea formal o esté bien escrito no lo hace de IA, y que tenga un error no lo hace humano.\n\nEscala (usa toda la escala; no te quedes en el medio por precaución): 0-15 claramente humano · 15-35 probablemente humano · 35-65 dudoso · 65-85 probablemente IA · 85-100 claramente IA.\n\nEl texto está dividido en bloques marcados [B1], [B2]…; puntúa también cada bloque con la misma escala.\n\nResponde SOLO con un objeto JSON con esta forma:\n{\"ai\": <0-100>, \"senales\": [\"hasta 4 señales concretas, citando palabras del texto\"], \"bloques\": [{\"b\": 1, \"ai\": <0-100>}]}\n\nTEXTO:\n";
+  var CLAUDE_PROMPT = "Eres un experto en detectar textos en español escritos por modelos de lenguaje (ChatGPT, Claude, Gemini, Llama, Copilot…). Estima la probabilidad de que el TEXTO de abajo haya sido generado por IA (tal cual o con pocos retoques) en lugar de escrito por una persona.\n\nLee el texto completo y pondera todas estas señales; ninguna basta por sí sola.\n\nSeñales de IA:\n- Vocabulario de asistente: «en el mundo actual», «en la era digital», «juega un papel fundamental» o «crucial», «cabe destacar», «es importante señalar», «no solo… sino también», «en conclusión», «en resumen», «en definitiva», «aspectos clave», «una amplia gama», «fomentar», «potenciar», «optimizar», «abordar», «desafíos y oportunidades», «integral», «enriquecedor», «transformador», «sinergia», «panorama», «sin lugar a dudas», «resulta fundamental».\n- Estructura de plantilla: introducción general, bloques simétricos y un cierre que resume o moraliza; párrafos de largo parecido; conectores encadenados al inicio de las oraciones (Además, Asimismo, Por otro lado, Sin embargo, Finalmente); enumeraciones de tres elementos; listas con títulos.\n- Estilo: tono neutro, pulido y positivo; equilibrio forzado («si bien…, también…»); generalidades sin datos comprobables; adjetivos en pares («eficiente y sostenible»); ortografía y puntuación impecables; ritmo uniforme; voz impersonal, o una experiencia personal genérica sin detalles verificables.\n- Imitación de lo humano: coloquialismos, emojis o «errores» repartidos de forma demasiado regular también pueden ser de IA.\n\nSeñales humanas:\n- Detalles concretos y verificables: nombres propios, fechas, cifras precisas, lugares, citas textuales atribuidas, referencias a hechos específicos.\n- Irregularidad: faltas de ortografía, tildes o concordancia; puntuación inconsistente; frases muy cortas junto a otras muy largas; repeticiones, digresiones, ideas sin cerrar.\n- Voz propia: opiniones con aristas, humor, ironía, regionalismos, jerga, anécdotas con detalles específicos.\n- Formatos humanos típicos: noticia con fuentes y datos; texto legal o parlamentario técnico y repetitivo; redacción de estudiante con errores de aprendiz.\n\nTen en cuenta el género: que un texto sea formal o esté bien escrito no lo hace de IA, y que tenga un error no lo hace humano.\n\nEscala (usa toda la escala; no te quedes en el medio por precaución): 0-15 claramente humano · 15-35 probablemente humano · 35-65 dudoso · 65-85 probablemente IA · 85-100 claramente IA.\n\nEl texto está dividido en bloques marcados [B1], [B2]…; puntúa también cada bloque con la misma escala.\n\nResponde SOLO con un objeto JSON con esta forma:\n{\"ai\": <0-100>, \"senales\": [\"hasta 4 razones breves que entienda cualquier persona sin conocimientos técnicos: una frase corta cada una, citando entre comillas «…» palabras del texto que lo muestren; si el texto parece humano, explica por qué parece humano\"], \"bloques\": [{\"b\": 1, \"ai\": <0-100>}]}\n\nTEXTO:\n";
   var CLAUDE_MODEL = "claude-sonnet-5-5", CLAUDE_EFFORT = "medium", PART_WORDS = 1800, PARALLEL = 2;
 
   var SAMPLES = {
@@ -549,11 +574,102 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
   }
 
   function verdictText(s) {
-    if (s >= 0.85) return ["Probablemente generado por IA", "El modelo encuentra rasgos fuertes de escritura automática en casi todo el texto."];
-    if (s >= T_AI) return ["Posiblemente generado por IA", "Hay bastantes rasgos de texto generado. Revisa las oraciones marcadas."];
-    if (s >= T_MIX) return ["Resultado mixto", "El texto combina rasgos humanos y de IA, o el modelo no tiene suficiente seguridad."];
-    if (s >= 0.15) return ["Mayormente humano", "Predominan los rasgos de escritura humana."];
-    return ["Probablemente humano", "El estilo encaja con escritura humana."];
+    if (s >= 0.85) return ["Muy probablemente escrito con IA", "El texto tiene muchas de las marcas típicas de los asistentes de IA."];
+    if (s >= T_AI) return ["Probablemente escrito con IA", "Hay bastantes marcas típicas de la IA. Revisa las frases en rojo."];
+    if (s >= T_MIX) return ["No está claro", "Tiene rasgos de los dos tipos: puede ser un texto humano retocado con IA, o al revés."];
+    if (s >= 0.15) return ["Probablemente escrito por una persona", "Predominan los rasgos de la escritura humana."];
+    return ["Muy probablemente escrito por una persona", "El estilo encaja con la forma de escribir de una persona."];
+  }
+
+  // ---------- Razones en lenguaje sencillo, con citas del propio texto ----------
+  var AI_PHRASES = ["en el mundo actual", "en la era digital", "en la actualidad", "juega un papel fundamental", "juega un papel crucial",
+    "juega un papel clave", "desempeña un papel", "papel fundamental", "cabe destacar", "cabe señalar", "cabe mencionar",
+    "es importante destacar", "es importante señalar", "es importante tener en cuenta", "es fundamental", "resulta fundamental",
+    "resulta crucial", "resulta esencial", "sin lugar a dudas", "en conclusión", "en resumen", "en definitiva", "en síntesis",
+    "aspectos clave", "una amplia gama", "un sinfín de", "desafíos y oportunidades", "oportunidad única", "todo su potencial",
+    "un futuro más", "en este sentido", "de manera significativa", "de manera eficiente", "de forma integral", "no solo",
+    "fomentar", "potenciar", "optimizar", "sinergia", "panorama", "enriquecedor", "transformador", "crucial"];
+  var CONNECTORS = ["además", "asimismo", "sin embargo", "por otro lado", "en conclusión", "en resumen", "finalmente", "por lo tanto",
+    "en primer lugar", "en segundo lugar", "en definitiva", "de igual manera", "del mismo modo", "no obstante", "adicionalmente",
+    "en este sentido", "por último", "por consiguiente"];
+  var CLOSINGS = /^(en conclusión|en resumen|en definitiva|en síntesis|en suma|para concluir|para finalizar)/i;
+  var CASUAL_ES = ["jaja", "pues", "o sea", "bueno", "vale", "la verdad", "no sé", "oye", "mira", "ojalá", "vaya", "menos mal", "qué va", "un montón", "tipo que"];
+
+  function q(t) { return "<q>" + esc(t.trim()) + "</q>"; }
+
+  function findPhrases(text) {
+    var low = text.toLowerCase(), found = [];
+    AI_PHRASES.forEach(function (ph) {
+      var i = low.indexOf(ph);
+      if (i > -1 && !found.some(function (f) { return f.low.indexOf(ph) > -1 || ph.indexOf(f.low) > -1; })) found.push({ low: ph, orig: text.substr(i, ph.length), at: i });
+    });
+    return found.sort(function (a, b) { return a.at - b.at; });
+  }
+
+  function startsWithConnector(sent) {
+    var low = sent.trim().toLowerCase().replace(/^[¿¡"«(\s]+/, "");
+    for (var k = 0; k < CONNECTORS.length; k++) if (low.indexOf(CONNECTORS[k]) === 0 && /[\s,]/.test(low.charAt(CONNECTORS[k].length) || " ")) return CONNECTORS[k];
+    return null;
+  }
+
+  function explain(r, text) {
+    var ai = [], hu = [], sents = r.sents.map(function (p) { return p.text.trim(); });
+    var phrases = findPhrases(text);
+    var multiWord = phrases.filter(function (f) { return f.low.indexOf(" ") > -1; });
+    var strongAi = 0;
+    if (multiWord.length >= 1 && phrases.length >= 2) strongAi++,
+      ai.push("Usa expresiones muy repetidas por los asistentes de IA: " + phrases.slice(0, 3).map(function (f) { return q(f.orig); }).join(", ") + ".");
+    var conn = sents.map(startsWithConnector).filter(Boolean);
+    if (conn.length >= 3 && conn.length / Math.max(1, sents.length) >= 0.2) {
+      strongAi++;
+      var uniq = conn.filter(function (c, k) { return conn.indexOf(c) === k; }).slice(0, 3);
+      ai.push(conn.length + " de sus " + sents.length + " frases empiezan con palabras de enlace como " + uniq.map(function (c) { return q(c.charAt(0).toUpperCase() + c.slice(1)); }).join(", ") + ". La IA encadena así sus ideas; una persona lo hace con menos regularidad.");
+    }
+    if (sents.length >= 4 && CLOSINGS.test(sents[sents.length - 1].replace(/^[¿¡"«(\s]+/, ""))) strongAi++,
+      ai.push("Termina con un cierre que resume todo (" + q(sents[sents.length - 1].split(/[,:]/)[0]) + "), una fórmula muy típica de la IA.");
+    var lens = r.sents.map(function (p) { return p.words; });
+    var mean = lens.reduce(function (x, y) { return x + y; }, 0) / Math.max(1, lens.length);
+    var cv = lens.length > 2 ? stdev(lens) / mean : 0.5;
+    if (lens.length >= 6 && cv < 0.35)
+      ai.push("Casi todas las frases tienen un largo parecido (alrededor de " + Math.round(mean) + " palabras). Las personas suelen alternar frases cortas y largas.");
+    var triads = text.match(/[\p{L}]+, [\p{L}]+ y [\p{L}]+(?=[.,;:])/gu) || [];
+    if (triads.length >= 2) ai.push("Repite listas de tres elementos, como " + q(triads[0]) + ", un recurso muy habitual en la IA.");
+    var digits = (text.match(/\b\d[\d.,]*\b/g) || []).length;
+    var names = (text.match(/[^.!?¿¡\n]\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}/g) || []).length;
+    var nw = r.total || 1;
+    var first = (text.toLowerCase().match(/\b(yo|me|mi|mis|conmigo|nosotros|nosotras|nuestro|nuestra)\b/g) || []).length;
+    if (nw >= 150 && digits === 0 && names <= 1 && first === 0)
+      ai.push("Habla en términos generales: no da cifras, fechas, nombres concretos ni experiencias propias, algo típico de un texto generado.");
+    if (first >= 2 && first / nw * 100 >= 1) hu.push("Habla desde la experiencia propia (usa «yo», «me», «mi»…), algo poco habitual en la IA.");
+    if (digits + names >= 3) {
+      var ex = (text.match(/\b\d[\d.,]*\b/) || [])[0];
+      hu.push("Incluye datos concretos" + (ex ? " como " + q(ex) : "") + " (cifras, fechas o nombres), más propios de alguien que conoce el tema de primera mano.");
+    }
+    if (lens.length >= 5 && cv > 0.6) hu.push("Mezcla frases muy cortas con otras muy largas, como suele escribir una persona.");
+    var low = text.toLowerCase();
+    var casual = CASUAL_ES.filter(function (w) { return new RegExp("(^|[^\\p{L}])" + w + "(?=$|[^\\p{L}])", "u").test(low); });
+    if (/[¿?¡!]/.test(text) || casual.length) hu.push("Tiene un tono espontáneo" + (casual.length ? " (" + casual.slice(0, 2).map(q).join(", ") + ")" : " (preguntas o exclamaciones)") + ".");
+    return { ai: ai, hu: hu, strongAi: ai.slice(0, strongAi) };
+  }
+
+  // ¿Ya lo dijo Claude? Compara las citas de una razón con el texto de las razones de Claude.
+  function saidBy(claudeText, reasonHtml) {
+    var qs = reasonHtml.match(/<q>([^<]+)<\/q>/g) || [];
+    return qs.some(function (x) { return claudeText.indexOf(x.replace(/<\/?q>/g, "").toLowerCase()) > -1; });
+  }
+
+  function sentenceReasons(p) {
+    var t = p.text.trim(), out = [];
+    var ph = findPhrases(t);
+    if (ph.length) out.push({ k: "ai", t: "Usa " + ph.slice(0, 2).map(function (f) { return q(f.orig); }).join(" y ") + ", " + (ph.length > 1 ? "expresiones típicas" : "una expresión típica") + " de la IA." });
+    var c = startsWithConnector(t);
+    if (c) out.push({ k: "ai", t: "Empieza con " + q(c.charAt(0).toUpperCase() + c.slice(1)) + ", una palabra de enlace que la IA usa mucho." });
+    var tri = t.match(/[\p{L}]+, [\p{L}]+ y [\p{L}]+(?=[.,;:])/u);
+    if (tri) out.push({ k: "ai", t: "Enumera tres cosas seguidas (" + q(tri[0]) + ")." });
+    if (/\b(yo|me|mi|mis|nosotros|nuestro|nuestra)\b/i.test(t)) out.push({ k: "h", t: "Habla en primera persona." });
+    if (/\b\d/.test(t)) out.push({ k: "h", t: "Da un dato concreto (una cifra o una fecha)." });
+    if (/[¿?¡!]/.test(t)) out.push({ k: "h", t: "Es una pregunta o una exclamación, más propia del habla espontánea." });
+    return out;
   }
 
   function chips(list, cls) {
@@ -573,11 +689,9 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     if (cursor < src.length) html += esc(src.slice(cursor));
     marked.innerHTML = html;
 
-    var cb = comboFor(r), localOk = r.lang === "es";
-    $("src").textContent = r.claude ? "Claude + modelo" : "Modelo local";
+    var localOk = r.lang === "es";
+    $("src").textContent = r.claude ? "Claude + detector automático" : "Detector automático";
     $("src").classList.toggle("h", !r.claude);
-    $("ai-summary").hidden = !(r.claude && r.claude.senales.length);
-    $("ai-summary").textContent = r.claude && r.claude.senales.length ? "Señales que vio Claude: " + r.claude.senales.join(" · ") : "";
     $("ai-run").textContent = r.claude ? "Volver a revisar" : "Revisar con Claude";
     if (!r.claude && !aiBusy) $("ai-status").textContent = AI_IDLE;
     var showScore = localOk || r.claude;
@@ -588,30 +702,38 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     var v = verdictText(r.score), split = disagree(r);
     var mPct = Math.round(sigmoid(r.zModel) * 100), cPct = r.claude ? Math.round(r.claude.overall) : null;
     if (split) $("arc").setAttribute("stroke", "var(--mix)");
-    $("verdict").textContent = !showScore ? "Texto en otro idioma" : split ? "Resultado dudoso" : v[0];
+    $("verdict").textContent = !showScore ? "Texto en otro idioma" : split ? "No está claro" : v[0];
     var sub;
-    if (!showScore) sub = "Lupa está entrenado para textos en español. Para analizar este texto hace falta la revisión de Claude (disponible en claude.ai).";
-    else if (!r.claude) {
-      var cbm = MODEL.claude_bench;
-      sub = (localOk ? v[1] : "") + (cbm && cbm.combinado && cbm.modelo
-        ? " Resultado solo del modelo local: en la prueba acertó el " + Math.round(cbm.modelo.acc * 100) + " %, frente al " + Math.round(cbm.combinado.acc * 100) + " % con la revisión de Claude (disponible en claude.ai)."
-        : "");
-    }
-    else if (r.lang !== "es") sub = "Nota de Claude: el modelo local solo analiza español.";
-    else if (MODEL.combo) sub = "Claude: " + cPct + " % · modelo local: " + mPct + " %. La nota final los combina con los pesos medidos en la prueba (Claude pesa más y su escala está calibrada: un 50 % de Claude ya indica IA).";
-    else if (split) sub = "El modelo local estima " + mPct + " % y Claude " + cPct + " %: no coinciden, así que revisa el texto a mano. La nota que ves es la del modelo local, cuya precisión está medida; la de Claude en español aún no.";
-    else sub = v[1] + " Claude coincide (" + cPct + " %).";
-    $("verdict-sub").textContent = sub + (showScore ? " " + r.sents.length.toLocaleString("es") + " oraciones, " + r.total.toLocaleString("es") + " palabras." : "");
-    $("lang").textContent = r.lang === "es" ? "Idioma: español" : "Idioma: no es español";
+    if (!showScore) sub = "Lupa está hecho para textos en español. Para este texto hace falta la revisión de Claude, disponible al abrir la página en claude.ai.";
+    else if (split) sub = "Claude y el detector automático no coinciden, así que conviene leer el texto con calma.";
+    else if (r.claude) sub = v[1] + " Lo revisaron Claude y el detector automático.";
+    else sub = v[1] + (MODEL.claude_bench ? " Por ahora lo revisó solo el detector automático; en claude.ai también lo revisa Claude, que acierta más." : "");
+    $("verdict-sub").textContent = sub;
+    $("lang").textContent = r.lang === "es" ? r.total.toLocaleString("es") + " palabras" : "No está en español";
+
+    // ¿Por qué? — primero las razones de Claude (si las hay), luego lo que se ve en el texto.
+    var ex = explain(r, src), isAi = r.score >= 0.5;
+    var items = [];
+    var cText = r.claude ? r.claude.senales.join(" ").toLowerCase() : "";
+    if (r.claude && r.claude.senales.length) r.claude.senales.slice(0, 3).forEach(function (t) { items.push({ k: isAi ? "" : "h", h: esc(t) }); });
+    (isAi ? ex.ai : ex.hu).forEach(function (t) { if (items.length < 5 && !saidBy(cText, t)) items.push({ k: isAi ? "" : "h", h: t }); });
+    if (!items.length) items.push({ k: "n", h: isAi
+      ? "No hay una marca concreta que destaque: el resultado viene del patrón general de palabras, parecido al de los textos de IA con los que se entrenó el detector."
+      : "No hay marcas típicas de la IA: ni expresiones de asistente, ni estructura de plantilla, ni un ritmo demasiado regular." });
+    $("why-title").textContent = !showScore ? "¿Por qué no hay resultado?" : isAi ? "¿Por qué parece IA?" : "¿Por qué parece escrito por una persona?";
+    $("why-list").innerHTML = !showScore ? '<li class="n">El detector automático solo funciona con textos en español.</li>' :
+      items.map(function (it) { return '<li class="' + it.k + '">' + it.h + "</li>"; }).join("");
+    var other = isAi ? ex.hu : ex.strongAi;
+    $("why-other").hidden = !showScore || !other.length;
+    $("why-other").innerHTML = other.length ? (isAi ? "Aun así, hay algo que apunta a una persona: " : "Aun así, hay algo que recuerda a la IA: ") + other[0] : "";
+
     var sn = $("short-note");
     sn.hidden = r.total >= 200;
-    if (r.total < 200) {
-      // Referencia medida con los textos de prueba en español.
-      var lm = MODEL.metrics.longitud || {}, ref = lm[r.total < 100 ? "es 40-100" : "es 100-200"], long_ = lm["es 200-+"];
-      var ratio = ref && long_ && long_.acc < 1 ? (1 - ref.acc) / (1 - long_.acc) : null;
-      sn.textContent = "Texto corto (" + r.total + " palabras): por debajo de 200 palabras el detector se equivoca más" +
-        (ratio && ratio > 1.2 ? "; en las pruebas, los textos de esta longitud tuvieron unas " + ratio.toFixed(1).replace(".", ",") + " veces más errores que los de más de 200 palabras" : "") + ". Si puedes, analiza un fragmento más largo.";
-    }
+    if (r.total < 200) sn.textContent = "Texto corto (" + r.total + " palabras): con menos de 200 palabras el detector se equivoca más. Si puedes, analiza un fragmento más largo.";
+
+    $("tech-scores").textContent = (r.claude ? "Claude: " + cPct + " % · " : "") + (localOk ? "detector automático: " + mPct + " % · " : "") +
+      (r.claude && MODEL.combo ? "la nota final los combina con pesos medidos (Claude pesa unas cuatro veces más y su escala está calibrada: a textos humanos les da menos de 15 %). " : "") +
+      r.sents.length.toLocaleString("es") + " frases.";
     [["ai", "b-ai", "n-ai"], ["mix", "b-mix", "n-mix"], ["hu", "b-hu", "n-hu"]].forEach(function (x) {
       var val = Math.round(r.share[x[0]] * 100);
       $(x[1]).style.width = val + "%"; $(x[2]).textContent = val + "%";
@@ -624,7 +746,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
       return '<li><div class="sig-top"><span>' + esc(s.name) + '<span class="lean ' + s.lean + '">' + leanTxt[s.lean] + '</span></span><span>' + esc(s.value) + '</span></div>' +
         '<div class="meter"><i style="width:' + Math.round(s.bar * 100) + '%;background:' + colors[s.lean] + '"></i></div><p>' + esc(s.note) + "</p></li>";
     }).join("");
-    $("detail").innerHTML = '<span class="empty">Toca una oración marcada para ver su puntuación y las palabras que la explican.</span>';
+    $("detail").innerHTML = '<span class="empty">Toca una frase coloreada para ver qué tiene de IA o de humano.</span>';
     showMarked(true);
   }
 
@@ -632,12 +754,11 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     var p = lastResult && lastResult.sents[i]; if (!p) return;
     marked.querySelectorAll(".s.active").forEach(function (el) { el.classList.remove("active"); });
     var el = marked.querySelector('[data-i="' + i + '"]'); if (el) el.classList.add("active");
-    var label = p.cls === "ai" ? "Probable IA" : p.cls === "mix" ? "Revisar" : "Probable humano";
-    var ex = scoreText(flat(p.text), true);
-    var why = p.claudeAi != null ? '<p style="margin:6px 0 0"><span class="src">Claude ' + Math.round(p.claudeAi) + ' %</span> nota de Claude para el bloque de unas 150 palabras que contiene esta oración.</p>' : "";
-    $("detail").innerHTML = '<span class="label">Oración ' + (i + 1) + " · " + label + " · " + Math.round(p.p * 100) + '% IA</span><p class="q">' + esc(p.text.trim()) + "</p>" + why +
-      '<div class="terms" style="margin-top:8px"><small>Hacia IA</small>' + chips(ex.ai.slice(0, 5), "ai") + '</div><div class="terms"><small>Hacia humano</small>' + chips(ex.hu.slice(0, 5), "human") + "</div>" +
-      '<p class="note" style="margin-top:8px">La puntuación de la oración combina la nota de Claude para su bloque con la del modelo local para la oración y sus vecinas.</p>';
+    var label = p.cls === "ai" ? "Esta frase parece de IA" : p.cls === "mix" ? "Esta frase es dudosa" : "Esta frase parece humana";
+    var rs = sentenceReasons(p);
+    var list = rs.length ? '<ul class="why-list" style="margin-top:8px">' + rs.map(function (x) { return '<li class="' + (x.k === "h" ? "h" : "") + '">' + x.t + "</li>"; }).join("") + "</ul>"
+      : '<p class="note" style="margin-top:6px">No tiene una marca evidente por sí sola: su color depende de las frases de alrededor' + (p.claudeAi != null ? " y de lo que Claude vio en esa parte del texto" : "") + ".</p>";
+    $("detail").innerHTML = '<span class="label">' + label + "</span><p class=\"q\">" + esc(p.text.trim()) + "</p>" + list;
   }
 
   function showMarked(on) {
@@ -719,7 +840,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 
   // ---------- Revisión con Claude (capacidad "sample" de claude.ai, con la cuenta de quien abre la página) ----------
   var sampleFn = null, aiBusy = false, aiCtl = null;
-  var AI_IDLE = "Al analizar, Claude Sonnet 5.5 (esfuerzo medio) lee el texto por bloques; su opinión es la que más pesa en la nota final. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.";
+  var AI_IDLE = "Al analizar, Claude lee el texto y da su opinión, que es la que más pesa en el resultado. Es gratis: usa tu cuenta de Claude.";
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("sample").then(function (s) { sampleFn = s; $("ai-row").hidden = !s; if (s && lastResult) render(lastResult); }, function () {});
   }
@@ -815,8 +936,8 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     aiCtl = new AbortController();
     setAiBusy(true);
     var status = function () {
-      $("ai-status").textContent = "Claude Sonnet 5.5 está revisando el texto" + (parts.length > 1 ? " (" + done + " de " + parts.length + " partes listas)" : "") +
-        "… Cada parte tarda entre 10 y 60 segundos. Mientras tanto ves el resultado provisional del modelo local.";
+      $("ai-status").textContent = "Claude está leyendo el texto" + (parts.length > 1 ? " (" + done + " de " + parts.length + " partes listas)" : "") +
+        "… Suele tardar entre 10 segundos y un minuto. Mientras tanto ves un resultado provisional.";
     };
     status();
     var worker = function () {
@@ -825,7 +946,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
       if (k >= parts.length) return Promise.resolve();
       return sampleFn(claudeInput(r, parts[k]), { signal: aiCtl.signal, model: CLAUDE_MODEL, effort: CLAUDE_EFFORT, modelTier: "default" }).then(function (res) {
         if (lastResult !== r) return;
-        modelLabel = res.modelApplied === CLAUDE_MODEL ? "Claude Sonnet 5.5 (esfuerzo medio)" : "Claude (modelo por defecto de tu cuenta; Sonnet 5.5 no estaba disponible)";
+        modelLabel = res.modelApplied === CLAUDE_MODEL ? "Claude Sonnet 5.5" : "Claude (con el modelo por defecto de tu cuenta)";
         results[k] = res.truncated ? null : applyPart(r, parts[k], parseJson(res.text));
         done++;
         finishClaude(r, results, parts.length, modelLabel);
@@ -856,6 +977,12 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 
   // ---------- Tabla de precisión ----------
   function fillMetrics() {
+    var cbp = MODEL && MODEL.claude_bench, pa = $("plain-acc");
+    if (cbp && cbp.combinado && cbp.modelo && pa) {
+      pa.textContent = "En nuestras pruebas con " + cbp.n + " textos en español, cuando Claude revisa el texto Lupa acertó en " + Math.round(cbp.combinado.acc * 100) +
+        " de cada 100, incluidos textos de IA «humanizados» para engañar a los detectores. Solo con el detector automático acertó en " + Math.round(cbp.modelo.acc * 100) +
+        " de cada 100 en esos mismos textos. Aun así, puede equivocarse: con textos cortos, con textos de IA editados a mano o con estilos que no ha visto.";
+    }
     var m = MODEL && MODEL.metrics, body = document.querySelector("#metrics-table tbody");
     if (!m || !body) return;
     var pc = function (x) { return x == null ? "–" : (x * 100).toFixed(1).replace(".", ",") + " %"; };
