@@ -46,6 +46,7 @@ Tarda unos 25 minutos con 4 núcleos y necesita unos 8 GB de RAM.
 - `evaluate_es.py`: auditoría en español con la lógica de la página (`--write-metrics` guarda las métricas en el modelo).
 - `gen_tasks.py`: encargos con los que los subagentes generaron `data/es_ia_generado.txt`.
 - `claude_prompt.txt`: instrucción que la página envía a Claude (`claude_prompt_v1.txt` es la anterior).
+- `robustez_humanizado.py`: prueba interna con texto de IA «humanizado» (`data/es_ia_humanizado.txt`; las versiones `hp*` solo se usan para medir).
 - `bench_claude.py` y `fit_combo.py`: prueba con Claude y ajuste de los pesos de la combinación (`--write` los guarda en el modelo como `combo`).
 
 Las fuentes humanas en español (licencias): AnCora UD (CC BY 4.0), GSD UD (CC BY-SA 4.0), Spanish Fake News Corpus (CC BY 4.0), COWS-L2H (Apache 2.0), además de las ya citadas. Los textos no se incluyen en el repositorio.

@@ -73,6 +73,26 @@ Claude separó perfectamente los textos humanos de los de IA actual (AUROC 1,0),
 
 Sin Claude (por ejemplo, en GitHub Pages) la página funciona solo con el modelo local y lo indica.
 
+### Prueba de resistencia frente a texto «humanizado»
+
+Los humanizadores reescriben texto de IA para engañar a los detectores. Lupa no incluye un humanizador; esta prueba interna sirve para comprobar si el detector resiste esas técnicas (`model/robustez_humanizado.py`).
+
+Un subagente reescribió 80 textos de IA con cuatro técnicas típicas (40 de la partición de prueba para medir y 40 de entrenamiento): parafraseo genérico, voz personal con anécdotas, imperfecciones (frases desiguales, tildes y puntuación descuidadas, coloquialismos) y quitar frases típicas y estructura de plantilla. Claude Sonnet 5.5 evaluó los 40 de prueba mezclados con 14 textos humanos de control.
+
+| 40 textos de IA de prueba, IA detectada | Original | Humanizado |
+|---|---|---|
+| Modelo local (umbral 50 %) | 60 % | 42 % |
+| Claude solo, umbral 50 % | — | 55 % (imperfecciones 10 %, sin plantilla 20 %) |
+| **Página: Claude + modelo con escala calibrada** | — | **100 % (las cuatro técnicas)** |
+
+Claude da a los humanizados notas de 22-88 % y a los humanos de control 2-12 %: aunque con su umbral nominal de 50 % se le escapan, nunca confundió un humanizado con un humano (AUROC 1,0). Por eso la página no usa su 50 % tal cual sino una escala calibrada.
+
+Combinación final (102 textos con nota de Claude, validación cruzada): **99,0 % de aciertos, 100 % de IA detectada (incluida la humanizada) y 2,6 % de humanos marcados como IA** (un tuit), frente a 65,7 % del modelo local solo y 77,5 % de Claude solo con su umbral nominal. Después se desplazó la constante de la combinación para que la frontera de Claude (≈17 %) quede a medio camino entre la nota humana más alta (12 %) y la IA humanizada más baja (22 %): con ese margen, ningún texto humano de la prueba pasa del 38 % de nota final.
+
+Entrenar el modelo local con los 40 humanizados de entrenamiento no ayudó (42 % → 42,5 % de detección y algo más de falsos positivos), así que se mantiene el modelo 4.
+
+**Límites de esta prueba**: muestras pequeñas (40 humanizados, 38 humanos); las reescrituras las hizo Claude y las juzgó Claude, lo que puede favorecerlo; no se probaron humanizadores comerciales ni otros detectores porque no son accesibles desde el entorno de trabajo.
+
 ### Repositorios revisados que no se incorporaron
 
 - `ai-detected/ai-detectors`: lista de detectores de imágenes, video, audio y deepfakes. No aplica a texto.

@@ -20,6 +20,7 @@ DEFAULTS = {
     "ancora": "/home/user/universaldependencies/ud_spanish-ancora",
     "fakenews": "/home/user/jpposadas/fakenewscorpusspanish",
     "gen": os.path.join(HERE, "data", "es_ia_generado.txt"),
+    "hum": os.path.join(HERE, "data", "es_ia_humanizado.txt"),
 }
 
 
@@ -129,6 +130,9 @@ def load_docs(paths=None):
         add(t, 1, "es-ia-moderno", f"esai-{i}")
     for gid, t in parse_generated(p["gen"]).items():
         add(t, 1, "ia-generado", f"gen-{gid}")
+    # IA «humanizada» (prueba de resistencia): textos de IA reescritos con técnicas de humanizadores.
+    for hid, t in parse_generated(p["hum"]).items():
+        add(t, 1, "ia-humanizada", f"hum-{hid}")
     return docs
 
 
@@ -141,6 +145,8 @@ def is_test(group, frozen):
         return False  # su partición ya está fijada por test_groups.json
     if group.startswith("gen-"):
         return group.startswith("gen-b")
+    if group.startswith("hum-"):
+        return group.startswith("hum-hp")
     return zlib.crc32(group.encode()) % 100 < 15
 
 
