@@ -167,7 +167,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 .metrics { display: grid; gap: 10px; }
 .metrics h3 { font-size: 18px; }
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.metrics table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+.metrics table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
 .metrics th, .metrics td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
 .metrics th { font: 500 11.5px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .metrics td:not(:first-child), .metrics th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -193,7 +193,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
   <section class="wrap intro">
     <span class="label">Detector de texto IA · Gratis · Español</span>
     <h1>Revisa si un texto suena escrito por una máquina</h1>
-    <p>Pega un texto en español o sube un archivo de hasta 50 000 palabras. Claude Sonnet 5.5 lo revisa por bloques y un modelo entrenado con textos humanos y de IA en español aporta una segunda señal; la nota final combina ambos según la precisión medida de cada uno. Es gratis y sin límite de usos. En claude.ai la revisión de Claude usa tu propia cuenta; fuera de claude.ai solo funciona el modelo local, que no envía el texto a ningún servidor.</p>
+    <p>Pega un texto en español o sube un archivo de hasta 50 000 palabras. En claude.ai, Claude Sonnet 5.5 lo revisa por bloques y un modelo entrenado con más de 60 000 textos humanos y de IA en español aporta una segunda señal; la nota final los combina con pesos medidos. Es gratis y sin límite de usos; la revisión de Claude usa tu propia cuenta.</p>
   </section>
 
   <section class="wrap bench" id="detector">
@@ -265,13 +265,13 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 
         <div class="claude-box" id="ai-row" hidden>
           <div class="row">
-            <h3>Revisión con Claude</h3>
+            <h3>Revisión con Claude (detector principal)</h3>
             <div class="actions">
               <button class="btn" type="button" id="ai-stop" hidden>Detener</button>
               <button class="btn primary" type="button" id="ai-run">Revisar con Claude</button>
             </div>
           </div>
-          <p id="ai-status">Al analizar, Claude Sonnet 5.5 (esfuerzo medio) lee el texto por bloques y da su propia estimación. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.</p>
+          <p id="ai-status">Al analizar, Claude Sonnet 5.5 (esfuerzo medio) lee el texto por bloques; su opinión es la que más pesa en la nota final. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.</p>
           <p class="summary" id="ai-summary" hidden></p>
         </div>
 
@@ -288,14 +288,14 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
   <section class="wrap method" id="metodo">
     <h2>Cómo funciona</h2>
     <ol class="steps">
-      <li><h3>Claude lee el texto</h3><p>En claude.ai, Claude Sonnet 5.5 revisa el texto en bloques de unas 150 palabras con una guía de señales de IA y de escritura humana en español, y da una probabilidad para el texto y para cada bloque.</p></li>
-      <li><h3>El modelo local da una segunda señal</h3><p>Una regresión logística entrenada solo con textos en español (noticias, ensayos de estudiantes, textos web, debates, tuits y textos de GPT-3, BLOOM, Haiku, Sonnet y Opus) puntúa palabras, pares de palabras, fragmentos de letras y 15 medidas de estilo.</p></li>
-      <li><h3>Se combinan con pesos medidos</h3><p>La nota final suma ambas señales con los pesos que mejor acertaron en una prueba con textos de etiqueta conocida. Cada oración se colorea con la nota de su bloque y la del modelo para esa oración y sus vecinas.</p></li>
+      <li><h3>Claude lee el texto</h3><p>En claude.ai, Claude Sonnet 5.5 (esfuerzo medio) revisa el texto en bloques de unas 150 palabras con una guía de señales de IA y de escritura humana en español, sin el sesgo de la instrucción anterior hacia «humano».</p></li>
+      <li><h3>El modelo local aporta otra señal</h3><p>Una regresión logística entrenada solo con textos en español (noticias, ensayos de estudiantes, textos web, debates, tuits y textos de GPT-3, BLOOM, Haiku, Sonnet y Opus) puntúa palabras, pares de palabras, fragmentos de letras y 15 medidas de estilo.</p></li>
+      <li><h3>Se combinan con pesos medidos</h3><p>En una prueba con textos de etiqueta conocida, Claude acertó mucho más que el modelo local, así que su opinión pesa unas cuatro veces más. Los pesos y la escala salen de esa prueba, no de un promedio a ciegas.</p></li>
     </ol>
     <div class="metrics" id="precision">
       <h3>Precisión medida con textos que el modelo nunca vio</h3>
       <p class="note">Textos en español nunca usados para entrenar. Umbral de 50 %, salvo donde se indica.</p>
-      <div class="table-wrap"><table id="metrics-table"><thead><tr><th>Conjunto de prueba</th><th>Textos</th><th>Aciertos</th><th>AUROC</th><th>Humanos marcados como IA</th></tr></thead><tbody></tbody></table></div>
+      <div class="table-wrap"><table id="metrics-table"><thead><tr><th>Conjunto de prueba</th><th>Textos</th><th>Aciertos</th><th>AUROC</th><th>IA detectada</th><th>Humanos marcados como IA</th></tr></thead><tbody></tbody></table></div>
       <p class="note">AUROC mide cuánto separa el modelo ambos tipos de texto: 1,0 es perfecto y 0,5 equivale a lanzar una moneda.</p>
     </div>
     <div class="limits" id="limites">
@@ -422,7 +422,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     var raw = JSON.parse($("lupa-model").textContent);
     var bin = atob(raw.w), w = new Int8Array(bin.length);
     for (var i = 0; i < bin.length; i++) w[i] = (bin.charCodeAt(i) << 24) >> 24;
-    MODEL = { w: w, mask: (1 << raw.dBits) - 1, scale: raw.scale, bias: raw.bias, alpha: raw.alpha, mu: raw.mu, sd: raw.sd, wd: raw.wd, metrics: raw.metrics || {} };
+    MODEL = { w: w, mask: (1 << raw.dBits) - 1, scale: raw.scale, bias: raw.bias, alpha: raw.alpha, mu: raw.mu, sd: raw.sd, wd: raw.wd, metrics: raw.metrics || {}, combo: raw.combo || null, claude_bench: raw.claude_bench || null };
   } catch (e) { MODEL = null; }
 
   // Devuelve el logit del modelo para un texto; con explain=true, también las palabras que más aportan.
@@ -585,15 +585,23 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     $("pct").textContent = showScore ? pct + "%" : "–";
     $("arc").setAttribute("stroke-dasharray", (showScore ? pct : 0) + " 100");
     $("arc").setAttribute("stroke", r.score >= T_AI ? "var(--ai)" : r.score >= T_MIX ? "var(--mix)" : "var(--human)");
-    var v = verdictText(r.score);
-    $("verdict").textContent = showScore ? v[0] : "Texto en otro idioma";
-    var parts_ = [];
-    if (r.claude) parts_.push("Claude: " + Math.round(r.claude.overall) + " %");
-    if (localOk) parts_.push("modelo local: " + Math.round(sigmoid(r.zModel) * 100) + " %");
-    $("verdict-sub").textContent = !showScore
-      ? "Lupa está entrenado para textos en español. Para analizar este texto hace falta la revisión de Claude (disponible en claude.ai)."
-      : (r.claude ? parts_.join(" · ") + ". La nota final los combina según la precisión medida de cada uno. " : (localOk ? v[1] + " " : "")) +
-        r.sents.length.toLocaleString("es") + " oraciones, " + r.total.toLocaleString("es") + " palabras.";
+    var v = verdictText(r.score), split = disagree(r);
+    var mPct = Math.round(sigmoid(r.zModel) * 100), cPct = r.claude ? Math.round(r.claude.overall) : null;
+    if (split) $("arc").setAttribute("stroke", "var(--mix)");
+    $("verdict").textContent = !showScore ? "Texto en otro idioma" : split ? "Resultado dudoso" : v[0];
+    var sub;
+    if (!showScore) sub = "Lupa está entrenado para textos en español. Para analizar este texto hace falta la revisión de Claude (disponible en claude.ai).";
+    else if (!r.claude) {
+      var cbm = MODEL.claude_bench;
+      sub = (localOk ? v[1] : "") + (cbm && cbm.combinado && cbm.modelo
+        ? " Resultado solo del modelo local: en la prueba acertó el " + Math.round(cbm.modelo.acc * 100) + " %, frente al " + Math.round(cbm.combinado.acc * 100) + " % con la revisión de Claude (disponible en claude.ai)."
+        : "");
+    }
+    else if (r.lang !== "es") sub = "Nota de Claude: el modelo local solo analiza español.";
+    else if (MODEL.combo) sub = "Claude: " + cPct + " % · modelo local: " + mPct + " %. La nota final los combina con los pesos medidos en la prueba (Claude pesa más y su escala está calibrada: un 50 % de Claude ya indica IA).";
+    else if (split) sub = "El modelo local estima " + mPct + " % y Claude " + cPct + " %: no coinciden, así que revisa el texto a mano. La nota que ves es la del modelo local, cuya precisión está medida; la de Claude en español aún no.";
+    else sub = v[1] + " Claude coincide (" + cPct + " %).";
+    $("verdict-sub").textContent = sub + (showScore ? " " + r.sents.length.toLocaleString("es") + " oraciones, " + r.total.toLocaleString("es") + " palabras." : "");
     $("lang").textContent = r.lang === "es" ? "Idioma: español" : "Idioma: no es español";
     var sn = $("short-note");
     sn.hidden = r.total >= 200;
@@ -711,7 +719,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
 
   // ---------- Revisión con Claude (capacidad "sample" de claude.ai, con la cuenta de quien abre la página) ----------
   var sampleFn = null, aiBusy = false, aiCtl = null;
-  var AI_IDLE = "Al analizar, Claude Sonnet 5.5 (esfuerzo medio) lee el texto por bloques y da su propia estimación. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.";
+  var AI_IDLE = "Al analizar, Claude Sonnet 5.5 (esfuerzo medio) lee el texto por bloques; su opinión es la que más pesa en la nota final. Es gratis: usa tu cuenta de Claude, sin clave de API ni pagos.";
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("sample").then(function (s) { sampleFn = s; $("ai-row").hidden = !s; if (s && lastResult) render(lastResult); }, function () {});
   }
@@ -727,10 +735,18 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
   };
   var HIDE_CODES = ["sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
 
-  // Pesos de la combinación, medidos con la prueba de Claude (model/fit_combo.py). z = c + a·z_modelo + b·logit(Claude).
+  // Combinación z = c + a·z_modelo + b·logit(Claude). Solo se usa cuando los pesos están medidos
+  // (model/fit_combo.py los guarda en el modelo). Sin medir, la nota es la del modelo local y Claude
+  // se muestra como segunda opinión independiente.
   function comboFor(r) {
     if (r.lang !== "es") return { a: 0, b: 1, c: 0 };  // el modelo local solo sabe español
-    return MODEL.combo || { a: 0.5, b: 0.5, c: 0 };
+    return MODEL.combo || { a: 1, b: 0, c: 0 };
+  }
+  // ¿Discrepan el modelo y Claude? Uno ve IA (≥ 60 %) y el otro humano (≤ 40 %).
+  function disagree(r) {
+    if (!r.claude || r.lang !== "es" || MODEL.combo) return false;
+    var m = sigmoid(r.zModel) * 100, c = r.claude.overall;
+    return (m >= 60 && c <= 40) || (m <= 40 && c >= 60);
   }
 
   function claudeParts(r) {
@@ -800,7 +816,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     setAiBusy(true);
     var status = function () {
       $("ai-status").textContent = "Claude Sonnet 5.5 está revisando el texto" + (parts.length > 1 ? " (" + done + " de " + parts.length + " partes listas)" : "") +
-        "… Cada parte tarda entre 10 y 60 segundos. El resultado de abajo es provisional (modelo local).";
+        "… Cada parte tarda entre 10 y 60 segundos. Mientras tanto ves el resultado provisional del modelo local.";
     };
     status();
     var worker = function () {
@@ -845,7 +861,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     var pc = function (x) { return x == null ? "–" : (x * 100).toFixed(1).replace(".", ",") + " %"; };
     var row = function (label, x) {
       if (!x || typeof x.n !== "number") return "";
-      return "<tr><td>" + esc(label) + "</td><td>" + x.n.toLocaleString("es") + "</td><td>" + pc(x.acc) + "</td><td>" + (x.auroc == null ? "–" : x.auroc.toFixed(3).replace(".", ",")) + "</td><td>" + pc(x.fpr_humano) + "</td></tr>";
+      return "<tr><td>" + esc(label) + "</td><td>" + x.n.toLocaleString("es") + "</td><td>" + pc(x.acc) + "</td><td>" + (x.auroc == null ? "–" : x.auroc.toFixed(3).replace(".", ",")) + "</td><td>" + pc(x.recall_ia) + "</td><td>" + pc(x.fpr_humano) + "</td></tr>";
     };
     var html = "", cb = MODEL.claude_bench;
     if (cb) {
