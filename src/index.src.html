@@ -1,0 +1,1029 @@
+<!doctype html><!--wrap-->
+<html lang="es"><!--wrap-->
+<head><!--wrap-->
+<meta charset="utf-8"><!--wrap-->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!--wrap-->
+<title>Lupa Detector</title>
+<meta name="description" content="Detector gratuito de texto generado por IA, con un modelo entrenado que funciona en tu navegador: puntuación global, análisis por oración y palabras que explican el resultado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab bench. Barra superior, mesa de trabajo de dos columnas (texto | informe), luego método y límites. */
+:root {
+  --bg: #f3f4f1;
+  --surface: #ffffff;
+  --ink: #1b2124;
+  --muted: #5b6669;
+  --line: #d9dcd6;
+  --accent: #1f5f6b;
+  --accent-ink: #ffffff;
+  --ai: #c2412d;
+  --ai-wash: #f8dcd5;
+  --mix: #a8740f;
+  --mix-wash: #f7ead0;
+  --human: #2f7a4a;
+  --human-wash: #d9eedf;
+  --focus: #1f5f6b;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121618; --surface: #1a2023; --ink: #e7ebe8; --muted: #9aa6a8; --line: #2c3539;
+    --accent: #6cc3cf; --accent-ink: #0d1b1e;
+    --ai: #f08a76; --ai-wash: #47241e; --mix: #e3b55a; --mix-wash: #3f3218; --human: #7fcf98; --human-wash: #1d3a27;
+    --focus: #6cc3cf; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121618; --surface: #1a2023; --ink: #e7ebe8; --muted: #9aa6a8; --line: #2c3539;
+  --accent: #6cc3cf; --accent-ink: #0d1b1e;
+  --ai: #f08a76; --ai-wash: #47241e; --mix: #e3b55a; --mix-wash: #3f3218; --human: #7fcf98; --human-wash: #1d3a27;
+  --focus: #6cc3cf; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; }
+@media (min-width: 720px) { .wrap { padding-inline: 28px; } }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+.label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Barra superior */
+.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.brand svg { flex: none; }
+.top nav { display: flex; gap: 18px; font-size: 14px; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--ink); }
+
+/* Encabezado */
+.intro { padding-block: 32px 20px; display: grid; gap: 10px; }
+.intro h1 { font-size: clamp(28px, 4.2vw, 44px); font-weight: 700; max-width: 22ch; }
+.intro p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+/* Mesa de trabajo */
+.bench { display: grid; gap: 20px; padding-bottom: 40px; }
+@media (min-width: 960px) { .bench { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.panel-body { padding: 16px; }
+.samples { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px/1 var(--font-body); border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 7px 10px; border-radius: 999px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+textarea#text { width: 100%; min-height: 340px; resize: vertical; border: 0; background: transparent; color: var(--ink); font: 16px/1.65 var(--font-body); padding: 0; }
+textarea#text:focus { outline: none; }
+#marked { font-size: 16px; line-height: 1.75; min-height: 340px; white-space: pre-wrap; overflow-wrap: anywhere; }
+#marked .s { border-radius: 3px; padding: 1px 0; cursor: help; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+#marked .s.ai { background: var(--ai-wash); box-shadow: inset 0 -2px 0 var(--ai); }
+#marked .s.mix { background: var(--mix-wash); box-shadow: inset 0 -2px 0 var(--mix); }
+#marked .s.human { background: transparent; }
+#marked .s.active { outline: 2px solid var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.panel-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.count { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.count.over { color: var(--ai); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: 600 14px/1 var(--font-body); border-radius: 8px; padding: 11px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.file { position: relative; overflow: hidden; }
+.file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.note.err { color: var(--ai); }
+
+/* Informe */
+.report .panel-body { display: grid; gap: 22px; }
+.verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.gauge { width: 148px; max-width: 100%; }
+.gauge text { font-family: var(--font-display); fill: var(--ink); }
+.verdict h2 { font-size: 22px; }
+.verdict p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+.split { display: grid; gap: 8px; }
+.bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); }
+.bar i { display: block; height: 100%; transition: width .5s ease; }
+.split-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.split-legend div { display: grid; gap: 2px; }
+.split-legend b { font: 500 20px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.split-legend small { color: var(--muted); font-size: 12.5px; }
+.signals { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.signals li { display: grid; gap: 5px; }
+.sig-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 500; }
+.sig-top span:last-child { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.meter { height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; transition: width .5s ease; }
+.signals p { margin: 0; color: var(--muted); font-size: 13px; }
+.lean { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+.lean.ai { background: var(--ai-wash); color: var(--ai); }
+.lean.human { background: var(--human-wash); color: var(--human); }
+.lean.neutral { background: var(--line); color: var(--muted); }
+.detail { border-top: 1px dashed var(--line); padding-top: 14px; font-size: 14px; min-height: 64px; }
+.detail .q { margin: 6px 0; font-style: italic; }
+.empty { color: var(--muted); font-size: 14px; }
+.note.warn { color: var(--ink); background: var(--mix-wash); border-radius: 6px; padding: 8px 10px; }
+.why { display: grid; gap: 8px; }
+.why h3 { font-size: 17px; }
+.why-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.why-list li { position: relative; padding-left: 22px; font-size: 15px; line-height: 1.5; }
+.why-list li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 9px; height: 9px; border-radius: 50%; background: var(--ai); }
+.why-list li.h::before { background: var(--human); }
+.why-list li.n::before { background: var(--mix); }
+.why-list q { font-style: italic; quotes: "«" "»"; }
+.why-other { margin: 0; font-size: 14px; color: var(--muted); }
+details.tech { border-top: 1px solid var(--line); padding-top: 12px; }
+details.tech summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.tech-body { display: grid; gap: 18px; margin-top: 14px; }
+.claude-box { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
+.claude-box .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.claude-box h3 { font-size: 15px; }
+.claude-box p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.claude-box .summary { color: var(--ink); font-size: 14px; }
+.src { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); }
+.src.h { background: var(--line); color: var(--muted); }
+
+/* Método */
+.method { border-top: 1px solid var(--line); padding-block: 40px; display: grid; gap: 24px; }
+.method h2 { font-size: 28px; }
+.steps { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+@media (min-width: 760px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.steps li { counter-increment: step; display: grid; gap: 6px; align-content: start; }
+.steps li::before { content: "Paso " counter(step); font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.steps h3 { font-size: 18px; }
+.steps p, .limits p { margin: 0; color: var(--muted); max-width: 62ch; }
+.limits { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--mix); border-radius: 8px; padding: 16px 18px; }
+.limits h3 { font-size: 17px; }
+footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var(--muted); font-size: 13px; }
+@media (max-width: 520px) {
+  .top nav { display: none; }
+  .verdict { grid-template-columns: 1fr; justify-items: start; }
+}
+@media (prefers-reduced-motion: reduce) { .bar i, .meter i, .gauge * { transition: none !important; } }
+.terms-box { display: grid; gap: 8px; }
+.terms { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.terms small { color: var(--muted); font-size: 12.5px; min-width: 92px; }
+.term { font: 500 13px/1.2 var(--font-mono); padding: 3px 7px; border-radius: 4px; }
+.term.ai { background: var(--ai-wash); color: var(--ai); }
+.term.human { background: var(--human-wash); color: var(--human); }
+.metrics { display: grid; gap: 10px; }
+.metrics h3 { font-size: 18px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.metrics table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
+.metrics th, .metrics td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.metrics th { font: 500 11.5px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.metrics td:not(:first-child), .metrics th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.metrics tr:last-child td { border-bottom: 0; }
+</style>
+</head><!--wrap-->
+<body><!--wrap-->
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke="var(--accent)" stroke-width="2.6"/><path d="M16.5 16.5 L23 23" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><path d="M7.5 11h7" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Lupa
+    </div>
+    <nav aria-label="Secciones">
+      <a href="#detector">Detector</a>
+      <a href="#metodo">Cómo funciona</a>
+      <a href="#precision">Precisión</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap intro">
+    <span class="label">Detector de texto IA · Gratis · Español</span>
+    <h1>¿Este texto lo escribió una persona o una IA?</h1>
+    <p>Pega un texto en español o sube un archivo. Lupa te dice qué tan probable es que lo haya escrito una IA, marca las frases sospechosas y te explica por qué, con ejemplos del propio texto. Es gratis y sin límite de usos.</p>
+  </section>
+
+  <section class="wrap bench" id="detector">
+    <div class="panel editor">
+      <div class="panel-head">
+        <span class="label" id="mode-label">Texto marcado</span>
+        <div class="samples" role="group" aria-label="Ejemplos">
+          <button class="chip" type="button" data-sample="es-ai" id="s-es-ai">Ejemplo IA (ES)</button>
+          <button class="chip" type="button" data-sample="es-human" id="s-es-human">Humano: Cervantes (ES)</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <label for="text" class="label" hidden>Texto a analizar</label>
+        <textarea id="text" spellcheck="false" placeholder="Pega aquí al menos 40 palabras…" hidden></textarea>
+        <div id="marked" aria-live="polite"></div>
+      </div>
+      <div class="panel-foot">
+        <div class="legend" aria-label="Leyenda">
+          <span><i class="sw" style="background:var(--ai-wash);box-shadow:inset 0 -2px 0 var(--ai)"></i>Parece IA</span>
+          <span><i class="sw" style="background:var(--mix-wash);box-shadow:inset 0 -2px 0 var(--mix)"></i>Dudosa</span>
+          <span><i class="sw" style="border:1px solid var(--line)"></i>Parece humana</span>
+        </div>
+        <span class="count" id="count">0 / 50 000 palabras</span>
+      </div>
+      <div class="panel-foot">
+        <div class="actions">
+          <button class="btn" type="button" id="edit">Editar texto</button>
+          <label class="btn file" for="file">Subir .txt, .docx o .pdf<input type="file" id="file" accept=".txt,.md,.docx,.pdf,text/plain"></label>
+          <button class="btn" type="button" id="clear">Vaciar</button>
+        </div>
+        <button class="btn primary" type="button" id="run">Analizar texto</button>
+      </div>
+      <div class="panel-foot" id="msg-row" hidden><p class="note" id="msg"></p></div>
+    </div>
+
+    <aside class="panel report" aria-labelledby="report-title">
+      <div class="panel-head"><span class="label" id="report-title">Resultado <span class="src h" id="src">Detector automático</span></span><span class="label" id="lang"></span></div>
+      <div class="panel-body">
+        <div class="verdict">
+          <svg class="gauge" viewBox="0 0 160 96" role="img" aria-labelledby="gauge-t">
+            <title id="gauge-t">Probabilidad de que sea IA</title>
+            <path d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
+            <path id="arc" d="M14 86 A66 66 0 0 1 146 86" fill="none" stroke="var(--ai)" stroke-width="14" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="transition: stroke-dasharray .6s ease"/>
+            <text x="80" y="76" text-anchor="middle" font-size="30" font-weight="700" id="pct">–</text>
+            <text x="80" y="93" text-anchor="middle" font-size="10" style="fill:var(--muted);font-family:var(--font-mono)">DE QUE SEA IA</text>
+          </svg>
+          <div>
+            <h2 id="verdict">Sin analizar</h2>
+            <p id="verdict-sub">Pulsa «Analizar texto» para ver el resultado.</p>
+          </div>
+        </div>
+        <p class="note warn" id="short-note" hidden></p>
+
+        <div class="why">
+          <h3 id="why-title">¿Por qué?</h3>
+          <ul class="why-list" id="why-list"></ul>
+          <p class="why-other" id="why-other" hidden></p>
+        </div>
+
+        <div class="claude-box" id="ai-row" hidden>
+          <div class="row">
+            <h3>Revisión con Claude</h3>
+            <div class="actions">
+              <button class="btn" type="button" id="ai-stop" hidden>Detener</button>
+              <button class="btn primary" type="button" id="ai-run">Revisar con Claude</button>
+            </div>
+          </div>
+          <p id="ai-status">Al analizar, Claude lee el texto y da su opinión. Es gratis: usa tu cuenta de Claude.</p>
+        </div>
+
+        <div class="detail" id="detail"><span class="empty">Toca una frase coloreada para ver qué tiene de IA o de humano.</span></div>
+
+        <details class="tech">
+          <summary>Detalles técnicos</summary>
+          <div class="tech-body">
+            <p class="note" id="tech-scores"></p>
+            <div class="split">
+              <span class="label">Reparto del texto por palabras</span>
+              <div class="bar" aria-hidden="true"><i id="b-ai" style="background:var(--ai);width:0"></i><i id="b-mix" style="background:var(--mix);width:0"></i><i id="b-hu" style="background:var(--human);width:0"></i></div>
+              <div class="split-legend">
+                <div><b id="n-ai">–</b><small>Parece IA</small></div>
+                <div><b id="n-mix">–</b><small>Dudoso</small></div>
+                <div><b id="n-hu">–</b><small>Parece humano</small></div>
+              </div>
+            </div>
+            <div class="terms-box">
+              <span class="label">Palabras que más pesaron en el detector automático</span>
+              <div class="terms" id="terms-ai" aria-label="Hacia IA"></div>
+              <div class="terms" id="terms-hu" aria-label="Hacia humano"></div>
+            </div>
+            <div>
+              <span class="label">Medidas de estilo</span>
+              <ul class="signals" id="signals" style="margin-top:10px"></ul>
+            </div>
+          </div>
+        </details>
+        <p class="note">Ningún detector es infalible: usa el resultado como orientación, no como prueba.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section class="wrap method" id="metodo">
+    <h2>Cómo funciona</h2>
+    <ol class="steps">
+      <li><h3>Claude lee el texto</h3><p>Claude revisa el texto por partes buscando las marcas típicas de la IA (expresiones de asistente, estructura de plantilla, ausencia de datos concretos) y las de una persona (experiencias propias, detalles, irregularidades).</p></li>
+      <li><h3>Un detector automático da una segunda opinión</h3><p>Un programa entrenado con más de 60 000 textos en español, escritos por personas y por IA, compara las palabras y el estilo de tu texto con los que aprendió.</p></li>
+      <li><h3>Se juntan las dos opiniones</h3><p>Como Claude acertó más en nuestras pruebas, su opinión pesa más. El resultado viene con las razones que lo explican, para que puedas comprobarlas tú.</p></li>
+    </ol>
+    <div class="metrics" id="precision">
+      <h3>¿Qué tan fiable es?</h3>
+      <p id="plain-acc"></p>
+      <details class="tech"><summary>Ver todas las pruebas</summary>
+      <p class="note">Textos en español nunca usados para entrenar. Umbral de 50 %, salvo donde se indica.</p>
+      <div class="table-wrap"><table id="metrics-table"><thead><tr><th>Conjunto de prueba</th><th>Textos</th><th>Aciertos</th><th>AUROC</th><th>IA detectada</th><th>Humanos marcados como IA</th></tr></thead><tbody></tbody></table></div>
+      <p class="note">AUROC mide cuánto separa el modelo ambos tipos de texto: 1,0 es perfecto y 0,5 equivale a lanzar una moneda.</p>
+      </details>
+    </div>
+    <div class="limits" id="limites">
+      <h3>Antes de sacar conclusiones</h3>
+      <p>Ningún detector es exacto. Este falla más con textos muy cortos, con texto de IA editado a mano o parafraseado, y con modelos o estilos distintos a los de la prueba. Un texto humano muy formal también puede salir alto. Úsalo para decidir qué revisar, nunca como prueba para acusar a alguien.</p>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">Lupa es gratis. Textos en español de 40 a 50 000 palabras. La revisión con Claude usa tu cuenta de claude.ai; el modelo local funciona en tu navegador.</div></footer>
+
+<script type="application/json" id="lupa-model">__LUPA_MODEL__</script>
+<script>
+(function () {
+  "use strict";
+  var MAX_WORDS = 50000, MIN_WORDS = 40, T_AI = 0.7, T_MIX = 0.4;
+  var CLAUDE_PROMPT = __CLAUDE_PROMPT__;
+  var CLAUDE_MODEL = "claude-sonnet-5-5", CLAUDE_EFFORT = "medium", PART_WORDS = 1800, PARALLEL = 2;
+
+  var SAMPLES = {
+    "es-ai": "En el mundo actual, la inteligencia artificial juega un papel fundamental en la transformación de la educación. Es importante destacar que estas herramientas ofrecen oportunidades significativas para personalizar el aprendizaje de cada estudiante. Además, permiten a los docentes optimizar su tiempo y centrarse en aspectos clave de la enseñanza. Sin embargo, también plantean desafíos importantes relacionados con la ética y la privacidad de los datos. Por otro lado, resulta crucial que las instituciones educativas desarrollen políticas claras para su uso responsable. Asimismo, la formación continua del profesorado se convierte en un elemento esencial para aprovechar todo su potencial. En conclusión, la integración de la inteligencia artificial en la educación representa una oportunidad única para construir un futuro más inclusivo, eficiente y sostenible.",
+    "es-human": "En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor. Una olla de algo más vaca que carnero, salpicón las más noches, duelos y quebrantos los sábados, lentejas los viernes, algún palomino de añadidura los domingos, consumían las tres partes de su hacienda. El resto della concluían sayo de velarte, calzas de velludo para las fiestas, con sus pantuflos de lo mesmo, y los días de entre semana se honraba con su vellorí de lo más fino. Tenía en su casa una ama que pasaba de los cuarenta, y una sobrina que no llegaba a los veinte, y un mozo de campo y plaza, que así ensillaba el rocín como tomaba la podadera."
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var ta = $("text"), marked = $("marked");
+  var lastResult = null;
+
+  function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+  function logit(p) { p = clamp(p, 1e-4, 1 - 1e-4); return Math.log(p / (1 - p)); }
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function words(s) { return (s.match(/[\p{L}\p{M}\p{N}]+(?:'[\p{L}\p{M}]+)*/gu) || []); }
+
+  // ---------- Rasgos: copia exacta de model/features.py ----------
+  var TOK = /[\p{L}\p{M}\p{N}]+(?:'[\p{L}\p{M}]+)*|[^\s\p{L}\p{M}\p{N}]/gu;
+  var HAS_WORD = /[\p{L}\p{M}\p{N}]/u;
+  var SENT_SPLIT = /[.!?…]+|\n+/u;
+  var FIRST_PERSON = new Set(["i", "me", "my", "mine", "i'm", "i've", "i'd", "i'll", "yo", "mi", "mis", "conmigo", "nosotros", "nosotras", "nuestro", "nuestra"]);
+  var TRANSITIONS = new Set(["además", "asimismo", "sin", "adicionalmente", "igualmente", "finalmente", "furthermore", "moreover", "additionally", "however", "overall", "ultimately", "consequently", "therefore", "thus", "notably", "importantly"]);
+  var NORM = [["’", "'"], ["‘", "'"], ["“", '"'], ["”", '"'], ["«", '"'], ["»", '"'], [" ", " "], ["﻿", ""], ["\r", ""]];
+
+  function normalizeText(t) {
+    t = t.normalize("NFC");
+    NORM.forEach(function (p) { t = t.split(p[0]).join(p[1]); });
+    return t;
+  }
+  function tokens(t) { return t.match(TOK) || []; }
+  function fnv(s) {
+    var h = 0x811c9dc5;
+    for (var ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  }
+  function cpLen(s) { var n = 0; for (var ch of s) n++; return n; }
+
+  function hashed(toks, mask, keep) {
+    var counts = new Map(), labels = keep ? new Map() : null;
+    function add(f, label) {
+      var i = fnv(f) & mask;
+      counts.set(i, (counts.get(i) || 0) + 1);
+      if (label && labels && !labels.has(i)) labels.set(i, label);
+    }
+    var prev = null;
+    for (var t of toks) {
+      var isWord = HAS_WORD.test(t);
+      add("u" + t, isWord ? t : null);
+      if (prev !== null) add("b" + prev + "\u0001" + t, isWord && HAS_WORD.test(prev) ? prev + " " + t : null);
+      prev = t;
+      if (isWord) {
+        var cps = Array.from("<" + t + ">");
+        if (cps.length - 2 <= 30) {
+          for (var n = 3; n <= 5; n++) for (var k = 0; k + n <= cps.length; k++) add("c" + cps.slice(k, k + n).join(""), null);
+        }
+      }
+    }
+    var norm = 0, vals = new Map();
+    counts.forEach(function (c, i) { var v = Math.log1p(c); vals.set(i, v); norm += v * v; });
+    norm = Math.sqrt(norm) || 1;
+    vals.forEach(function (v, i) { vals.set(i, v / norm); });
+    return { vals: vals, labels: labels };
+  }
+
+  function dense(text, toks) {
+    var ws = toks.filter(function (t) { return HAS_WORD.test(t); });
+    var n = ws.length || 1;
+    var sents = text.split(SENT_SPLIT).filter(function (s) { return HAS_WORD.test(s); });
+    var lens = sents.map(function (s) { return tokens(s).filter(function (t) { return HAS_WORD.test(t); }).length; });
+    if (!lens.length) lens = [n];
+    var mean = lens.reduce(function (a, b) { return a + b; }, 0) / lens.length;
+    var sd = Math.sqrt(lens.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / lens.length);
+    var nchar = cpLen(text) || 1;
+    var letters = (text.match(/\p{L}/gu) || []).length || 1;
+    var cnt = new Map();
+    toks.forEach(function (t) { cnt.set(t, (cnt.get(t) || 0) + 1); });
+    var c = function (k) { return cnt.get(k) || 0; };
+    var first40 = ws.slice(0, 40);
+    var starts = 0;
+    sents.forEach(function (s) {
+      var w0 = tokens(s.toLowerCase()).filter(function (t) { return HAS_WORD.test(t); })[0];
+      if (w0 && TRANSITIONS.has(w0)) starts++;
+    });
+    return [
+      mean / 30,
+      mean ? sd / mean : 0,
+      c(",") / n * 10,
+      (c(";") + c(":")) / n * 10,
+      (c("?") + c("!") + c("¿") + c("¡")) / lens.length,
+      (c("(") + c('"')) / n * 10,
+      (c("-") + c("—") + c("–")) / n * 10,
+      (text.match(/\p{N}/gu) || []).length / nchar * 10,
+      (text.match(/\p{Lu}/gu) || []).length / letters,
+      ws.reduce(function (a, w) { return a + cpLen(w); }, 0) / n / 10,
+      new Set(first40).size / (first40.length || 1),
+      (text.split("\n").length - 1) / n * 10,
+      ws.filter(function (w) { return w.indexOf("'") > -1; }).length / n * 10,
+      ws.filter(function (w) { return FIRST_PERSON.has(w.toLowerCase()); }).length / n * 10,
+      starts / lens.length
+    ];
+  }
+
+  // ---------- Modelo ----------
+  var MODEL = null;
+  try {
+    var raw = JSON.parse($("lupa-model").textContent);
+    var bin = atob(raw.w), w = new Int8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) w[i] = (bin.charCodeAt(i) << 24) >> 24;
+    MODEL = { w: w, mask: (1 << raw.dBits) - 1, scale: raw.scale, bias: raw.bias, alpha: raw.alpha, mu: raw.mu, sd: raw.sd, wd: raw.wd, metrics: raw.metrics || {}, combo: raw.combo || null, claude_bench: raw.claude_bench || null };
+  } catch (e) { MODEL = null; }
+
+  // Devuelve el logit del modelo para un texto; con explain=true, también las palabras que más aportan.
+  function scoreText(text, explain) {
+    var t = normalizeText(text);
+    var h = hashed(tokens(t.toLowerCase()), MODEL.mask, explain);
+    var d = dense(t, tokens(t));
+    var z = MODEL.bias;
+    h.vals.forEach(function (v, i) { z += v * MODEL.w[i] * MODEL.scale; });
+    for (var j = 0; j < d.length; j++) z += (d[j] - MODEL.mu[j]) / MODEL.sd[j] * MODEL.alpha * MODEL.wd[j];
+    if (!explain) return { z: z };
+    var contrib = [];
+    h.labels.forEach(function (label, i) {
+      if (!informative(label)) return;
+      var c = h.vals.get(i) * MODEL.w[i] * MODEL.scale;
+      if (Math.abs(c) > 0.02) contrib.push({ t: label, c: c });
+    });
+    contrib.sort(function (a, b) { return b.c - a.c; });
+    return { z: z, ai: contrib.filter(function (x) { return x.c > 0; }).slice(0, 8), hu: contrib.filter(function (x) { return x.c < 0; }).reverse().slice(0, 8) };
+  }
+
+  var EMPTY = new Set(("a al algo ante así aun aunque cada como con cual cuando de del desde donde dos e el ella ellas ellos en entre era es esa ese eso esta este esto fue ha han hay la las le les lo los más me mi muy ni no nos o otra otro para pero por que qué se ser si sí sin sobre son su sus también te tu un una uno y ya " +
+    "a about all an and any are as at be been but by can could did do for from had has have he her his how i if in into is it its just me more my no not of on one or our out she so some than that the their them then there these they this to up was we were what when which who will with would you your").split(" "));
+  function informative(label) {
+    var ws = label.split(" ");
+    var good = ws.filter(function (w) { return !EMPTY.has(w) && cpLen(w) > 2 && !/^\p{N}+$/u.test(w); });
+    return good.length > 0 && (ws.length === 1 || good.length >= 1);
+  }
+
+  // ---------- Señales de estilo (explicativas) ----------
+  var STOP = {
+    es: ["el","la","los","las","de","que","y","en","un","una","es","por","con","para","se","del","al","lo","como","más","pero","sus","su","le","ya","o","este","sí","porque","esta","entre","cuando","muy","sin","sobre","también"],
+    en: ["the","and","of","to","in","is","that","it","for","on","with","as","was","are","be","this","by","or","at","from","an","have","not","but","they","you","which","their","can","has"]
+  };
+  function detectLang(text) {
+    var es = 0, en = 0;
+    words(text.toLowerCase()).slice(0, 3000).forEach(function (x) { if (STOP.es.indexOf(x) > -1) es++; if (STOP.en.indexOf(x) > -1) en++; });
+    if (/[ñáéíóú¿¡]/i.test(text)) es += 3;
+    return es >= en ? "es" : "en";
+  }
+
+  function splitSentences(text) {
+    var out = [], re = /(?:[^.!?…\n]|\n(?![ \t]*\n))+(?:[.!?…]+["'”»)\]]*|(?=\n[ \t]*\n)|$)|\n+/g, m;
+    while ((m = re.exec(text))) {
+      if (!m[0]) { re.lastIndex++; continue; }
+      out.push({ text: m[0], start: m.index, isBreak: /^\s+$/.test(m[0]) || !/[\p{L}\p{N}]/u.test(m[0]) });
+    }
+    return out;
+  }
+
+  // Un salto de línea dentro de una oración cuenta como espacio (como en el entrenamiento).
+  function flat(s) { return s.trim().replace(/\s*\n\s*/g, " "); }
+
+  function stdev(a) { var m = a.reduce(function (x, y) { return x + y; }, 0) / a.length; return Math.sqrt(a.reduce(function (x, y) { return x + (y - m) * (y - m); }, 0) / a.length); }
+
+  function analyze(text) {
+    var lang = detectLang(text);
+    var parts = splitSentences(text);
+    var sents = parts.filter(function (p) { return !p.isBreak && words(p.text).length > 0; });
+    sents.forEach(function (p) { p.words = words(p.text).length; });
+    var total = sents.reduce(function (a, p) { return a + p.words; }, 0);
+
+    // Oración: se puntúa junto a sus vecinas hasta reunir unas 40 palabras.
+    sents.forEach(function (p, i) {
+      var lo = i, hi = i, n = p.words;
+      while (n < 40 && (lo > 0 || hi < sents.length - 1) && hi - lo < 6) {
+        if (hi < sents.length - 1) { hi++; n += sents[hi].words; }
+        if (n < 40 && lo > 0) { lo--; n += sents[lo].words; }
+      }
+      var win = sents.slice(lo, hi + 1).map(function (s) { return flat(s.text); }).join(" ");
+      p.zM = scoreText(win).z;
+      p.p = sigmoid(p.zM);
+    });
+
+    // Documento: bloques de unas 150 palabras, promediados por palabras.
+    var blocks = [], cur = [], cs = [], cn = 0;
+    sents.forEach(function (p, i) {
+      cur.push(flat(p.text)); cs.push(i); cn += p.words;
+      if (cn >= 150) { blocks.push({ t: cur.join(" "), n: cn, sents: cs }); cur = []; cs = []; cn = 0; }
+    });
+    if (cur.length) {
+      if (blocks.length && cn < 60) { var last = blocks[blocks.length - 1]; last.t += " " + cur.join(" "); last.n += cn; last.sents = last.sents.concat(cs); }
+      else blocks.push({ t: cur.join(" "), n: cn, sents: cs });
+    }
+    var zs = 0, ns = 0;
+    blocks.forEach(function (b, bi) {
+      b.z = scoreText(b.t).z; zs += b.z * b.n; ns += b.n;
+      b.sents.forEach(function (i) { sents[i].block = bi; });
+    });
+    var zDoc = zs / (ns || 1);
+    var expl = scoreText(text.length > 400000 ? text.slice(0, 400000) : text, true);
+
+    // Señales de estilo para el panel.
+    var lens = sents.map(function (p) { return p.words; });
+    var meanLen = lens.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, lens.length);
+    var cv = lens.length > 2 ? stdev(lens) / meanLen : 0;
+    var nt = normalizeText(text), dv = dense(nt, tokens(nt));
+    var r = {
+      lang: lang, parts: parts, sents: sents, blocks: blocks, total: total, zModel: zDoc, score: sigmoid(zDoc), claude: null, expl: expl,
+      signals: [
+        { name: "Variación entre oraciones", value: cv.toFixed(2), bar: clamp(cv / 0.9, 0, 1), lean: cv < 0.35 ? "ai" : cv > 0.55 ? "human" : "neutral",
+          note: "Coeficiente de variación de la longitud de las oraciones. Un ritmo muy regular (menos de 0,35) es típico de texto generado." },
+        { name: "Conectores al inicio de oración", value: Math.round(dv[15] * 100) + " %", bar: clamp(dv[15] * 2, 0, 1), lean: dv[15] > 0.2 ? "ai" : dv[15] < 0.06 ? "human" : "neutral",
+          note: "Oraciones que empiezan con «Además», «Asimismo», «Sin embargo», «Adicionalmente»…" },
+        { name: "Primera persona", value: (dv[14] * 10).toFixed(1) + " /100 pal.", bar: clamp(dv[14] / 0.6, 0, 1), lean: dv[14] > 0.25 ? "human" : dv[14] < 0.05 ? "ai" : "neutral",
+          note: "Uso de yo, me, mi, nosotros… Los asistentes de IA rara vez hablan desde la experiencia propia." },
+        { name: "Comas por palabra", value: (dv[3] * 10).toFixed(1) + " /100 pal.", bar: clamp(dv[3] / 1.5, 0, 1), lean: "neutral",
+          note: "Los textos generados suelen tener una puntuación regular y cuidada." },
+        { name: "Diversidad de vocabulario", value: dv[11].toFixed(2), bar: dv[11], lean: "neutral",
+          note: "Palabras distintas entre las primeras 40. Sirve de contexto, no decide por sí sola." }
+      ]
+    };
+    classify(r);
+    return r;
+  }
+
+  function classify(r) {
+    var share = { ai: 0, mix: 0, hu: 0 }, wsum = 0;
+    r.sents.forEach(function (p) {
+      p.cls = p.p >= T_AI ? "ai" : p.p >= T_MIX ? "mix" : "human";
+      share[p.cls === "human" ? "hu" : p.cls] += p.words; wsum += p.words;
+    });
+    r.share = { ai: share.ai / (wsum || 1), mix: share.mix / (wsum || 1), hu: share.hu / (wsum || 1) };
+  }
+
+  function verdictText(s) {
+    if (s >= 0.85) return ["Muy probablemente escrito con IA", "El texto tiene muchas de las marcas típicas de los asistentes de IA."];
+    if (s >= T_AI) return ["Probablemente escrito con IA", "Hay bastantes marcas típicas de la IA. Revisa las frases en rojo."];
+    if (s >= T_MIX) return ["No está claro", "Tiene rasgos de los dos tipos: puede ser un texto humano retocado con IA, o al revés."];
+    if (s >= 0.15) return ["Probablemente escrito por una persona", "Predominan los rasgos de la escritura humana."];
+    return ["Muy probablemente escrito por una persona", "El estilo encaja con la forma de escribir de una persona."];
+  }
+
+  // ---------- Razones en lenguaje sencillo, con citas del propio texto ----------
+  var AI_PHRASES = ["en el mundo actual", "en la era digital", "en la actualidad", "juega un papel fundamental", "juega un papel crucial",
+    "juega un papel clave", "desempeña un papel", "papel fundamental", "cabe destacar", "cabe señalar", "cabe mencionar",
+    "es importante destacar", "es importante señalar", "es importante tener en cuenta", "es fundamental", "resulta fundamental",
+    "resulta crucial", "resulta esencial", "sin lugar a dudas", "en conclusión", "en resumen", "en definitiva", "en síntesis",
+    "aspectos clave", "una amplia gama", "un sinfín de", "desafíos y oportunidades", "oportunidad única", "todo su potencial",
+    "un futuro más", "en este sentido", "de manera significativa", "de manera eficiente", "de forma integral", "no solo",
+    "fomentar", "potenciar", "optimizar", "sinergia", "panorama", "enriquecedor", "transformador", "crucial"];
+  var CONNECTORS = ["además", "asimismo", "sin embargo", "por otro lado", "en conclusión", "en resumen", "finalmente", "por lo tanto",
+    "en primer lugar", "en segundo lugar", "en definitiva", "de igual manera", "del mismo modo", "no obstante", "adicionalmente",
+    "en este sentido", "por último", "por consiguiente"];
+  var CLOSINGS = /^(en conclusión|en resumen|en definitiva|en síntesis|en suma|para concluir|para finalizar)/i;
+  var CASUAL_ES = ["jaja", "pues", "o sea", "bueno", "vale", "la verdad", "no sé", "oye", "mira", "ojalá", "vaya", "menos mal", "qué va", "un montón", "tipo que"];
+
+  function q(t) { return "<q>" + esc(t.trim()) + "</q>"; }
+
+  function findPhrases(text) {
+    var low = text.toLowerCase(), found = [];
+    AI_PHRASES.forEach(function (ph) {
+      var i = low.indexOf(ph);
+      if (i > -1 && !found.some(function (f) { return f.low.indexOf(ph) > -1 || ph.indexOf(f.low) > -1; })) found.push({ low: ph, orig: text.substr(i, ph.length), at: i });
+    });
+    return found.sort(function (a, b) { return a.at - b.at; });
+  }
+
+  function startsWithConnector(sent) {
+    var low = sent.trim().toLowerCase().replace(/^[¿¡"«(\s]+/, "");
+    for (var k = 0; k < CONNECTORS.length; k++) if (low.indexOf(CONNECTORS[k]) === 0 && /[\s,]/.test(low.charAt(CONNECTORS[k].length) || " ")) return CONNECTORS[k];
+    return null;
+  }
+
+  function explain(r, text) {
+    var ai = [], hu = [], sents = r.sents.map(function (p) { return p.text.trim(); });
+    var phrases = findPhrases(text);
+    var multiWord = phrases.filter(function (f) { return f.low.indexOf(" ") > -1; });
+    var strongAi = 0;
+    if (multiWord.length >= 1 && phrases.length >= 2) strongAi++,
+      ai.push("Usa expresiones muy repetidas por los asistentes de IA: " + phrases.slice(0, 3).map(function (f) { return q(f.orig); }).join(", ") + ".");
+    var conn = sents.map(startsWithConnector).filter(Boolean);
+    if (conn.length >= 3 && conn.length / Math.max(1, sents.length) >= 0.2) {
+      strongAi++;
+      var uniq = conn.filter(function (c, k) { return conn.indexOf(c) === k; }).slice(0, 3);
+      ai.push(conn.length + " de sus " + sents.length + " frases empiezan con palabras de enlace como " + uniq.map(function (c) { return q(c.charAt(0).toUpperCase() + c.slice(1)); }).join(", ") + ". La IA encadena así sus ideas; una persona lo hace con menos regularidad.");
+    }
+    if (sents.length >= 4 && CLOSINGS.test(sents[sents.length - 1].replace(/^[¿¡"«(\s]+/, ""))) strongAi++,
+      ai.push("Termina con un cierre que resume todo (" + q(sents[sents.length - 1].split(/[,:]/)[0]) + "), una fórmula muy típica de la IA.");
+    var lens = r.sents.map(function (p) { return p.words; });
+    var mean = lens.reduce(function (x, y) { return x + y; }, 0) / Math.max(1, lens.length);
+    var cv = lens.length > 2 ? stdev(lens) / mean : 0.5;
+    if (lens.length >= 6 && cv < 0.35)
+      ai.push("Casi todas las frases tienen un largo parecido (alrededor de " + Math.round(mean) + " palabras). Las personas suelen alternar frases cortas y largas.");
+    var triads = text.match(/[\p{L}]+, [\p{L}]+ y [\p{L}]+(?=[.,;:])/gu) || [];
+    if (triads.length >= 2) ai.push("Repite listas de tres elementos, como " + q(triads[0]) + ", un recurso muy habitual en la IA.");
+    var digits = (text.match(/\b\d[\d.,]*\b/g) || []).length;
+    var names = (text.match(/[^.!?¿¡\n]\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}/g) || []).length;
+    var nw = r.total || 1;
+    var first = (text.toLowerCase().match(/\b(yo|me|mi|mis|conmigo|nosotros|nosotras|nuestro|nuestra)\b/g) || []).length;
+    if (nw >= 150 && digits === 0 && names <= 1 && first === 0)
+      ai.push("Habla en términos generales: no da cifras, fechas, nombres concretos ni experiencias propias, algo típico de un texto generado.");
+    if (first >= 2 && first / nw * 100 >= 1) hu.push("Habla desde la experiencia propia (usa «yo», «me», «mi»…), algo poco habitual en la IA.");
+    if (digits + names >= 3) {
+      var ex = (text.match(/\b\d[\d.,]*\b/) || [])[0];
+      hu.push("Incluye datos concretos" + (ex ? " como " + q(ex) : "") + " (cifras, fechas o nombres), más propios de alguien que conoce el tema de primera mano.");
+    }
+    if (lens.length >= 5 && cv > 0.6) hu.push("Mezcla frases muy cortas con otras muy largas, como suele escribir una persona.");
+    var low = text.toLowerCase();
+    var casual = CASUAL_ES.filter(function (w) { return new RegExp("(^|[^\\p{L}])" + w + "(?=$|[^\\p{L}])", "u").test(low); });
+    if (/[¿?¡!]/.test(text) || casual.length) hu.push("Tiene un tono espontáneo" + (casual.length ? " (" + casual.slice(0, 2).map(q).join(", ") + ")" : " (preguntas o exclamaciones)") + ".");
+    return { ai: ai, hu: hu, strongAi: ai.slice(0, strongAi) };
+  }
+
+  // ¿Ya lo dijo Claude? Compara las citas de una razón con el texto de las razones de Claude.
+  function saidBy(claudeText, reasonHtml) {
+    var qs = reasonHtml.match(/<q>([^<]+)<\/q>/g) || [];
+    return qs.some(function (x) { return claudeText.indexOf(x.replace(/<\/?q>/g, "").toLowerCase()) > -1; });
+  }
+
+  function sentenceReasons(p) {
+    var t = p.text.trim(), out = [];
+    var ph = findPhrases(t);
+    if (ph.length) out.push({ k: "ai", t: "Usa " + ph.slice(0, 2).map(function (f) { return q(f.orig); }).join(" y ") + ", " + (ph.length > 1 ? "expresiones típicas" : "una expresión típica") + " de la IA." });
+    var c = startsWithConnector(t);
+    if (c) out.push({ k: "ai", t: "Empieza con " + q(c.charAt(0).toUpperCase() + c.slice(1)) + ", una palabra de enlace que la IA usa mucho." });
+    var tri = t.match(/[\p{L}]+, [\p{L}]+ y [\p{L}]+(?=[.,;:])/u);
+    if (tri) out.push({ k: "ai", t: "Enumera tres cosas seguidas (" + q(tri[0]) + ")." });
+    if (/\b(yo|me|mi|mis|nosotros|nuestro|nuestra)\b/i.test(t)) out.push({ k: "h", t: "Habla en primera persona." });
+    if (/\b\d/.test(t)) out.push({ k: "h", t: "Da un dato concreto (una cifra o una fecha)." });
+    if (/[¿?¡!]/.test(t)) out.push({ k: "h", t: "Es una pregunta o una exclamación, más propia del habla espontánea." });
+    return out;
+  }
+
+  function chips(list, cls) {
+    return list.length ? list.map(function (x) { return '<span class="term ' + cls + '">' + esc(x.t) + "</span>"; }).join("") : '<span class="note">Nada destacado</span>';
+  }
+
+  function render(r) {
+    lastResult = r;
+    var html = "", sentIdx = new Map(), src = ta.value, cursor = 0;
+    r.sents.forEach(function (p, i) { sentIdx.set(p, i); });
+    r.parts.forEach(function (p) {
+      if (p.start > cursor) html += esc(src.slice(cursor, p.start));
+      if (p.isBreak || !sentIdx.has(p)) html += esc(p.text);
+      else html += '<span class="s ' + p.cls + '" tabindex="0" data-i="' + sentIdx.get(p) + '">' + esc(p.text) + "</span>";
+      cursor = p.start + p.text.length;
+    });
+    if (cursor < src.length) html += esc(src.slice(cursor));
+    marked.innerHTML = html;
+
+    var localOk = r.lang === "es";
+    $("src").textContent = r.claude ? "Claude + detector automático" : "Detector automático";
+    $("src").classList.toggle("h", !r.claude);
+    $("ai-run").textContent = r.claude ? "Volver a revisar" : "Revisar con Claude";
+    if (!r.claude && !aiBusy) $("ai-status").textContent = AI_IDLE;
+    var showScore = localOk || r.claude;
+    var pct = Math.round(r.score * 100);
+    $("pct").textContent = showScore ? pct + "%" : "–";
+    $("arc").setAttribute("stroke-dasharray", (showScore ? pct : 0) + " 100");
+    $("arc").setAttribute("stroke", r.score >= T_AI ? "var(--ai)" : r.score >= T_MIX ? "var(--mix)" : "var(--human)");
+    var v = verdictText(r.score), split = disagree(r);
+    var mPct = Math.round(sigmoid(r.zModel) * 100), cPct = r.claude ? Math.round(r.claude.overall) : null;
+    if (split) $("arc").setAttribute("stroke", "var(--mix)");
+    $("verdict").textContent = !showScore ? "Texto en otro idioma" : split ? "No está claro" : v[0];
+    var sub;
+    if (!showScore) sub = "Lupa está hecho para textos en español. Para este texto hace falta la revisión de Claude, disponible al abrir la página en claude.ai.";
+    else if (split) sub = "Claude y el detector automático no coinciden, así que conviene leer el texto con calma.";
+    else if (r.claude) sub = v[1] + " Lo revisaron Claude y el detector automático.";
+    else sub = v[1] + (MODEL.claude_bench ? " Por ahora lo revisó solo el detector automático; en claude.ai también lo revisa Claude, que acierta más." : "");
+    $("verdict-sub").textContent = sub;
+    $("lang").textContent = r.lang === "es" ? r.total.toLocaleString("es") + " palabras" : "No está en español";
+
+    // ¿Por qué? — primero las razones de Claude (si las hay), luego lo que se ve en el texto.
+    var ex = explain(r, src), isAi = r.score >= 0.5;
+    var items = [];
+    var cText = r.claude ? r.claude.senales.join(" ").toLowerCase() : "";
+    if (r.claude && r.claude.senales.length) r.claude.senales.slice(0, 3).forEach(function (t) { items.push({ k: isAi ? "" : "h", h: esc(t) }); });
+    (isAi ? ex.ai : ex.hu).forEach(function (t) { if (items.length < 5 && !saidBy(cText, t)) items.push({ k: isAi ? "" : "h", h: t }); });
+    if (!items.length) items.push({ k: "n", h: isAi
+      ? "No hay una marca concreta que destaque: el resultado viene del patrón general de palabras, parecido al de los textos de IA con los que se entrenó el detector."
+      : "No hay marcas típicas de la IA: ni expresiones de asistente, ni estructura de plantilla, ni un ritmo demasiado regular." });
+    $("why-title").textContent = !showScore ? "¿Por qué no hay resultado?" : isAi ? "¿Por qué parece IA?" : "¿Por qué parece escrito por una persona?";
+    $("why-list").innerHTML = !showScore ? '<li class="n">El detector automático solo funciona con textos en español.</li>' :
+      items.map(function (it) { return '<li class="' + it.k + '">' + it.h + "</li>"; }).join("");
+    var other = isAi ? ex.hu : ex.strongAi;
+    $("why-other").hidden = !showScore || !other.length;
+    $("why-other").innerHTML = other.length ? (isAi ? "Aun así, hay algo que apunta a una persona: " : "Aun así, hay algo que recuerda a la IA: ") + other[0] : "";
+
+    var sn = $("short-note");
+    sn.hidden = r.total >= 200;
+    if (r.total < 200) sn.textContent = "Texto corto (" + r.total + " palabras): con menos de 200 palabras el detector se equivoca más. Si puedes, analiza un fragmento más largo.";
+
+    $("tech-scores").textContent = (r.claude ? "Claude: " + cPct + " % · " : "") + (localOk ? "detector automático: " + mPct + " % · " : "") +
+      (r.claude && MODEL.combo ? "la nota final los combina con pesos medidos (Claude pesa unas cuatro veces más y su escala está calibrada: a textos humanos les da menos de 15 %). " : "") +
+      r.sents.length.toLocaleString("es") + " frases.";
+    [["ai", "b-ai", "n-ai"], ["mix", "b-mix", "n-mix"], ["hu", "b-hu", "n-hu"]].forEach(function (x) {
+      var val = Math.round(r.share[x[0]] * 100);
+      $(x[1]).style.width = val + "%"; $(x[2]).textContent = val + "%";
+    });
+    $("terms-ai").innerHTML = '<small>Hacia IA</small>' + chips(r.expl.ai, "ai");
+    $("terms-hu").innerHTML = '<small>Hacia humano</small>' + chips(r.expl.hu, "human");
+    var leanTxt = { ai: "IA", human: "Humano", neutral: "Neutro" };
+    var colors = { ai: "var(--ai)", human: "var(--human)", neutral: "var(--muted)" };
+    $("signals").innerHTML = r.signals.map(function (s) {
+      return '<li><div class="sig-top"><span>' + esc(s.name) + '<span class="lean ' + s.lean + '">' + leanTxt[s.lean] + '</span></span><span>' + esc(s.value) + '</span></div>' +
+        '<div class="meter"><i style="width:' + Math.round(s.bar * 100) + '%;background:' + colors[s.lean] + '"></i></div><p>' + esc(s.note) + "</p></li>";
+    }).join("");
+    $("detail").innerHTML = '<span class="empty">Toca una frase coloreada para ver qué tiene de IA o de humano.</span>';
+    showMarked(true);
+  }
+
+  function showDetail(i) {
+    var p = lastResult && lastResult.sents[i]; if (!p) return;
+    marked.querySelectorAll(".s.active").forEach(function (el) { el.classList.remove("active"); });
+    var el = marked.querySelector('[data-i="' + i + '"]'); if (el) el.classList.add("active");
+    var label = p.cls === "ai" ? "Esta frase parece de IA" : p.cls === "mix" ? "Esta frase es dudosa" : "Esta frase parece humana";
+    var rs = sentenceReasons(p);
+    var list = rs.length ? '<ul class="why-list" style="margin-top:8px">' + rs.map(function (x) { return '<li class="' + (x.k === "h" ? "h" : "") + '">' + x.t + "</li>"; }).join("") + "</ul>"
+      : '<p class="note" style="margin-top:6px">No tiene una marca evidente por sí sola: su color depende de las frases de alrededor' + (p.claudeAi != null ? " y de lo que Claude vio en esa parte del texto" : "") + ".</p>";
+    $("detail").innerHTML = '<span class="label">' + label + "</span><p class=\"q\">" + esc(p.text.trim()) + "</p>" + list;
+  }
+
+  function showMarked(on) {
+    marked.hidden = !on; ta.hidden = on;
+    $("mode-label").textContent = on ? "Texto marcado" : "Texto";
+    $("edit").textContent = on ? "Editar texto" : "Ver marcas";
+    if (!on) ta.focus();
+  }
+
+  function updateCount() {
+    var n = words(ta.value).length;
+    $("count").textContent = n.toLocaleString("es") + " / 50 000 palabras";
+    $("count").classList.toggle("over", n > MAX_WORDS);
+    return n;
+  }
+
+  function note(text, err) { $("msg-row").hidden = !text; $("msg").textContent = text || ""; $("msg").classList.toggle("err", !!err); }
+
+  function run(withClaude) {
+    if (aiBusy) return;
+    if (!MODEL) { note("No se pudo cargar el modelo. Recarga la página.", true); return; }
+    var n = updateCount();
+    if (n < MIN_WORDS) { note("Añade más texto: hacen falta al menos " + MIN_WORDS + " palabras para un resultado fiable (ahora hay " + n + ").", true); showMarked(false); return; }
+    if (n > MAX_WORDS) { note("El texto supera las 50 000 palabras. Divídelo en partes y analiza cada una.", true); return; }
+    note(n > 8000 ? "Analizando " + n.toLocaleString("es") + " palabras…" : "");
+    $("run").disabled = true;
+    setTimeout(function () {
+      try { render(analyze(ta.value)); note(""); }
+      catch (e) { note("No se pudo analizar el texto: " + (e && e.message || e), true); $("run").disabled = false; return; }
+      $("run").disabled = false;
+      if (withClaude !== false && sampleFn) askClaude();
+    }, 30);
+  }
+
+  function loadSample(key, withClaude) {
+    ta.value = SAMPLES[key];
+    document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.sample === key ? "true" : "false"); });
+    updateCount(); run(withClaude);
+  }
+
+  function readFile(file) {
+    var name = file.name.toLowerCase();
+    note("Leyendo " + file.name + "…");
+    var done = function (t) { ta.value = t.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim(); updateCount(); document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); run(); };
+    var fail = function (e) { note("No se pudo leer " + file.name + ". Prueba a copiar y pegar el texto. (" + (e && e.message || e) + ")", true); };
+    if (/\.(txt|md)$/.test(name) || file.type === "text/plain") { file.text().then(done, fail); return; }
+    if (/\.docx$/.test(name)) {
+      loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js").then(function () {
+        return file.arrayBuffer().then(function (buf) { return window.mammoth.extractRawText({ arrayBuffer: buf }); });
+      }).then(function (r) { done(r.value); }, fail);
+      return;
+    }
+    if (/\.pdf$/.test(name)) {
+      var base = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+      loadScript(base + "pdf.min.js").then(function () {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js";
+        return file.arrayBuffer();
+      }).then(function (buf) { return window.pdfjsLib.getDocument({ data: buf }).promise; })
+        .then(function (pdf) {
+          var jobs = []; for (var i = 1; i <= pdf.numPages; i++) jobs.push(pdf.getPage(i).then(function (pg) { return pg.getTextContent(); }).then(function (c) { return c.items.map(function (it) { return it.str + (it.hasEOL ? "\n" : ""); }).join(" "); }));
+          return Promise.all(jobs);
+        }).then(function (pages) { done(tidyLines(pages.join("\n\n"))); }, fail);
+      return;
+    }
+    note("Formato no admitido. Usa .txt, .docx o .pdf.", true);
+  }
+
+  // Une los renglones partidos de un PDF: un salto simple pasa a espacio y se reparan las palabras con guion.
+  function tidyLines(t) {
+    return t.replace(/[ \t]+/g, " ").replace(/(\p{L})-[ ]?\n[ ]?(\p{Ll})/gu, "$1$2").replace(/([^\n]) ?\n ?(?!\n)/g, "$1 ").replace(/ {2,}/g, " ");
+  }
+
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function () { delete loaded[src]; rej(new Error("no se pudo cargar el lector")); }; document.head.appendChild(s); });
+    return loaded[src];
+  }
+
+  // ---------- Revisión con Claude (capacidad "sample" de claude.ai, con la cuenta de quien abre la página) ----------
+  var sampleFn = null, aiBusy = false, aiCtl = null;
+  var AI_IDLE = "Al analizar, Claude lee el texto y da su opinión, que es la que más pesa en el resultado. Es gratis: usa tu cuenta de Claude.";
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("sample").then(function (s) { sampleFn = s; $("ai-row").hidden = !s; if (s && lastResult) render(lastResult); }, function () {});
+  }
+  var AI_ERRORS = {
+    not_granted: "No diste permiso para usar Claude en esta página, así que el resultado es solo del modelo local. Recarga la página si cambias de opinión.",
+    sampling_disabled: "Claude no está disponible para tu cuenta u organización; el resultado es solo del modelo local.",
+    rate_limited: "Llegaste al límite de uso de Claude por ahora. Las partes ya revisadas se mantienen; vuelve a intentarlo más tarde.",
+    session_expired: "Tu sesión de Claude caducó. Vuelve a iniciar sesión y pulsa «Revisar con Claude».",
+    prompt_too_large: "Una parte del texto es demasiado larga para Claude.",
+    invalid_json: "Claude respondió en un formato inesperado. Pulsa «Revisar con Claude» para reintentar.",
+    refused: "Claude no quiso evaluar este texto; el resultado es solo del modelo local.",
+    upstream_error: "Se cortó la conexión con Claude. Pulsa «Revisar con Claude» para reintentar."
+  };
+  var HIDE_CODES = ["sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+
+  // Combinación z = c + a·z_modelo + b·logit(Claude). Solo se usa cuando los pesos están medidos
+  // (model/fit_combo.py los guarda en el modelo). Sin medir, la nota es la del modelo local y Claude
+  // se muestra como segunda opinión independiente.
+  function comboFor(r) {
+    if (r.lang !== "es") return { a: 0, b: 1, c: 0 };  // el modelo local solo sabe español
+    return MODEL.combo || { a: 1, b: 0, c: 0 };
+  }
+  // ¿Discrepan el modelo y Claude? Uno ve IA (≥ 60 %) y el otro humano (≤ 40 %).
+  function disagree(r) {
+    if (!r.claude || r.lang !== "es" || MODEL.combo) return false;
+    var m = sigmoid(r.zModel) * 100, c = r.claude.overall;
+    return (m >= 60 && c <= 40) || (m <= 40 && c >= 60);
+  }
+
+  function claudeParts(r) {
+    var parts = [], cur = [], n = 0;
+    r.blocks.forEach(function (b, i) {
+      if (cur.length && n + b.n > PART_WORDS) { parts.push(cur); cur = []; n = 0; }
+      cur.push(i); n += b.n;
+    });
+    if (cur.length) parts.push(cur);
+    return parts;
+  }
+
+  function claudeInput(r, part) {
+    return CLAUDE_PROMPT + part.map(function (bi, k) { return "[B" + (k + 1) + "] " + r.blocks[bi].t; }).join("\n\n");
+  }
+
+  // Lee el JSON de la respuesta: completo, dentro de un bloque de código o del primer «{» al último «}».
+  function parseJson(text) {
+    var t = String(text || "").trim(), m;
+    try { return JSON.parse(t); } catch (e) {}
+    if ((m = t.match(/```(?:json)?\s*([\s\S]*?)```/))) { try { return JSON.parse(m[1]); } catch (e) {} }
+    var i = t.indexOf("{"), j = t.lastIndexOf("}");
+    if (i > -1 && j > i) { try { return JSON.parse(t.slice(i, j + 1)); } catch (e) {} }
+    return null;
+  }
+
+  function applyPart(r, part, j) {
+    var ai = clamp(Number(j && j.ai), 0, 100);
+    if (!j || isNaN(ai)) return null;
+    var byB = {};
+    (Array.isArray(j.bloques) ? j.bloques : []).forEach(function (x) {
+      var k = Number(x && x.b), v = clamp(Number(x && x.ai), 0, 100);
+      if (k >= 1 && k <= part.length && !isNaN(v)) byB[k - 1] = v;
+    });
+    part.forEach(function (bi, k) { r.blocks[bi].claude = byB[k] != null ? byB[k] : ai; });
+    var senales = (Array.isArray(j.senales) ? j.senales : Array.isArray(j["señales"]) ? j["señales"] : []).map(String).slice(0, 4);
+    return { ai: ai, words: part.reduce(function (s, bi) { return s + r.blocks[bi].n; }, 0), senales: senales };
+  }
+
+  function finishClaude(r, results, total, modelLabel) {
+    var got = results.filter(Boolean);
+    if (!got.length) return;
+    var w = got.reduce(function (s, d) { return s + d.words; }, 0);
+    var zc = got.reduce(function (s, d) { return s + d.words * logit(d.ai / 100); }, 0) / w;
+    var cb = comboFor(r);
+    r.score = sigmoid(cb.c + cb.a * r.zModel + cb.b * zc);
+    r.sents.forEach(function (p) {
+      var b = r.blocks[p.block];
+      p.claudeAi = b && b.claude != null ? b.claude : null;
+      p.p = p.claudeAi != null ? sigmoid(cb.c + cb.a * p.zM + cb.b * logit(p.claudeAi / 100)) : sigmoid(p.zM);
+    });
+    var senales = [];
+    got.forEach(function (d) { d.senales.forEach(function (x) { if (senales.length < 5 && senales.indexOf(x) < 0) senales.push(x); }); });
+    r.claude = { overall: sigmoid(zc) * 100, senales: senales, done: got.length, total: total, model: modelLabel };
+    classify(r);
+  }
+
+  function setAiBusy(on) {
+    aiBusy = on; $("ai-run").disabled = on; $("ai-stop").hidden = !on; $("run").disabled = on;
+  }
+
+  function askClaude() {
+    if (!sampleFn || !lastResult || aiBusy) return;
+    var r = lastResult, parts = claudeParts(r), results = new Array(parts.length), next = 0, done = 0, failed = null;
+    var modelLabel = "Claude";
+    aiCtl = new AbortController();
+    setAiBusy(true);
+    var status = function () {
+      $("ai-status").textContent = "Claude está leyendo el texto" + (parts.length > 1 ? " (" + done + " de " + parts.length + " partes listas)" : "") +
+        "… Suele tardar entre 10 segundos y un minuto. Mientras tanto ves un resultado provisional.";
+    };
+    status();
+    var worker = function () {
+      if (failed || lastResult !== r) return Promise.resolve();
+      var k = next++;
+      if (k >= parts.length) return Promise.resolve();
+      return sampleFn(claudeInput(r, parts[k]), { signal: aiCtl.signal, model: CLAUDE_MODEL, effort: CLAUDE_EFFORT, modelTier: "default" }).then(function (res) {
+        if (lastResult !== r) return;
+        modelLabel = res.modelApplied === CLAUDE_MODEL ? "Claude Sonnet 5.5" : "Claude (con el modelo por defecto de tu cuenta)";
+        results[k] = res.truncated ? null : applyPart(r, parts[k], parseJson(res.text));
+        done++;
+        finishClaude(r, results, parts.length, modelLabel);
+        render(r);
+        if (done < parts.length) status();
+        return worker();
+      }, function (e) {
+        if (!failed) { failed = e || { code: "upstream_error" }; if (failed.code !== "cancelled") aiCtl.abort(); }
+      });
+    };
+    var pool = [];
+    for (var i = 0; i < Math.min(PARALLEL, parts.length); i++) pool.push(worker());
+    Promise.all(pool).then(function () {
+      if (lastResult !== r) return;
+      var ok = results.filter(Boolean).length;
+      if (failed) {
+        var code = failed.code;
+        if (code === "cancelled") { $("ai-status").textContent = "Revisión detenida" + (ok ? " tras " + ok + " de " + parts.length + " partes." : "."); return; }
+        if (HIDE_CODES.indexOf(code) > -1) { $("ai-status").textContent = AI_ERRORS.sampling_disabled; return; }
+        $("ai-status").textContent = AI_ERRORS[code] || AI_ERRORS.upstream_error;
+        return;
+      }
+      $("ai-status").textContent = ok
+        ? "Revisado por " + modelLabel + (ok < parts.length ? " (" + ok + " de " + parts.length + " partes; el resto no se pudo leer)" : "") + "."
+        : AI_ERRORS.invalid_json;
+    }).then(function () { setAiBusy(false); if (lastResult) render(lastResult); });
+  }
+
+  // ---------- Tabla de precisión ----------
+  function fillMetrics() {
+    var cbp = MODEL && MODEL.claude_bench, pa = $("plain-acc");
+    if (cbp && cbp.combinado && cbp.modelo && pa) {
+      pa.textContent = "En nuestras pruebas con " + cbp.n + " textos en español, cuando Claude revisa el texto Lupa acertó en " + Math.round(cbp.combinado.acc * 100) +
+        " de cada 100 (textos de personas y de asistentes de IA actuales). Solo con el detector automático acertó en " + Math.round(cbp.modelo.acc * 100) +
+        " de cada 100 en esos mismos textos. Aun así, puede equivocarse: con textos cortos, con textos de IA editados a mano o con estilos que no ha visto.";
+    }
+    var m = MODEL && MODEL.metrics, body = document.querySelector("#metrics-table tbody");
+    if (!m || !body) return;
+    var pc = function (x) { return x == null ? "–" : (x * 100).toFixed(1).replace(".", ",") + " %"; };
+    var row = function (label, x) {
+      if (!x || typeof x.n !== "number") return "";
+      return "<tr><td>" + esc(label) + "</td><td>" + x.n.toLocaleString("es") + "</td><td>" + pc(x.acc) + "</td><td>" + (x.auroc == null ? "–" : x.auroc.toFixed(3).replace(".", ",")) + "</td><td>" + pc(x.recall_ia) + "</td><td>" + pc(x.fpr_humano) + "</td></tr>";
+    };
+    var html = "", cb = MODEL.claude_bench;
+    if (cb) {
+      if (cb.combinado) html += row("Prueba con Claude (" + cb.n + " textos): nota final de la página", cb.combinado);
+      if (cb.claude) html += row("Prueba con Claude: solo Claude Sonnet 5.5", cb.claude);
+      if (cb.modelo) html += row("Prueba con Claude: solo el modelo local", cb.modelo);
+    }
+    if (m["todo-es"]) html += row("Modelo local: todos los textos de prueba", m["todo-es"]);
+    if (m["ia-actual-vs-humanos"]) html += row("Modelo local: IA actual frente a textos humanos", m["ia-actual-vs-humanos"]);
+    var names = m.nombres || {};
+    Object.keys(names).forEach(function (k) { if (m[k]) html += row("Modelo local: " + names[k], m[k]); });
+    if (m.oraciones) html += row("Modelo local: oraciones de documentos mezclados (umbral 70 %)", m.oraciones);
+    body.innerHTML = html;
+  }
+
+  // ---------- Eventos ----------
+  $("ai-run").addEventListener("click", askClaude);
+  $("ai-stop").addEventListener("click", function () { if (aiCtl) aiCtl.abort(); });
+  $("run").addEventListener("click", function () { run(true); });
+  $("edit").addEventListener("click", function () { if (marked.hidden) { run(true); } else { showMarked(false); } });
+  $("clear").addEventListener("click", function () { if (aiBusy) return; ta.value = ""; updateCount(); note(""); lastResult = null; marked.innerHTML = ""; document.querySelectorAll("[data-sample]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); showMarked(false); });
+  ta.addEventListener("input", updateCount);
+  ta.addEventListener("keydown", function (e) { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") run(true); });
+  document.querySelectorAll("[data-sample]").forEach(function (b) { b.addEventListener("click", function () { if (!aiBusy) loadSample(b.dataset.sample); }); });
+  $("file").addEventListener("change", function (e) { var f = e.target.files[0]; if (f && !aiBusy) readFile(f); e.target.value = ""; });
+  marked.addEventListener("click", function (e) { var s = e.target.closest(".s"); if (s) showDetail(+s.dataset.i); });
+  marked.addEventListener("keydown", function (e) { if (e.key === "Enter") { var s = e.target.closest(".s"); if (s) showDetail(+s.dataset.i); } });
+  ["dragover", "drop"].forEach(function (ev) { document.querySelector(".editor").addEventListener(ev, function (e) { e.preventDefault(); if (ev === "drop" && e.dataTransfer.files[0] && !aiBusy) readFile(e.dataTransfer.files[0]); }); });
+
+  try { fillMetrics(); } catch (e) { /* la tabla es informativa: nunca debe impedir el análisis */ }
+  if (MODEL) loadSample("es-ai", false); else note("No se pudo cargar el modelo. Recarga la página.", true);
+  window.LupaScore = function (t) { return MODEL ? sigmoid(scoreText(t).z) : null; };
+  window.LupaDoc = function (t) { return MODEL ? analyze(t).score : null; };
+  window.LupaBlocks = function (t) { return MODEL ? analyze(t).blocks.map(function (b) { return b.t; }) : null; };
+})();
+</script>
+</body><!--wrap-->
+</html><!--wrap-->
