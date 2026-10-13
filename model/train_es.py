@@ -66,7 +66,7 @@ def main():
     mu, sd = Xd.mean(0), Xd.std(0) + 1e-6
     X = stack(Xh, Xd, mu, sd, args.alpha)
     w = np.where(y == 1, 0.5 / y.mean(), 0.5 / (1 - y.mean()))
-    modern = np.isin(src, ["ia-generado", "es-ia-moderno", "ia-humanizada"])
+    modern = np.isin(src, ["ia-generado", "es-ia-moderno"])
     w[modern] *= args.modern_weight
     w = w / w.mean()
 

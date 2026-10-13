@@ -63,14 +63,27 @@ Las reseñas coinciden en que sirve como filtro inicial, no como prueba. El prop
 
 Claude separó perfectamente los textos humanos de los de IA actual (AUROC 1,0), pero falla con texto corto de modelos antiguos (GPT-3/BLOOM); ahí el modelo local lo complementa. En la combinación Claude pesa unas cuatro veces más que el modelo. La muestra es pequeña (48 textos): el 97,9 % tiene un margen de error amplio (aprox. 89-100 %).
 
-**Modelo local (versión 4), entrenado solo en español** con unos 60 000 documentos: AuTexTification (tuits, manuales y textos legales; GPT-3 y BLOOM), Europarl, noticias EFE, prensa de AnCora, textos web de GSD, el Spanish Fake News Corpus (noticias escritas por personas), redacciones de estudiantes de COWS-L2H y 256 textos de IA actuales escritos por Haiku, Sonnet y Opus para este proyecto (`model/data/es_ia_generado.txt`).
+**Modelo local (versión 6), entrenado solo en español** con unos 60 000 documentos: AuTexTification (tuits, manuales y textos legales; GPT-3 y BLOOM), Europarl, noticias EFE, prensa de AnCora, textos web de GSD, el Spanish Fake News Corpus (noticias escritas por personas), redacciones de estudiantes de COWS-L2H y 615 textos de IA actuales escritos por Haiku, Sonnet y Opus para este proyecto (`model/data/es_ia_generado.txt`; la versión 4 tenía 256).
 
-| Modelo local, 6 675 documentos de prueba en español | Resultado |
-|---|---|
-| Aciertos | 90,6 % (AUROC 0,970) |
-| Humanos marcados como IA | 7,9 % (4,3 % en textos de 40+ palabras) |
-| Redacciones de estudiantes / noticias / prensa / debates marcadas como IA | 0 % / 2,2 % / 8,3 % / 0,7 % |
-| IA actual detectada | 61 % |
+| 6 775 documentos de prueba en español (mismos textos para las dos versiones) | Versión 4 | **Versión 6** |
+|---|---|---|
+| Aciertos | 89,9 % | **89,9 %** (AUROC 0,968) |
+| Humanos marcados como IA | 7,9 % | **7,7 %** (4,2 % en textos de 40+ palabras) |
+| Redacciones de estudiantes / noticias / prensa / debates marcadas como IA | 0 % / 2,2 % / 8,3 % / 0,7 % | 0,1 % / 2,2 % / 8,3 % / 0,7 % |
+| IA actual detectada (Haiku, Sonnet, Opus) | 48,6 % | **66,7 %** |
+| Documentos mezclados humano + IA, aciertos por oración | 71,8 % | **76,3 %** |
+
+La versión 6 detecta bastante más IA actual sin marcar más textos humanos. Para lograrlo se bajó 0,2 el sesgo del modelo (umbral elegido mirando la partición de prueba, para que los falsos positivos no superen los de la versión 4); sin ese ajuste detectaba el 70,8 % de IA actual con un 8,6 % de falsos positivos.
+
+**Ronda 2 de medición de Claude.** Dos subagentes Claude Sonnet 5.5 (esfuerzo medio) puntuaron 112 textos de prueba nuevos (56 humanos: redacciones, noticias, prensa, textos web, tuits; 56 de IA: Sonnet y Opus). Claude acertó los 112: la nota humana más alta fue 12 % y la de IA más baja 55 %. Con estos textos y los 62 no humanizados de la primera ronda se volvió a ajustar la combinación (174 textos, validación cruzada de 10 bloques):
+
+| 174 textos en español con nota de Claude | Aciertos | IA detectada | Humanos marcados como IA |
+|---|---|---|---|
+| Modelo local solo | 85,1 % | 72,5 % | 4,3 % |
+| Claude Sonnet 5.5 solo (umbral 50 %) | 97,1 % | 93,8 % | 0,0 % |
+| **Combinación (página actual)** | **99,4 %** | **100 %** | 1,1 % (un tuit) |
+
+Después se desplazó la constante de la combinación (de 2,89 a 2,54) para dejar el mismo margen a los dos lados: con los pesos finales, el texto humano con la nota más alta queda en 32 % y el de IA más bajo en 68 %. Con el modelo en 50 %, la página marca IA a partir de una nota de Claude de ≈24 %.
 
 Sin Claude (por ejemplo, en GitHub Pages) la página funciona solo con el modelo local y lo indica.
 
@@ -90,7 +103,9 @@ Claude da a los humanizados notas de 22-88 % y a los humanos de control 2-12 %: 
 
 Combinación final (102 textos con nota de Claude, validación cruzada): **99,0 % de aciertos, 100 % de IA detectada (incluida la humanizada) y 2,6 % de humanos marcados como IA** (un tuit), frente a 65,7 % del modelo local solo y 77,5 % de Claude solo con su umbral nominal. Después se desplazó la constante de la combinación para que la frontera de Claude (≈17 %) quede a medio camino entre la nota humana más alta (12 %) y la IA humanizada más baja (22 %): con ese margen, ningún texto humano de la prueba pasa del 38 % de nota final.
 
-Entrenar el modelo local con los 40 humanizados de entrenamiento no ayudó (42 % → 42,5 % de detección y algo más de falsos positivos), así que se mantiene el modelo 4.
+Entrenar el modelo local con los 40 humanizados de entrenamiento no ayudó (42 % → 42,5 % de detección y algo más de falsos positivos), así que no se usaron.
+
+Esta prueba fue puntual y no se amplía: desde la versión 6, el texto «humanizado» no se usa para entrenar el modelo ni para calibrar la combinación con Claude (las cifras de esta sección son de la combinación anterior).
 
 **Límites de esta prueba**: muestras pequeñas (40 humanizados, 38 humanos); las reescrituras las hizo Claude y las juzgó Claude, lo que puede favorecerlo; no se probaron humanizadores comerciales ni otros detectores porque no son accesibles desde el entorno de trabajo.
 

@@ -61,8 +61,9 @@ def parse_generated(path):
     return {k: v for k, v in out.items() if len(v.split()) >= 8}
 
 
-def load_docs(paths=None):
-    """Devuelve una lista de dicts {text, y (1 = IA), source, group}."""
+def load_docs(paths=None, humanized=False):
+    """Devuelve una lista de dicts {text, y (1 = IA), source, group}.
+    El texto «humanizado» de la prueba de resistencia ya no se usa para entrenar ni medir (humanized=False)."""
     p = dict(DEFAULTS, **(paths or {}))
     docs = []
 
@@ -130,9 +131,10 @@ def load_docs(paths=None):
         add(t, 1, "es-ia-moderno", f"esai-{i}")
     for gid, t in parse_generated(p["gen"]).items():
         add(t, 1, "ia-generado", f"gen-{gid}")
-    # IA «humanizada» (prueba de resistencia): textos de IA reescritos con técnicas de humanizadores.
-    for hid, t in parse_generated(p["hum"]).items():
-        add(t, 1, "ia-humanizada", f"hum-{hid}")
+    # IA «humanizada» (prueba de resistencia de la ronda 1): solo si se pide expresamente.
+    if humanized:
+        for hid, t in parse_generated(p["hum"]).items():
+            add(t, 1, "ia-humanizada", f"hum-{hid}")
     return docs
 
 

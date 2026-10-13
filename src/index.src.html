@@ -980,7 +980,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 32px; color: var
     var cbp = MODEL && MODEL.claude_bench, pa = $("plain-acc");
     if (cbp && cbp.combinado && cbp.modelo && pa) {
       pa.textContent = "En nuestras pruebas con " + cbp.n + " textos en español, cuando Claude revisa el texto Lupa acertó en " + Math.round(cbp.combinado.acc * 100) +
-        " de cada 100, incluidos textos de IA «humanizados» para engañar a los detectores. Solo con el detector automático acertó en " + Math.round(cbp.modelo.acc * 100) +
+        " de cada 100 (textos de personas y de asistentes de IA actuales). Solo con el detector automático acertó en " + Math.round(cbp.modelo.acc * 100) +
         " de cada 100 en esos mismos textos. Aun así, puede equivocarse: con textos cortos, con textos de IA editados a mano o con estilos que no ha visto.";
     }
     var m = MODEL && MODEL.metrics, body = document.querySelector("#metrics-table tbody");

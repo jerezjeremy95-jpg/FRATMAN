@@ -1,4 +1,4 @@
-# Modelo de Lupa (versión 4, solo español)
+# Modelo de Lupa (versión 6, solo español)
 
 Regresión logística sobre rasgos hasheados y estilométricos (versión 2). El mismo cálculo existe en Python (`features.py`) y en JavaScript (`src/index.src.html`); la prueba de paridad da una diferencia máxima de 0,000005 en la probabilidad.
 
@@ -39,14 +39,14 @@ python3 model/build.py
 
 Tarda unos 25 minutos con 4 núcleos y necesita unos 8 GB de RAM.
 
-## Versión 4 (solo español) y combinación con Claude
+## Versiones 4-6 (solo español) y combinación con Claude
 
 - `data_es.py`: fuentes en español y partición fija de prueba.
-- `train_es.py`: entrena el modelo en español (`python3 model/train_es.py --C 32 --modern-weight 3`).
+- `train_es.py`: entrena el modelo en español (`python3 model/train_es.py --C 32 --modern-weight 3`; en la versión 6 se restó después 0,2 al sesgo, campo `ajuste_sesgo`).
 - `evaluate_es.py`: auditoría en español con la lógica de la página (`--write-metrics` guarda las métricas en el modelo).
-- `gen_tasks.py`: encargos con los que los subagentes generaron `data/es_ia_generado.txt`.
+- `gen_tasks.py`: encargos con los que los subagentes generaron `data/es_ia_generado.txt` (615 textos; los `b*` solo se usan para medir).
 - `claude_prompt.txt`: instrucción que la página envía a Claude (`claude_prompt_v1.txt` es la anterior).
-- `robustez_humanizado.py`: prueba interna con texto de IA «humanizado» (`data/es_ia_humanizado.txt`; las versiones `hp*` solo se usan para medir).
+- `robustez_humanizado.py`: prueba interna puntual con texto de IA «humanizado» (`data/es_ia_humanizado.txt`). Desde la versión 6 ese texto no se usa para entrenar ni para calibrar (`data_es.load_docs(humanized=False)`).
 - `bench_claude.py` y `fit_combo.py`: prueba con Claude y ajuste de los pesos de la combinación (`--write` los guarda en el modelo como `combo`).
 
 Las fuentes humanas en español (licencias): AnCora UD (CC BY 4.0), GSD UD (CC BY-SA 4.0), Spanish Fake News Corpus (CC BY 4.0), COWS-L2H (Apache 2.0), además de las ya citadas. Los textos no se incluyen en el repositorio.

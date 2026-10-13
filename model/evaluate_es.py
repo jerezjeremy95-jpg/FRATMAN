@@ -28,7 +28,6 @@ NAMES = {
     "cows": "Redacciones de estudiantes universitarios",
     "es-ia-moderno": "IA actual: conjunto inicial",
     "ia-generado": "IA actual: Haiku, Sonnet y Opus (temas no vistos)",
-    "ia-humanizada": "IA actual «humanizada» (reescrita con técnicas de humanizadores)",
 }
 
 
@@ -76,7 +75,7 @@ def main():
     for s in sorted(set(src)):
         rep["documentos"][s] = ev.metrics(ys[src == s], p[src == s])
         print(f"  {s:16s} {rep['documentos'][s]}")
-    modern = np.isin(src, ["ia-generado", "es-ia-moderno", "ia-humanizada"]) | (ys == 0)
+    modern = np.isin(src, ["ia-generado", "es-ia-moderno"]) | (ys == 0)
     rep["documentos"]["ia-actual-vs-humanos"] = ev.metrics(ys[modern], p[modern])
     print(f"  {'IA actual vs humanos':16s} {rep['documentos']['ia-actual-vs-humanos']}")
 
