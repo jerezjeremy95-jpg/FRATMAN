@@ -1,0 +1,14 @@
+{
+  "name": "fratman",
+  "description": "Plugins de Jeremy: Agente Astra (contenido y brand safety para la agencia Astra).",
+  "owner": {
+    "name": "jerezjeremy95-jpg"
+  },
+  "plugins": [
+    {
+      "name": "agente-astra",
+      "source": "./agente-astra/plugin",
+      "description": "Agente de contenido de Astra: Guardián de marca y claims, Reciclador de contenido y Guionista de Reels, con enrutamiento por modelo."
+    }
+  ]
+}
