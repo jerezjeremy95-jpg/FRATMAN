@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+# corridas de prueba: se suben solo los resúmenes (evals/resultados/)
+agente-astra/evals/workspace/
+# resultados locales de claude plugin eval
+agente-astra/plugin/evals/results/

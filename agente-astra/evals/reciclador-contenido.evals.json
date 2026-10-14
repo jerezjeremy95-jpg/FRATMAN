@@ -1,0 +1,64 @@
+{
+  "skill_name": "reciclador-contenido",
+  "evals": [
+    {
+      "id": 101,
+      "nombre": "vergel-carrusel-combinaciones",
+      "marca": "Vergel",
+      "core_brand": "evals/marcas-ficticias/vergel.md",
+      "prompt": "Este carrusel de Vergel ya está aprobado por el cliente. Recíclalo: necesito Reel, Stories, LinkedIn y variantes de caption.\n\nSlide 1: 3 combinaciones criollas para tu mañana 🌅\nSlide 2: Mango + piña + jengibre: el Tropical.\nSlide 3: Chinola + zanahoria: el Naranja Cibao.\nSlide 4: Espinaca + piña + limón: el Verde (sin azúcar añadida).\nSlide 5: ¿Con cuál arrancas tú? Pídelo en la tienda o por delivery.\nCopy: Tres jugos, prensados en frío y hechos en Santiago. ¿Cuál es tu favorito? 🥭 Link en la bio.",
+      "expectations": [
+        "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.",
+        "Los tiempos de la tabla del Reel cubren la duración declarada sin huecos ni solapes (tolerancia de 2 s).",
+        "Al menos una Story tiene una interacción concreta (encuesta, pregunta, quiz o slider).",
+        "El post de LinkedIn tiene un gancho en las 2 primeras líneas y no pasa de 3,000 caracteres.",
+        "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no estén en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).",
+        "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.",
+        "Incluye un pase del Guardián con veredicto y la lista de cambios aplicados.",
+        "No propone una canción comercial específica para el audio.",
+        "\"Sin azúcar añadida\" aparece solo asociado al jugo Verde, nunca a los tres jugos ni a la marca en general.",
+        "No atribuye efectos de salud a los jugos ni a sus ingredientes (energía, defensas, vitaminas, digestión, detox, hidratación o \"saludable\")."
+      ]
+    },
+    {
+      "id": 102,
+      "nombre": "ambar-post-db-pausa",
+      "marca": "Estudio Ámbar",
+      "core_brand": "evals/marcas-ficticias/estudio-ambar.md",
+      "prompt": "Te paso el POST 3 del Design Board de Estudio Ámbar de este mes (ya aprobado). Sácale Reel, Stories, un post de LinkedIn para Recursos Humanos y captions.\n\nPOST 3 · Pausa de mediodía\nINSPO: https://www.pinterest.com/ideas/ejemplo/000/\nFormato: carrusel de 3\nFondo: arena claro\nImagen: foto del estudio vacío con luz de tarde\nLetras: marrón ámbar, Montserrat\nTexto imagen 1: ¿Y si tu almuerzo tuviera 10 minutos para ti?\nTexto imagen 2: Respira. Estira. Vuelve.\nTexto imagen 3: Clases de mediodía, para todos los niveles.\nCopy: Una pausa a mitad del día también cuenta 🌿 Clases de mediodía para todos los niveles, en grupos pequeños. Reserva por el link en la bio.",
+      "expectations": [
+        "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.",
+        "Los tiempos de la tabla del Reel cubren la duración declarada sin huecos ni solapes (tolerancia de 2 s).",
+        "Al menos una Story tiene una interacción concreta (encuesta, pregunta, quiz o slider).",
+        "El post de LinkedIn tiene un gancho en las 2 primeras líneas y no pasa de 3,000 caracteres.",
+        "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no estén en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).",
+        "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.",
+        "Incluye un pase del Guardián con veredicto y la lista de cambios aplicados.",
+        "No propone una canción comercial específica para el audio.",
+        "El post de LinkedIn para Recursos Humanos no promete resultados de salud ni de desempeño (menos estrés, menos ansiedad, más productividad, menos ausentismo, mejor concentración).",
+        "No usa las palabras \"terapia\", \"sanar\" ni \"sanación\".",
+        "Si menciona horarios, precios o días de las clases, van como [confirmar] porque la pieza no los trae."
+      ]
+    },
+    {
+      "id": 103,
+      "nombre": "monteluz-patio",
+      "marca": "Cervecera Monteluz",
+      "core_brand": "evals/marcas-ficticias/monteluz.md",
+      "prompt": "Recicla este post aprobado de Monteluz para Reel, Stories, LinkedIn y captions:\n\n\"Viernes de patio 🍻 Una Monteluz bien fría, buena música y tu gente. Cerveza artesanal del Cibao, hecha en lotes pequeños. Búscala en tu colmado de confianza. Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.\"",
+      "expectations": [
+        "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.",
+        "Los tiempos de la tabla del Reel cubren la duración declarada sin huecos ni solapes (tolerancia de 2 s).",
+        "Al menos una Story tiene una interacción concreta (encuesta, pregunta, quiz o slider).",
+        "El post de LinkedIn tiene un gancho en las 2 primeras líneas y no pasa de 3,000 caracteres.",
+        "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no estén en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).",
+        "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.",
+        "Incluye un pase del Guardián con veredicto y la lista de cambios aplicados.",
+        "No propone una canción comercial específica para el audio.",
+        "La leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.\" aparece en el Reel (texto en pantalla o caption), en las Stories, en el post de LinkedIn y en cada variante de caption.",
+        "No hay consumo excesivo o rápido, conducción, rendimiento deportivo, éxito social o sexual, ni menores; si aparecen personas, se indica que sean claramente mayores de 25.",
+        "No usa nombres, logos, uniformes ni hashtags oficiales de la liga de béisbol ni de equipos."
+      ]
+    }
+  ]
+}

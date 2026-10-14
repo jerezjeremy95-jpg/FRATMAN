@@ -1,0 +1,62 @@
+{
+  "skill_name": "guionista-reels",
+  "evals": [
+    {
+      "id": 201,
+      "nombre": "vergel-ola-de-calor",
+      "marca": "Vergel",
+      "core_brand": "evals/marcas-ficticias/vergel.md",
+      "prompt": "Guion de Reel para Vergel. El Radar Cibao de esta semana trajo que se anuncia una ola de calor en Santiago (fuente: aviso meteorológico del 13/10; fecha límite para publicar: 17/10). Objetivo: pedidos por delivery. Puede salir el equipo de la tienda, ya firmaron autorización de imagen. Que dure entre 20 y 30 segundos.",
+      "expectations": [
+        "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situación local) y recomienda uno con su razón.",
+        "Los tiempos de la tabla de tomas cubren la duración objetivo sin huecos ni solapes (tolerancia de 2 s).",
+        "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.",
+        "Incluye CTA, caption con 1 o 2 emojis y notas de producción con los permisos necesarios (imagen o locación).",
+        "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].",
+        "No propone una canción comercial específica para el audio.",
+        "Incluye el pase del Guardián con veredicto y una línea REGISTRO-GUARDIAN con JSON válido.",
+        "No promete efectos en el cuerpo (hidratación, energía, defensas, bajar de peso); habla de sabor, frescura y experiencia.",
+        "Respeta las prohibiciones del Core Brand de Vergel (detox, dieta, quema grasa, adelgazar, barato, competidores)."
+      ]
+    },
+    {
+      "id": 202,
+      "nombre": "monteluz-inicio-temporada",
+      "marca": "Cervecera Monteluz",
+      "core_brand": "evals/marcas-ficticias/monteluz.md",
+      "prompt": "Necesito un Reel de 15 a 20 segundos para Monteluz por el inicio de la temporada de béisbol invernal. Queremos que la gente la pida en el colmado los días de juego.",
+      "expectations": [
+        "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situación local) y recomienda uno con su razón.",
+        "Los tiempos de la tabla de tomas cubren la duración objetivo sin huecos ni solapes (tolerancia de 2 s).",
+        "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.",
+        "Incluye CTA, caption con 1 o 2 emojis y notas de producción con los permisos necesarios (imagen o locación).",
+        "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].",
+        "No propone una canción comercial específica para el audio.",
+        "Incluye el pase del Guardián con veredicto y una línea REGISTRO-GUARDIAN con JSON válido.",
+        "No usa logos, nombres oficiales, uniformes, mascotas, jugadores ni hashtags oficiales de la liga o de equipos; usa referencias genéricas a la temporada.",
+        "Incluye la leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.\"",
+        "No muestra ni sugiere consumo excesivo o rápido, conducción, rendimiento deportivo ni menores, y las notas de producción piden personas claramente mayores de 25."
+      ]
+    },
+    {
+      "id": 203,
+      "nombre": "ambar-diciembre-sin-personas",
+      "marca": "Estudio Ámbar",
+      "core_brand": "evals/marcas-ficticias/estudio-ambar.md",
+      "prompt": "Reel para Estudio Ámbar para diciembre: una pausa antes de las fiestas. Sin personas en cámara (solo el espacio, objetos y texto). 20 segundos. Objetivo: reservas para la clase especial del 20 de diciembre.",
+      "expectations": [
+        "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situación local) y recomienda uno con su razón.",
+        "Los tiempos de la tabla de tomas cubren la duración objetivo sin huecos ni solapes (tolerancia de 2 s).",
+        "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.",
+        "Incluye CTA, caption con 1 o 2 emojis y notas de producción con los permisos necesarios (imagen o locación).",
+        "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].",
+        "No propone una canción comercial específica para el audio.",
+        "Incluye el pase del Guardián con veredicto y una línea REGISTRO-GUARDIAN con JSON válido.",
+        "Ninguna toma muestra personas ni partes del cuerpo (manos, pies, siluetas); se resuelve con espacio, objetos, texto y voz.",
+        "No promete resultados de salud (eliminar el estrés de las fiestas, curar el insomnio, sanar) ni usa \"terapia\", \"sanar\" o \"sanación\".",
+        "Usa la fecha del 20 de diciembre que trae el brief y marca como [confirmar] la hora, el precio o los cupos si los menciona.",
+        "No usa símbolos ni lenguaje religioso como gancho."
+      ]
+    }
+  ]
+}

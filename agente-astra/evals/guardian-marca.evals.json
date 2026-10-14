@@ -1,0 +1,577 @@
+{
+  "skill_name": "guardian-marca",
+  "nota": "Casos con marcas ficticias y riesgos sembrados. 'issues' es la verdad de referencia; 'control': true significa que el copy está limpio y cualquier hallazgo alto o medio es un falso positivo.",
+  "evals": [
+    {
+      "id": 1,
+      "nombre": "vergel-caption-detox",
+      "marca": "Vergel",
+      "core_brand": "evals/marcas-ficticias/vergel.md",
+      "canal": "Instagram (caption)",
+      "control": false,
+      "pieza": "¡Arranca el día con nuestro Jugo Verde DETOX! 🥬 Limpia tu hígado, quema grasa y te da energía todo el día. El mejor jugo de Santiago, 100% natural y sin efectos secundarios. 9 de cada 10 clientes repiten. ¡Pídelo ya a solo RD$250! #detox #saludable",
+      "prompt": "Revisa este caption de Vergel antes de mandárselo al cliente:\n\n\"¡Arranca el día con nuestro Jugo Verde DETOX! 🥬 Limpia tu hígado, quema grasa y te da energía todo el día. El mejor jugo de Santiago, 100% natural y sin efectos secundarios. 9 de cada 10 clientes repiten. ¡Pídelo ya a solo RD$250! #detox #saludable\"",
+      "issues": [
+        {
+          "id": "i1",
+          "texto": "DETOX",
+          "tipos_aceptables": [
+            "prohibicion_core_brand",
+            "salud"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": "El Core Brand prohíbe 'detox'; el hashtag #detox cuenta como el mismo hallazgo."
+        },
+        {
+          "id": "i2",
+          "texto": "Limpia tu hígado",
+          "tipos_aceptables": [
+            "salud"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i3",
+          "texto": "quema grasa",
+          "tipos_aceptables": [
+            "salud",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i4",
+          "texto": "te da energía todo el día",
+          "tipos_aceptables": [
+            "salud"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i5",
+          "texto": "El mejor jugo de Santiago",
+          "tipos_aceptables": [
+            "absoluto"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i6",
+          "texto": "100% natural",
+          "tipos_aceptables": [
+            "absoluto",
+            "salud",
+            "ambiental",
+            "cifra_sin_fuente"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i7",
+          "texto": "sin efectos secundarios",
+          "tipos_aceptables": [
+            "salud"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i8",
+          "texto": "9 de cada 10 clientes repiten",
+          "tipos_aceptables": [
+            "cifra_sin_fuente"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i9",
+          "texto": "a solo RD$250",
+          "tipos_aceptables": [
+            "precio_promocion"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "baja",
+          "nota": "Precio sin vigencia ni confirmación."
+        }
+      ],
+      "opcionales": [
+        "#saludable (asociación de salud, puede agruparse)"
+      ],
+      "veredictos_aceptables": [
+        "rojo"
+      ],
+      "prohibido_en_corregida": [
+        "detox",
+        "hígado",
+        "quema grasa",
+        "efectos secundarios",
+        "9 de cada 10",
+        "el mejor jugo"
+      ]
+    },
+    {
+      "id": 2,
+      "nombre": "ambar-carrusel-ansiedad",
+      "marca": "Estudio Ámbar",
+      "core_brand": "evals/marcas-ficticias/estudio-ambar.md",
+      "canal": "Instagram (carrusel de 5)",
+      "control": false,
+      "pieza": "Slide 1: ¿Ansiedad? Tenemos la solución.\nSlide 2: Nuestra meditación guiada elimina la ansiedad en 21 días.\nSlide 3: Recomendado por psicólogos.\nSlide 4: Primera clase GRATIS.\nSlide 5: Escríbenos tu nombre, cédula y teléfono en los comentarios para reservar.\nCopy: Sana tu mente con nosotros 🧘‍♀️ Cupos limitados. #ansiedad #meditación #Santiago",
+      "prompt": "Pásame por el guardián este carrusel de Estudio Ámbar, lo queremos publicar el jueves:\n\nSlide 1: ¿Ansiedad? Tenemos la solución.\nSlide 2: Nuestra meditación guiada elimina la ansiedad en 21 días.\nSlide 3: Recomendado por psicólogos.\nSlide 4: Primera clase GRATIS.\nSlide 5: Escríbenos tu nombre, cédula y teléfono en los comentarios para reservar.\nCopy: Sana tu mente con nosotros 🧘‍♀️ Cupos limitados. #ansiedad #meditación #Santiago",
+      "issues": [
+        {
+          "id": "i1",
+          "texto": "¿Ansiedad? Tenemos la solución",
+          "tipos_aceptables": [
+            "salud"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i2",
+          "texto": "elimina la ansiedad en 21 días",
+          "tipos_aceptables": [
+            "salud",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i3",
+          "texto": "Recomendado por psicólogos",
+          "tipos_aceptables": [
+            "respaldo_falso"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i4",
+          "texto": "Primera clase GRATIS",
+          "tipos_aceptables": [
+            "precio_promocion"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "baja",
+          "nota": "Gratis sin condiciones visibles."
+        },
+        {
+          "id": "i5",
+          "texto": "Escríbenos tu nombre, cédula y teléfono en los comentarios",
+          "tipos_aceptables": [
+            "datos_personales"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i6",
+          "texto": "Sana tu mente",
+          "tipos_aceptables": [
+            "prohibicion_core_brand",
+            "salud"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        }
+      ],
+      "opcionales": [
+        "Cupos limitados (urgencia sin dato)",
+        "#ansiedad (asociación con condición)"
+      ],
+      "veredictos_aceptables": [
+        "rojo"
+      ],
+      "prohibido_en_corregida": [
+        "tenemos la solución",
+        "elimina la ansiedad",
+        "21 días",
+        "psicólogos",
+        "cédula",
+        "sana tu mente"
+      ]
+    },
+    {
+      "id": 3,
+      "nombre": "monteluz-reel-temporada",
+      "marca": "Cervecera Monteluz",
+      "core_brand": "evals/marcas-ficticias/monteluz.md",
+      "canal": "Reel (guion de 20 s)",
+      "control": false,
+      "pieza": "Toma 1 (0–3 s): Botella de Monteluz con el logo de las Águilas Cibaeñas pegado al lado. Texto en pantalla: \"Noche de Águilas 🦅\"\nToma 2 (3–8 s): Grupo de amigos con las camisetas amarillas del equipo brindando en las gradas del Estadio Cibao. Voz: \"Ponte la camiseta, trae tu Monteluz y vamos al Cibao.\"\nToma 3 (8–12 s): Un amigo se toma la cerveza de un solo trago y los demás aplauden. Texto: \"¡El que más se tome, más fanático es!\"\nToma 4 (12–16 s): Bateador conectando un jonrón. Voz: \"Con Monteluz el equipo batea mejor 😉\"\nToma 5 (16–20 s): Logo de Monteluz. Texto: \"Hecha para campeones. Comenta 🦅 y gana una nevera full de Monteluz.\"\nCaption: Esta temporada se vive con Monteluz 🍺⚾ Comenta y participa por una nevera full. #Águilas #LIDOM",
+      "prompt": "Este es el guion del Reel de Monteluz para el arranque de la temporada. ¿Se puede grabar así? Revísalo:\n\nToma 1 (0–3 s): Botella de Monteluz con el logo de las Águilas Cibaeñas pegado al lado. Texto en pantalla: \"Noche de Águilas 🦅\"\nToma 2 (3–8 s): Grupo de amigos con las camisetas amarillas del equipo brindando en las gradas del Estadio Cibao. Voz: \"Ponte la camiseta, trae tu Monteluz y vamos al Cibao.\"\nToma 3 (8–12 s): Un amigo se toma la cerveza de un solo trago y los demás aplauden. Texto: \"¡El que más se tome, más fanático es!\"\nToma 4 (12–16 s): Bateador conectando un jonrón. Voz: \"Con Monteluz el equipo batea mejor 😉\"\nToma 5 (16–20 s): Logo de Monteluz. Texto: \"Hecha para campeones. Comenta 🦅 y gana una nevera full de Monteluz.\"\nCaption: Esta temporada se vive con Monteluz 🍺⚾ Comenta y participa por una nevera full. #Águilas #LIDOM",
+      "issues": [
+        {
+          "id": "i1",
+          "texto": "logo de las Águilas Cibaeñas",
+          "tipos_aceptables": [
+            "propiedad_intelectual",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i2",
+          "texto": "camisetas amarillas del equipo",
+          "tipos_aceptables": [
+            "propiedad_intelectual",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i3",
+          "texto": "¡El que más se tome, más fanático es!",
+          "tipos_aceptables": [
+            "alcohol",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i4",
+          "texto": "se toma la cerveza de un solo trago",
+          "tipos_aceptables": [
+            "alcohol",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i5",
+          "texto": "Con Monteluz el equipo batea mejor",
+          "tipos_aceptables": [
+            "alcohol",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i6",
+          "texto": "Hecha para campeones",
+          "tipos_aceptables": [
+            "alcohol",
+            "absoluto",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "baja",
+          "nota": "Asocia la cerveza con éxito o rendimiento."
+        },
+        {
+          "id": "i7",
+          "texto": "Comenta 🦅 y gana una nevera full",
+          "tipos_aceptables": [
+            "precio_promocion"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": "Sorteo sin bases."
+        },
+        {
+          "id": "i8",
+          "texto": "#Águilas #LIDOM",
+          "tipos_aceptables": [
+            "propiedad_intelectual",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": "Hashtags oficiales; puede agruparse con i1 si el hallazgo los menciona."
+        },
+        {
+          "id": "i9",
+          "texto": "(falta) leyenda de consumo responsable",
+          "tipos_aceptables": [
+            "alcohol",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": "Omisión: el Core Brand exige la leyenda en toda pieza."
+        }
+      ],
+      "opcionales": [
+        "Noche de Águilas (nombre del equipo en texto en pantalla, puede agruparse con i1)"
+      ],
+      "veredictos_aceptables": [
+        "rojo"
+      ],
+      "prohibido_en_corregida": [
+        "logo de las águilas",
+        "el que más se tome",
+        "batea mejor",
+        "#lidom",
+        "un solo trago"
+      ]
+    },
+    {
+      "id": 4,
+      "nombre": "vergel-control-limpio",
+      "marca": "Vergel",
+      "core_brand": "evals/marcas-ficticias/vergel.md",
+      "canal": "Instagram (caption)",
+      "control": true,
+      "pieza": "Mango, piña y un toque de jengibre 🥭 Así sabe el Cibao en un vaso. Nuestro jugo Tropical, prensado en frío y hecho en Santiago. ¿Con cuál arrancas tú? Pídelo en la tienda o por delivery (link en la bio).",
+      "prompt": "¿Le ves algo a este copy de Vergel? Es para mañana:\n\n\"Mango, piña y un toque de jengibre 🥭 Así sabe el Cibao en un vaso. Nuestro jugo Tropical, prensado en frío y hecho en Santiago. ¿Con cuál arrancas tú? Pídelo en la tienda o por delivery (link en la bio).\"",
+      "issues": [],
+      "opcionales": [],
+      "veredictos_aceptables": [
+        "verde"
+      ],
+      "prohibido_en_corregida": []
+    },
+    {
+      "id": 5,
+      "nombre": "ambar-linkedin-b2b",
+      "marca": "Estudio Ámbar",
+      "core_brand": "evals/marcas-ficticias/estudio-ambar.md",
+      "canal": "LinkedIn (página de la marca)",
+      "control": false,
+      "pieza": "¿Sabías que las empresas que implementan meditación reducen el ausentismo un 40%? En Estudio Ámbar llevamos el bienestar a tu oficina: sesiones de 30 minutos que bajan el estrés de tu equipo y aumentan la productividad. Más de 200 empresas en Santiago ya confían en nosotros. Somos el estudio #1 de bienestar corporativo del Cibao. Escríbenos para llevar una sesión a tu equipo.",
+      "prompt": "Revisa este post de LinkedIn de Estudio Ámbar para Recursos Humanos:\n\n¿Sabías que las empresas que implementan meditación reducen el ausentismo un 40%? En Estudio Ámbar llevamos el bienestar a tu oficina: sesiones de 30 minutos que bajan el estrés de tu equipo y aumentan la productividad. Más de 200 empresas en Santiago ya confían en nosotros. Somos el estudio #1 de bienestar corporativo del Cibao. Escríbenos para llevar una sesión a tu equipo.",
+      "issues": [
+        {
+          "id": "i1",
+          "texto": "reducen el ausentismo un 40%",
+          "tipos_aceptables": [
+            "cifra_sin_fuente",
+            "salud"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "alta",
+          "nota": ""
+        },
+        {
+          "id": "i2",
+          "texto": "bajan el estrés de tu equipo",
+          "tipos_aceptables": [
+            "salud",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i3",
+          "texto": "aumentan la productividad",
+          "tipos_aceptables": [
+            "salud",
+            "absoluto",
+            "cifra_sin_fuente",
+            "respaldo_falso"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i4",
+          "texto": "Más de 200 empresas en Santiago ya confían en nosotros",
+          "tipos_aceptables": [
+            "cifra_sin_fuente"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i5",
+          "texto": "el estudio #1 de bienestar corporativo del Cibao",
+          "tipos_aceptables": [
+            "absoluto",
+            "cifra_sin_fuente"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        }
+      ],
+      "opcionales": [
+        "sesiones de 30 minutos (dato a confirmar)"
+      ],
+      "veredictos_aceptables": [
+        "rojo"
+      ],
+      "prohibido_en_corregida": [
+        "40%",
+        "bajan el estrés",
+        "200 empresas",
+        "#1"
+      ]
+    },
+    {
+      "id": 6,
+      "nombre": "monteluz-control-limpio",
+      "marca": "Cervecera Monteluz",
+      "core_brand": "evals/marcas-ficticias/monteluz.md",
+      "canal": "Instagram (caption)",
+      "control": true,
+      "pieza": "Viernes de patio 🍻 Una Monteluz bien fría, buena música y tu gente. Cerveza artesanal del Cibao, hecha en lotes pequeños. Búscala en tu colmado de confianza. Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.",
+      "prompt": "Dale un vistazo a este caption de Monteluz antes de programarlo:\n\n\"Viernes de patio 🍻 Una Monteluz bien fría, buena música y tu gente. Cerveza artesanal del Cibao, hecha en lotes pequeños. Búscala en tu colmado de confianza. Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.\"",
+      "issues": [],
+      "opcionales": [],
+      "veredictos_aceptables": [
+        "verde"
+      ],
+      "prohibido_en_corregida": []
+    },
+    {
+      "id": 7,
+      "nombre": "vergel-tono-prohibiciones",
+      "marca": "Vergel",
+      "core_brand": "evals/marcas-ficticias/vergel.md",
+      "canal": "Facebook / Instagram (caption)",
+      "control": false,
+      "pieza": "Estimado cliente: le informamos que nuestra empresa ofrece jugos de calidad superior a precios baratos. Visite nuestro establecimiento y compruébelo usted mismo. Los demás jugos de la zona no se comparan.",
+      "prompt": "El cliente de Vergel nos mandó este texto para que lo publiquemos. Revísalo:\n\nEstimado cliente: le informamos que nuestra empresa ofrece jugos de calidad superior a precios baratos. Visite nuestro establecimiento y compruébelo usted mismo. Los demás jugos de la zona no se comparan.",
+      "issues": [
+        {
+          "id": "i1",
+          "texto": "Estimado cliente: le informamos",
+          "tipos_aceptables": [
+            "tono"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": "Usted y registro corporativo frente a un Core Brand cercano y de tú."
+        },
+        {
+          "id": "i2",
+          "texto": "precios baratos",
+          "tipos_aceptables": [
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i3",
+          "texto": "calidad superior",
+          "tipos_aceptables": [
+            "absoluto",
+            "comparativo"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "baja",
+          "nota": ""
+        },
+        {
+          "id": "i4",
+          "texto": "Los demás jugos de la zona no se comparan",
+          "tipos_aceptables": [
+            "comparativo",
+            "prohibicion_core_brand"
+          ],
+          "severidad_esperada": "alta",
+          "severidad_minima": "media",
+          "nota": ""
+        }
+      ],
+      "opcionales": [],
+      "veredictos_aceptables": [
+        "rojo"
+      ],
+      "prohibido_en_corregida": [
+        "barato",
+        "no se comparan",
+        "estimado cliente"
+      ]
+    },
+    {
+      "id": 8,
+      "nombre": "vergel-ambiental-influencer",
+      "marca": "Vergel",
+      "core_brand": "evals/marcas-ficticias/vergel.md",
+      "canal": "Instagram (caption)",
+      "control": false,
+      "pieza": "Nuestros vasos son 100% ecológicos 🌎 y con cada jugo ayudas a salvar el planeta. Gracias a @creadora_ejemplo por recomendarnos en sus stories, ¡la amamos! Usa su código AMIGA10 y llévate 10% de descuento.",
+      "prompt": "Revisa este caption de Vergel, va con una foto de los vasos nuevos:\n\nNuestros vasos son 100% ecológicos 🌎 y con cada jugo ayudas a salvar el planeta. Gracias a @creadora_ejemplo por recomendarnos en sus stories, ¡la amamos! Usa su código AMIGA10 y llévate 10% de descuento.",
+      "issues": [
+        {
+          "id": "i1",
+          "texto": "100% ecológicos",
+          "tipos_aceptables": [
+            "ambiental",
+            "absoluto"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i2",
+          "texto": "ayudas a salvar el planeta",
+          "tipos_aceptables": [
+            "ambiental"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "media",
+          "nota": ""
+        },
+        {
+          "id": "i3",
+          "texto": "Gracias a @creadora_ejemplo por recomendarnos",
+          "tipos_aceptables": [
+            "publicidad_no_identificada"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "baja",
+          "nota": "El código de descuento sugiere relación comercial: ¿colaboración pagada?"
+        },
+        {
+          "id": "i4",
+          "texto": "código AMIGA10 y llévate 10% de descuento",
+          "tipos_aceptables": [
+            "precio_promocion"
+          ],
+          "severidad_esperada": "media",
+          "severidad_minima": "baja",
+          "nota": "Descuento sin vigencia ni condiciones."
+        }
+      ],
+      "opcionales": [],
+      "veredictos_aceptables": [
+        "amarillo",
+        "rojo"
+      ],
+      "prohibido_en_corregida": [
+        "salvar el planeta",
+        "100% ecológicos"
+      ]
+    }
+  ]
+}
