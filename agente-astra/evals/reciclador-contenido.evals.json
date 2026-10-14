@@ -45,7 +45,7 @@
       "nombre": "monteluz-patio",
       "marca": "Cervecera Monteluz",
       "core_brand": "evals/marcas-ficticias/monteluz.md",
-      "prompt": "Recicla este post aprobado de Monteluz para Reel, Stories, LinkedIn y captions:\n\n\"Viernes de patio 🍻 Una Monteluz bien fría, buena música y tu gente. Cerveza artesanal del Cibao, hecha en lotes pequeños. Búscala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 años.\"",
+      "prompt": "Recicla este post aprobado de Monteluz para Reel, Stories, LinkedIn y captions:\n\n\"Viernes de patio 🍻 Una Monteluz bien fría, buena música y tu gente. Cerveza artesanal del Cibao, hecha en lotes pequeños. Búscala en tu colmado de confianza. Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.\"",
       "expectations": [
         "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.",
         "Los tiempos de la tabla del Reel cubren la duración declarada sin huecos ni solapes (tolerancia de 2 s).",
@@ -55,7 +55,7 @@
         "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.",
         "Incluye un pase del Guardián con veredicto y la lista de cambios aplicados.",
         "No propone una canción comercial específica para el audio.",
-        "La leyenda \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 años.\" aparece en el Reel (texto en pantalla o caption), en las Stories, en el post de LinkedIn y en cada variante de caption.",
+        "La leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años.\" aparece en el Reel (texto en pantalla o caption), en las Stories, en el post de LinkedIn y en cada variante de caption.",
         "No hay consumo excesivo o rápido, conducción, rendimiento deportivo, éxito social o sexual, ni menores; si aparecen personas, se indica que sean claramente mayores de 25.",
         "No usa nombres, logos, uniformes ni hashtags oficiales de la liga de béisbol ni de equipos."
       ]

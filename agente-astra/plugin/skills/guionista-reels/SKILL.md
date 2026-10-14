@@ -29,6 +29,7 @@ Referencias de esta skill:
    - **Contraste o sorpresa:** un antes y después de situación (nunca de cuerpo), o algo inesperado.
    - **POV o situación local:** una escena que cualquiera en Santiago o el Cibao reconoce.
    Recomienda uno y explica en una línea por qué.
+   Los hooks son donde más se cuelan datos inventados. Una hora exacta ("2 p. m."), una temperatura, un lugar con nombre, una cifra o una frase de escasez ("se llena rápido", "últimos cupos") no pueden aparecer si no vienen del brief o del Core Brand. Una situación genérica funciona igual de bien ("mediodía en Santiago", "el calor de esta semana").
 3. **Estructura:** hook (0 a 3 s), desarrollo en tomas cortas de 2 a 4 s con una idea por toma, remate y CTA en los últimos 2 o 3 segundos. Los tiempos de la tabla tienen que sumar la duración total.
 4. **Texto en pantalla:** corto y legible en un vistazo, fuera de las zonas que tapa la interfaz (ver `formatos-canal.md`). El video se tiene que entender sin sonido.
 5. **Audio:** audio original, voz en off o la biblioteca de audio comercial de la plataforma. Las canciones en tendencia muchas veces no están disponibles para cuentas de empresa; si propones un tipo de música, describe el estilo y no una canción comercial.
@@ -83,5 +84,6 @@ REGISTRO-GUARDIAN {…una sola línea, mismo formato que la skill guardian-marca
 - No mostrar marcas, logos, uniformes ni canciones de terceros sin licencia confirmada.
 - Con alcohol: nada de menores ni de personas que parezcan menores, nada de conducir, de exceso ni de rendimiento deportivo. Incluye la leyenda de consumo responsable.
 - No poner personas en cámara si la marca o el brief dicen "sin personas": resuélvelo con producto, espacios, texto y voz.
-- No inventar datos para el gancho ("el 80 % de los dominicanos…"). Si no hay fuente, el gancho es otro.
+- No inventar datos para el gancho ("el 80 % de los dominicanos…", "2 p. m.", "35 grados"). Si no hay fuente, el gancho es otro.
+- No meter urgencia ni escasez ("se llena rápido", "quedan pocos cupos") si el brief no la trae: es un claim.
 - No publicar ni programar: entregas un guion para que el equipo lo apruebe.

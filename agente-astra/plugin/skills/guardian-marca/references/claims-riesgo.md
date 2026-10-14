@@ -11,6 +11,9 @@ Contenido:
 
 ---
 
+## Por qué importa
+En República Dominicana, el anunciante **y la agencia** responden solidariamente por la publicidad engañosa (`marco-rd.md` §1). Un claim que se escapa no es solo un problema del cliente: también es de Astra.
+
 ## 1. Severidades
 
 | Severidad | Qué significa | Efecto en el veredicto |
@@ -68,6 +71,8 @@ Las alternativas de esta tabla suponen que los datos que usan (ingredientes, mé
 | "Sin contraindicaciones" | Eliminar |
 | "Sanación emocional en cada clase" | "Un rato para ti en cada clase" |
 
+Base legal: en alimentos y bebidas no se pueden sugerir efectos preventivos o curativos, y Pro Consumidor prohíbe anunciar curas, prevención o tratamientos rápidos o bajar de peso sin ejercicio sin prueba científica (`marco-rd.md` §2). Los medicamentos tienen reglas propias: si la pieza anuncia uno, es **Alta** y va a "Para decidir por un humano".
+
 ### `respaldo_falso`
 "Recomendado por médicos o psicólogos", "clínicamente probado", "científicamente comprobado", "aprobado por nutricionistas": **Alta** salvo que exista un documento que el cliente haya autorizado a citar. Aunque exista, va a "Para decidir por un humano": el cliente o su área legal decide.
 
@@ -80,16 +85,16 @@ Alternativa: `[confirmar: dato y fuente con el cliente]`, o quitar la cifra y qu
 Alternativa: hablar de lo propio y concreto (si es cierto): "la pizza de la casa", "masa madre horneada en leña", "nuestra favorita".
 
 ### `comparativo`
-Nombrar o aludir a la competencia ("a diferencia de otras pizzerías que usan masa congelada", "mejor que [marca]"): **Alta**. Alternativa: decir lo propio sin comparar ("masa hecha cada mañana", solo si es un claim aprobado).
+La comparativa está prohibida si es engañosa, no objetiva o denigra (`marco-rd.md` §1). Nombrar o aludir a la competencia ("a diferencia de otras pizzerías que usan masa congelada", "mejor que [marca]"): **Alta**. Alternativa: decir lo propio sin comparar ("masa hecha cada mañana", solo si es un claim aprobado).
 
 ### `precio_promocion`
-- Precio sin vigencia ni condiciones: **Media** → "RD$[confirmar] · válido hasta [confirmar fecha]".
+- Precio sin vigencia ni condiciones: **Media** → "RD$[confirmar] · válido hasta [confirmar fecha]". La ley pide que las ofertas digan inicio, fin, cantidad disponible y condiciones, con el precio en RD$ (`marco-rd.md` §1). "Hasta agotar existencia" sin cantidad también cuenta.
 - "Gratis" con condiciones ocultas: **Media** → decir la condición: "primera clase sin costo, cupos limitados [confirmar cupos]".
 - Urgencia o escasez sin dato ("últimas unidades", "solo hoy"): **Media**.
-- Sorteos, concursos y "etiqueta a 3 amigos y participa" sin bases publicadas (fechas, mecánica, premio, quién puede participar, cómo se elige): **Alta**. Va a "Para decidir por un humano" para confirmar bases y si requiere autorización (ver `marco-rd.md`).
+- Sorteos, concursos y "etiqueta a 3 amigos y participa" sin bases publicadas (fechas, mecánica, premio, quién puede participar, cómo se elige): **Alta**. Las bases se registran en Pro Consumidor **al menos 21 días antes** y la publicidad lleva un extracto de ellas; si hay boletos o venta, además se necesita licencia de Hacienda (`marco-rd.md` §5). Va a "Para decidir por un humano": ¿están registradas las bases?
 
 ### `alcohol`
-**Alta**: dirigirse a menores o mostrar personas que parezcan menores; asociar el alcohol con conducir, con rendimiento deportivo, con éxito social o sexual; premiar o celebrar el exceso ("quien aguante más rondas…"); presentar el alcohol como solución a problemas. Falta de la leyenda de consumo responsable cuando corresponde: **Alta** (texto oficial en `marco-rd.md`).
+**Alta**: dirigirse a menores o mostrar personas que parezcan menores; asociar el alcohol con conducir, con rendimiento deportivo, con éxito social o sexual; premiar o celebrar el exceso ("quien aguante más rondas…"); presentar el alcohol como solución a problemas o atribuirle bienestar o energía. **Falta de la leyenda legal "El consumo de alcohol perjudica la salud"** (Ley 42-01, art. 123; ver `marco-rd.md` §3): **Alta**. Si el Core Brand exige además su propia leyenda, también tiene que estar.
 Buena práctica: las personas que aparecen bebiendo deben verse claramente adultas.
 
 ### `datos_personales`

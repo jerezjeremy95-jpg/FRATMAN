@@ -96,7 +96,8 @@ REGISTRO-GUARDIAN {…una sola línea, mismo formato que la skill guardian-marca
 ```
 
 ## Qué no hacer
-- No agregar beneficios, cifras, precios, fechas, premios ni testimonios que no estén en la pieza.
+- No agregar beneficios, cifras, precios, fechas, horas, premios ni testimonios que no estén en la pieza. Tampoco urgencia o escasez ("se llena rápido", "últimas unidades") ni promesas de servicio ("llega en 20 minutos", "siempre bien frío") que la pieza no hace.
+- Los datos descriptivos del Core Brand que no son claims aprobados (estilos, sucursales, años en el mercado) tampoco se agregan: si hacen falta, van como `[confirmar]`.
 - No cambiar la oferta ni las condiciones de la pieza original.
 - No usar canciones comerciales, logos de terceros ni personas que no estén autorizadas.
 - No publicar, programar ni enviar nada: entregas un borrador para el equipo.

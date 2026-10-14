@@ -117,12 +117,17 @@ def chequeos_guardian(caso: dict, texto: str) -> dict:
 def paquetes(dir_skill: Path) -> None:
     skill = dir_skill.name
     casos = cargar_casos(skill)
-    rng = random.Random(20261014)
+    solo = set(sys.argv[3:])  # opcional: limitar a ciertos eval-<id>
     for eval_dir in sorted(dir_skill.glob("eval-*")):
+        if solo and eval_dir.name.split("-")[1] not in solo:
+            continue
+        if (eval_dir / "juicio" / "juicio.json").exists():
+            print(eval_dir.name, "ya tiene juicio: se deja igual")
+            continue
         caso = casos[eval_id(eval_dir)]
         runs = runs_de(eval_dir)
         configs = list(runs)
-        rng.shuffle(configs)
+        random.Random(f"20261014-{eval_dir.name}").shuffle(configs)
         mapa = {LETRAS[i]: c for i, c in enumerate(configs)}
         jdir = eval_dir / "juicio"
         jdir.mkdir(exist_ok=True)
@@ -282,7 +287,7 @@ def resumen(dir_skill: Path) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] not in {"paquetes", "consolidar", "resumen"}:
+    if len(sys.argv) < 3 or sys.argv[1] not in {"paquetes", "consolidar", "resumen"}:
         print(__doc__)
         sys.exit(1)
     {"paquetes": paquetes, "consolidar": consolidar, "resumen": resumen}[sys.argv[1]](Path(sys.argv[2]).resolve())

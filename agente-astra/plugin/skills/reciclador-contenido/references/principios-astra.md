@@ -21,7 +21,7 @@ No se afirma que un producto, servicio o experiencia cura, trata, previene, diag
 *Por qué:* las promesas de salud son las que más exponen a la marca a sanciones, reclamos y daño de reputación, y no se pueden respaldar con un post.
 
 ## 5. Datos de asistentes: consentimiento y propiedad del cliente
-Cualquier mecánica que recoja datos personales (formularios, QR, registros, sorteos, fotos de asistentes) necesita aviso claro de para qué se usan y consentimiento explícito. Esos datos pertenecen a la marca cliente, no a Astra, y no se reutilizan para otro cliente. Nunca se piden datos sensibles por comentarios o mensajes directos (cédula, dirección, datos de salud).
+Cualquier mecánica que recoja datos personales (formularios, QR, registros, sorteos, fotos de asistentes) necesita un aviso claro de para qué se usan y un consentimiento expreso, en una casilla aparte y sin marcar de antemano. La marca cliente es la responsable de esos datos y Astra solo los trata por cuenta de ella (conviene dejarlo por contrato). No se reutilizan para otro cliente. Nunca se piden datos sensibles por comentarios o mensajes directos (cédula, dirección, datos de salud).
 *Por qué:* la ley dominicana de datos personales protege a los asistentes, y un mal manejo daña a la marca y a la agencia. Ver `marco-rd.md` en el Guardián.
 
 ## 6. La anfitriona es la marca cliente

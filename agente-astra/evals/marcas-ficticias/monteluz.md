@@ -27,7 +27,7 @@ Adultos de 25 a 45 años. Nunca menores de edad.
 - No mostrar ni sugerir consumo excesivo ni consumo rápido.
 - No asociar la cerveza con manejar, con rendimiento deportivo, con éxito social o con éxito sexual.
 - Nada dirigido a menores. Las personas en cámara deben verse claramente mayores de 25 años.
-- Toda pieza lleva la leyenda: **"Disfruta con responsabilidad. Prohibida su venta a menores de 18 años."**
+- Toda pieza lleva la leyenda: **"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 años."**
 
 ## CTA habituales
 "Búscala en tu colmado de confianza."

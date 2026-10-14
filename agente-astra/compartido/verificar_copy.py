@@ -21,7 +21,7 @@ import unicodedata
 
 LIMITE_LINKEDIN = 3000          # caracteres por publicación (ver formatos-canal.md)
 LIMITE_CAPTION_IG = 2200        # caracteres por caption de Instagram
-CORTE_VER_MAS_LINKEDIN = 210    # aprox. caracteres visibles antes de "ver más"
+CORTE_VER_MAS_LINKEDIN = 140    # aprox. caracteres visibles antes de "ver más" en el celular
 
 EMOJI_RE = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF\U00002B50\U00002B06\U00002934\U00002935]"
@@ -132,8 +132,8 @@ def verificar(texto: str, prohibidas: list, leyenda: str | None) -> dict:
                                "caracteres_primeras_2_lineas": len(primeras), "hashtags": len(HASHTAG_RE.findall(cuerpo))}
         if len(cuerpo) > LIMITE_LINKEDIN:
             reporte["alertas"].append(f"El post de LinkedIn pasa de {LIMITE_LINKEDIN} caracteres.")
-        if len(primeras) > CORTE_VER_MAS_LINKEDIN:
-            reporte["alertas"].append("Las 2 primeras líneas de LinkedIn quizá se corten antes del 'ver más'.")
+        if len(cuerpo.splitlines()[0]) > CORTE_VER_MAS_LINKEDIN:
+            reporte["alertas"].append("La primera línea de LinkedIn quizá se corte antes del 'ver más' en el celular.")
 
     titulo, cuerpo = buscar(partes, "reel", "guion")
     if cuerpo:
