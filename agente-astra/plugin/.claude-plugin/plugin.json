@@ -1,6 +1,6 @@
 {
   "name": "agente-astra",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Agente de contenido de Astra: Guardián de marca y claims, Reciclador de contenido y Guionista de Reels, con subagentes que usan Haiku, Sonnet u Opus según la tarea. Todo es borrador para revisión humana.",
   "author": {
     "name": "jerezjeremy95-jpg"

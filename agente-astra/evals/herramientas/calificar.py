@@ -238,6 +238,7 @@ def consolidar(dir_skill: Path) -> None:
                     "veredicto": veredicto, "veredicto_ok": veredicto in caso["veredictos_aceptables"],
                     "registro_ok": auto["registro_ok"], "frases_que_sobreviven": auto["frases_que_sobreviven"],
                     "hay_corregida": auto["hay_corregida"],
+                    "claims_nuevos_en_correccion": bool(nuevos.get("si", False)),
                 }
             else:
                 for n, e in enumerate(caso["expectations"], 1):
@@ -293,9 +294,11 @@ def resumen(dir_skill: Path) -> None:
                 "altos_como_altos": f"{sum(x['altos_detectados_como_altos'] for x in m)}/{alt}",
                 "altos_pct": round(100 * sum(x["altos_detectados_como_altos"] for x in m) / alt, 1) if alt else None,
                 "falsos_positivos_controles": sum(x["falsos_positivos"] for x in ctrl),
+                "falsos_positivos_total": sum(x["falsos_positivos"] for x in m),
                 "veredictos_ok": f"{sum(x['veredicto_ok'] for x in m)}/{len(m)}",
                 "registro_ok": f"{sum(x['registro_ok'] for x in m)}/{len(m)}",
-                "corregidas_limpias": f"{sum(1 for x in m if x['hay_corregida'] and not x['frases_que_sobreviven'])}/{sum(1 for x in m if not x['es_control'])}",
+                "corregidas_limpias": f"{sum(1 for x in m if not x['es_control'] and x['hay_corregida'] and not x['frases_que_sobreviven'])}/{sum(1 for x in m if not x['es_control'])}",
+                "correcciones_con_claims_nuevos": f"{sum(1 for x in m if x.get('claims_nuevos_en_correccion'))}/{len(m)}",
             })
         filas.append(fila)
     (dir_skill / "resumen.json").write_text(json.dumps(filas, ensure_ascii=False, indent=2))

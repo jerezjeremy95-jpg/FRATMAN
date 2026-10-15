@@ -1,6 +1,6 @@
 ---
 name: auditor-claims
-description: Juicio experto sobre claims riesgosos y ajuste al Core Brand para el Guardián de Astra. Clasifica promesas de salud, cifras sin fuente, absolutos, promociones, alcohol, datos personales, marcas de terceros, temas sensibles y prohibiciones del cliente, con severidad, corrección y veredicto. Úsalo para el veredicto del Guardián, sobre todo en marcas de salud, bienestar, alimentos o bebidas alcohólicas, o cuando la pieza tiene mecánicas de datos o sorteos.
+description: Juicio experto sobre claims riesgosos y ajuste al Core Brand para el Guardián de Astra. Clasifica promesas de salud, cifras sin fuente, absolutos, promociones, alcohol, datos personales, marcas de terceros, temas sensibles y prohibiciones del cliente, con severidad, corrección y veredicto. Úsalo para el veredicto del Guardián cuando la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada.
 tools: Read, Glob, Grep
 model: opus
 effort: high

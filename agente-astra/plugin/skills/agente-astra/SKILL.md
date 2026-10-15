@@ -40,11 +40,12 @@ Regla general: **si el error saldría publicado o toca salud, alcohol o datos pe
 |---|---|---|
 | Extraer el texto de una pieza, contar caracteres y hashtags, ordenar un DB, resumir | **Haiku** | Es mecánico: va rápido y gasta poco del plan |
 | Redactar guiones, Stories, LinkedIn, captions y variantes | **Sonnet** | Buena escritura y buen tono, rápido |
-| Veredicto del Guardián en salud, bienestar, alimentos o alcohol, casos ambiguos y estrategia | **Opus** | Criterio fino, porque el error cuesta caro |
+| Guardián del día a día (copys de cualquier marca sin temas sensibles) | **Sonnet** | En las pruebas detectó todos los riesgos, sin falsas alarmas y más rápido que Opus |
+| Guardián cuando la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada; casos ambiguos y estrategia | **Opus** | Criterio fino, porque el error cuesta caro |
 | Auditoría completa antes de un lanzamiento grande o revisión adversarial de una campaña sensible | **Fable** | El más capaz. Resérvalo para lo crítico |
 
-- **En Claude.ai** (chat): el modelo lo elige la persona en el selector antes de escribir. Cuando la tarea lo amerite, recomienda el modelo en una línea al inicio de la respuesta, por ejemplo: "Para revisar claims de una marca de salud conviene Opus".
-- **En Cowork o Claude Code con el plugin agente-astra:** los subagentes ya tienen su modelo asignado. `agente-astra:extractor-piezas` y `agente-astra:verificador-formato` usan Haiku, `agente-astra:redactor-multicanal` usa Sonnet y `agente-astra:auditor-claims` usa Opus con esfuerzo alto. Delega en ellos según la tabla. Los comandos también fijan el modelo: `/agente-astra:guardian` (Opus), `/agente-astra:reciclar` y `/agente-astra:guion` (Sonnet), y `/agente-astra:extraer` (Haiku).
+- **En Claude.ai** (chat): el modelo lo elige la persona en el selector antes de escribir. Cuando la tarea lo amerite, recomienda el modelo en una línea al inicio de la respuesta, por ejemplo: "Este post promete algo para la ansiedad: para revisarlo conviene Opus".
+- **En Cowork o Claude Code con el plugin agente-astra:** los subagentes ya tienen su modelo asignado. `agente-astra:extractor-piezas` y `agente-astra:verificador-formato` usan Haiku, `agente-astra:redactor-multicanal` usa Sonnet y `agente-astra:auditor-claims` usa Opus con esfuerzo alto. Delega en ellos según la tabla. Los comandos también fijan el modelo: `/agente-astra:guardian` (Sonnet, que delega en Opus lo sensible), `/agente-astra:reciclar` y `/agente-astra:guion` (Sonnet), y `/agente-astra:extraer` (Haiku).
 
 `references/enrutamiento-modelos.md` tiene el detalle y lo que midieron las pruebas.
 

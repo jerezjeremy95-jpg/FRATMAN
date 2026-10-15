@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "reciclador-contenido (iteraci\u00f3n 1)", "runs": [{"id": "eval-101-vergel-carrusel-combinaciones-haiku_con_skill-run-1", "prompt": "Este carrusel de Vergel ya est\u00e1 aprobado por el cliente. Rec\u00edclalo: necesito Reel, Stories, LinkedIn y variantes de caption.\n\nSlide 1: 3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05\nSlide 2: Mango + pi\u00f1a + jengibre: el Tropical.\nSlide 3: Chinola + zanahoria: el Naranja Cibao.\nSlide 4: Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida).\nSlide 5: \u00bfCon cu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery.\nCopy: Tres jugos, prensados en fr\u00edo y hechos en Santiago. \u00bfCu\u00e1l es tu favorito? \ud83e\udd6d Link en la bio.", "eval_id": 101, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Reciclaje \u2014 Vergel \u00b7 desde: carrusel aprobado \u00ab3 combinaciones criollas para tu ma\u00f1ana\u00bb \u00b7 2026-10-14\n\n**Materia prima**\n- Idea central: tres jugos criollos prensados en fr\u00edo y hechos en Santiago (el Tropical, el Naranja Cibao y el Verde) para arrancar la ma\u00f1ana. Cada persona elige el suyo.\n- Inventario de claims y datos permitidos: \"3 combinaciones criollas para tu ma\u00f1ana\", \"Mango + pi\u00f1a + jengibre: el Tropical.\", \"Chinola + zanahoria: el Naranja Cibao.\", \"Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida).\", \"Tres jugos, prensados en fr\u00edo y hechos en Santiago.\", \"P\u00eddelo en la tienda o por delivery.\" Claims aprobados del Core Brand usados: \"Prensado en fr\u00edo\", \"Hecho en Santiago\", \"Sin az\u00facar a\u00f1adida\" (solo para el Verde).\n- CTA original: \"\u00bfCon cu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery.\" y \"Link en la bio\".\n\n### 1. Reel \u00b7 20 s\n\n| Tiempo | Toma / visual | Texto en pantalla | Voz o audio |\n|---|---|---|---|\n| 0\u20133 s | Plano cenital: tres vasos alineados sobre una mesa de madera con luz de ma\u00f1ana. Se levanta el vaso naranja. | 3 combinaciones criollas para tu ma\u00f1ana | Sonido ambiente de la ma\u00f1ana y percusi\u00f3n suave |\n| 3\u20137 s | Mango, pi\u00f1a y jengibre entrando a la prensa; corte al vaso del Tropical. | El Tropical: mango + pi\u00f1a + jengibre | Sonido de la prensa |\n| 7\u201311 s | Chinola abierta y zanahoria; corte al vaso del Naranja Cibao. | El Naranja Cibao: chinola + zanahoria | Sonido de la prensa |\n| 11\u201313 s | Espinaca, pi\u00f1a y lim\u00f3n; corte al vaso del Verde. | El Verde: espinaca, pi\u00f1a y lim\u00f3n | Sonido de la prensa |\n| 13\u201315 s | Primer plano del vaso verde con gotas en el borde. | Sin az\u00facar a\u00f1adida | Sonido ambiente |\n| 15\u201317 s | Tres vasos en fila; una mano toma uno. | \u00bfCon cu\u00e1l arrancas t\u00fa? | Pausa con sonido ambiente |\n| 17\u201320 s | Vaso en mano frente a la tienda. Cierre con el CTA. | P\u00eddelo en la tienda o por delivery | Voz en off breve (opcional) |\n\n**Audio:** original (sonido de la prensa, hielo y vasos) con percusi\u00f3n suave instrumental de la biblioteca de audio comercial de Instagram. Sin canciones comerciales.\n\n**Caption del Reel:** Tres combinaciones criollas para tu ma\u00f1ana, prensadas en fr\u00edo y hechas en Santiago. \u00bfCu\u00e1l es tu favorito? \ud83e\udd6d P\u00eddelo en la tienda o por delivery (link en la bio).\n\n### 2. Stories (5 pantallas)\n\n| # | Visual | Texto | Interacci\u00f3n |\n|---|---|---|---|\n| 1 | Tres vasos alineados sobre la mesa, con luz de ma\u00f1ana | 3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05 | Ninguna (pantalla de entrada) |\n| 2 | Mango, pi\u00f1a y jengibre; vaso del Tropical | El Tropical: mango + pi\u00f1a + jengibre | Slider de emoji: \"\u00bfQu\u00e9 tanto te late el Tropical?\" |\n| 3 | Chinola y zanahoria; vaso del Naranja Cibao | El Naranja Cibao: chinola + zanahoria | Ninguna |\n| 4 | Espinaca, pi\u00f1a y lim\u00f3n; vaso del Verde | El Verde: sin az\u00facar a\u00f1adida | Quiz: \"\u00bfQu\u00e9 lleva el Verde?\" Opciones: \"Espinaca, pi\u00f1a y lim\u00f3n\" (correcta), \"Mango, pi\u00f1a y jengibre\", \"Chinola y zanahoria\" |\n| 5 | Vaso en mano frente a la tienda | \u00bfCon cu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery | Sticker de link \"P\u00eddelo aqu\u00ed\" \u2192 [confirmar: enlace de pedido] |\n\n### 3. Post de LinkedIn\n\n\u00bfC\u00f3mo arrancas tu ma\u00f1ana?\nTenemos tres combinaciones criollas, prensadas en fr\u00edo y hechas en Santiago.\n\nEl Tropical: mango, pi\u00f1a y jengibre.\nEl Naranja Cibao: chinola y zanahoria.\nEl Verde: espinaca, pi\u00f1a y lim\u00f3n, sin az\u00facar a\u00f1adida.\n\nTres jugos, tres formas distintas de empezar el d\u00eda. Se pueden pedir en nuestra tienda o por delivery.\n\nPara los que arrancan temprano, la ma\u00f1ana tambi\u00e9n tiene su sabor. \u00bfCu\u00e1l pedir\u00edas t\u00fa? \ud83c\udf05\n\n#Vergel #HechoEnSantiago\n\n### 4. Captions\n\n**A \u00b7 Corta:** Tres combinaciones criollas para tu ma\u00f1ana. \u00bfCu\u00e1l es tu favorito? \ud83e\udd6d\nP\u00eddelo en la tienda o por delivery (link en la bio).\n\n**B \u00b7 Historia:**\nHay ma\u00f1anas dulces, ma\u00f1anas con car\u00e1cter y ma\u00f1anas verdes.\nTenemos un jugo para cada una: el Tropical, el Naranja Cibao y el Verde.\nTodos prensados en fr\u00edo y hechos en Santiago. El Verde va sin az\u00facar a\u00f1adida.\n\u00bfCu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**C \u00b7 Conversaci\u00f3n:** Tropical, Naranja Cibao o Verde: \u00bfcu\u00e1l te toca esta ma\u00f1ana? \ud83c\udf05\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 \u2014 Sin hallazgos de severidad alta ni media. Ajustes preventivos al redactar (no hubo correcciones despu\u00e9s del pase):\n- Se dej\u00f3 fuera \"frutas del Cibao\" y \"fruta del d\u00eda\": son pilares del Core Brand, no claims aprobados.\n- Se dejaron fuera los beneficios corporales vagos (sensaci\u00f3n de ligereza o de vigor), sin nombrarlos.\n- \"Sin az\u00facar a\u00f1adida\" aparece solo ligado al Verde, como exige el Core Brand.\n- No aparece ninguna de las prohibiciones del Core Brand (t\u00e9rminos de desintoxicaci\u00f3n, de r\u00e9gimen, de p\u00e9rdida de peso o de precio bajo), ni competidores, ni antes y despu\u00e9s.\n\n**Nota del pase:** Vergel es marca de alimentos y bienestar. Para ese caso la skill pide el pase con el subagente auditor-claims (Opus), que no estaba disponible en esta ejecuci\u00f3n, as\u00ed que el pase lo hizo el reciclador. Conviene que lo revise auditor-claims o una persona antes de enviar.\n\n### Por confirmar\n- [confirmar: enlace de pedido para el sticker de link en Stories]\n- [confirmar: tomas disponibles de los tres jugos y de la tienda para el Reel; si no hay, hace falta rodaje]\n- [confirmar: pista de audio elegida en la biblioteca de Instagram, sin canciones conocidas]\n- L\u00edmites de caracteres y hashtags de cada plataforma (LinkedIn alrededor de 3,000; caption de Instagram alrededor de 2,200): la tabla de verificaci\u00f3n de formatos-canal.md est\u00e1 vac\u00eda, as\u00ed que no quedaron verificados contra fuente oficial.\n- Confirmar que #Vergel y #HechoEnSantiago son los hashtags que la marca quiere usar en LinkedIn.\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Vergel\",\"pieza\":\"Reciclaje de carrusel aprobado: 3 combinaciones criollas para tu ma\u00f1ana\",\"veredicto\":\"verde\",\"hallazgos\":[],\"canales\":[\"reel\",\"stories\",\"linkedin\",\"captions\"]}\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Incluye Reel de 20 s con tabla de tiempos, 5 Stories, post de LinkedIn y 3 captions (A, B, C)."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Reel de 20 s: 0\u20133, 3\u20137, 7\u201311, 11\u201313, 13\u201315, 15\u201317, 17\u201320 s. Sin huecos ni solapes."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 2: slider de emoji \u00ab\u00bfQu\u00e9 tanto te late el Tropical?\u00bb; Story 4: quiz \u00ab\u00bfQu\u00e9 lleva el Verde?\u00bb; Story 5: sticker de link."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con \u00ab\u00bfC\u00f3mo arrancas tu ma\u00f1ana?\u00bb y las tres combinaciones criollas prensadas en fr\u00edo; muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Todo sale de la pieza y del Core Brand; el enlace de pedido, tomas y audio van como [confirmar]. Notas internas no son contenido publicable."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "No usa las palabras ni recursos prohibidos; el Guardi\u00e1n los menciona solo de forma gen\u00e9rica, sin nombrarlos."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe2 y lista de 4 ajustes preventivos; aclara que no hubo correcciones posteriores. Cumple de forma justa."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "\u00abpercusi\u00f3n suave instrumental de la biblioteca de audio comercial de Instagram. Sin canciones comerciales.\u00bb No propone canci\u00f3n espec\u00edfica."}, {"text": "\"Sin az\u00facar a\u00f1adida\" aparece solo asociado al jugo Verde, nunca a los tres jugos ni a la marca en general.", "passed": true, "evidence": "Reel 13\u201315 s sobre el vaso verde, Story 4, LinkedIn y caption B (\u00abEl Verde va sin az\u00facar a\u00f1adida\u00bb). Nunca con los tres jugos."}, {"text": "No atribuye efectos de salud a los jugos ni a sus ingredientes (energ\u00eda, defensas, vitaminas, digesti\u00f3n, detox, hidrataci\u00f3n o \"saludable\").", "passed": true, "evidence": "Sin efectos de salud atribuidos a jugos ni ingredientes. \u00abBienestar\u00bb aparece solo en una nota interna del pase, no en el contenido."}], "summary": {"passed": 10, "failed": 0, "total": 10, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida correcta con interacciones variadas (slider, quiz). El pase del Guardi\u00e1n declara que no hubo correcciones y avisa que lo hizo el reciclador, no el auditor-claims.", "timing": {"total_tokens": 116190, "duration_ms": 157193, "total_duration_seconds": 157.2}}}, {"id": "eval-101-vergel-carrusel-combinaciones-sonnet_con_skill-run-1", "prompt": "Este carrusel de Vergel ya est\u00e1 aprobado por el cliente. Rec\u00edclalo: necesito Reel, Stories, LinkedIn y variantes de caption.\n\nSlide 1: 3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05\nSlide 2: Mango + pi\u00f1a + jengibre: el Tropical.\nSlide 3: Chinola + zanahoria: el Naranja Cibao.\nSlide 4: Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida).\nSlide 5: \u00bfCon cu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery.\nCopy: Tres jugos, prensados en fr\u00edo y hechos en Santiago. \u00bfCu\u00e1l es tu favorito? \ud83e\udd6d Link en la bio.", "eval_id": 101, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Reciclaje \u2014 Vergel \u00b7 desde: Carrusel \"3 combinaciones criollas para tu ma\u00f1ana\" \u00b7 2026-10-14\n\n**Materia prima**\n- Idea central: tres jugos criollos, cada uno con su nombre (el Tropical, el Naranja Cibao y el Verde), para que el p\u00fablico elija con cu\u00e1l arrancar su ma\u00f1ana.\n- Puntos de apoyo: las tres combinaciones y sus ingredientes; los claims \"prensado en fr\u00edo\" y \"hecho en Santiago\"; \"sin az\u00facar a\u00f1adida\" solo en el Verde; la pregunta final \"\u00bfcon cu\u00e1l arrancas t\u00fa?\".\n- Inventario de claims y datos permitidos: \"3 combinaciones criollas para tu ma\u00f1ana\", \"Mango + pi\u00f1a + jengibre: el Tropical\", \"Chinola + zanahoria: el Naranja Cibao\", \"Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida)\", \"\u00bfCon cu\u00e1l arrancas t\u00fa?\", \"P\u00eddelo en la tienda o por delivery\", \"Tres jugos, prensados en fr\u00edo y hechos en Santiago\", \"\u00bfCu\u00e1l es tu favorito?\", \"Link en la bio\". Del Core Brand: \"Prensado en fr\u00edo\", \"Hecho en Santiago\" y \"Sin az\u00facar a\u00f1adida\", este \u00faltimo **solo para la l\u00ednea Verde**. No hay precios, horarios, direcciones ni beneficios de salud en la pieza, as\u00ed que el paquete tampoco los lleva.\n- CTA original: \"P\u00eddelo en la tienda o por delivery\" + \"Link en la bio\" (coincide con el CTA habitual del Core Brand).\n- Tono que se repite: t\u00fa, frases cortas, \"arrancas\", \"ma\u00f1ana\", humor ligero. M\u00e1ximo 2 emojis por pieza (los del original: \ud83c\udf05 y \ud83e\udd6d).\n- Visuales: el carrusel no trae Design Board ni fotos. Las \u00fanicas pistas de color son los nombres \"Naranja Cibao\" y \"Verde\".\n\n### 1. Reel \u00b7 22 s\n\n| Tiempo | Toma / visual | Texto en pantalla | Voz o audio |\n|---|---|---|---|\n| 0\u20133 s | Plano cercano de tres vasos en fila sobre una mesa, con luz de ma\u00f1ana. Sin logo al inicio. | 3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05 | Voz en off: \"Tres combinaciones criollas para tu ma\u00f1ana.\" |\n| 3\u20137 s | Mango, pi\u00f1a y jengibre entran al plano y quedan junto al primer vaso. | Mango + pi\u00f1a + jengibre: el Tropical | Voz en off: \"Mango, pi\u00f1a y jengibre: el Tropical.\" |\n| 7\u201311 s | Chinola y zanahoria junto al segundo vaso. | Chinola + zanahoria: el Naranja Cibao | Voz en off: \"Chinola y zanahoria: el Naranja Cibao.\" |\n| 11\u201315 s | Espinaca, pi\u00f1a y lim\u00f3n junto al tercer vaso. | Espinaca + pi\u00f1a + lim\u00f3n: el Verde (etiqueta peque\u00f1a debajo: Sin az\u00facar a\u00f1adida) | Voz en off: \"Espinaca, pi\u00f1a y lim\u00f3n: el Verde, sin az\u00facar a\u00f1adida.\" |\n| 15\u201318 s | Los tres vasos juntos; una mano toma uno (solo manos, sin rostro). | Prensados en fr\u00edo. Hechos en Santiago. | Voz en off: \"Prensados en fr\u00edo. Hechos en Santiago.\" |\n| 18\u201320 s | Plano abierto de los tres vasos. | \u00bfCon cu\u00e1l arrancas t\u00fa? | Voz en off: \"\u00bfCon cu\u00e1l arrancas t\u00fa?\" |\n| 20\u201322 s | Los tres vasos, fijo. | Tienda o delivery \u00b7 link en la bio | Voz en off: \"P\u00eddelo en la tienda o por delivery.\" |\n\n**Audio:** voz en off cercana y alegre sobre percusi\u00f3n suave de ritmo tropical, instrumental, de la biblioteca de audio de Meta (o audio original); sin canciones comerciales. Se entiende sin sonido gracias al texto en pantalla.\n**Notas de producci\u00f3n:** \"Sin az\u00facar a\u00f1adida\" aparece solo en la toma del Verde (11\u201315 s), nunca en el gancho, el remate ni el CTA. Texto centrado, lejos de la franja inferior y del borde derecho.\n**Caption del Reel:** Tres jugos, tres formas de arrancar la ma\u00f1ana. \u00bfCu\u00e1l va contigo? \ud83e\udd6d P\u00eddelo en la tienda o por delivery (link en la bio).\n\n### 2. Stories (5 pantallas)\n\n| # | Visual | Texto | Interacci\u00f3n |\n|---|---|---|---|\n| 1 | Tres vasos en fila, luz de ma\u00f1ana. | 3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05 | Ninguna (portada). |\n| 2 | Mango, pi\u00f1a y jengibre sobre fondo claro. | Mango + pi\u00f1a + jengibre: el Tropical | Ninguna. |\n| 3 | Chinola y zanahoria sobre fondo claro. | Chinola + zanahoria: el Naranja Cibao | Ninguna. |\n| 4 | Espinaca, pi\u00f1a y lim\u00f3n sobre fondo claro. | Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida) | Ninguna. |\n| 5 | Los tres vasos juntos. Franja inferior libre para las respuestas. | \u00bfCon cu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery. Link en la bio \ud83e\udd6d | Caja de preguntas centrada: \"Tropical, Naranja Cibao o Verde\" (la encuesta solo admite 2 opciones y son 3 jugos). |\n\n### 3. Post de LinkedIn\n*(Para la p\u00e1gina de LinkedIn de Vergel.)*\n\nUn buen nombre cuenta qu\u00e9 hay en el vaso.\nNuestras tres combinaciones criollas se llaman el Tropical, el Naranja Cibao y el Verde.\n\nEn Vergel prensamos en fr\u00edo, en Santiago. Estas son las tres:\n\n\u2022 El Tropical: mango + pi\u00f1a + jengibre.\n\u2022 El Naranja Cibao: chinola + zanahoria.\n\u2022 El Verde: espinaca + pi\u00f1a + lim\u00f3n, sin az\u00facar a\u00f1adida.\n\nNos gusta que cada jugo se entienda en una l\u00ednea: lo que lleva y c\u00f3mo se llama.\n\n\u00bfCon cu\u00e1l arrancas t\u00fa? Cu\u00e9ntanos en los comentarios \ud83c\udf05\n\nP\u00eddelo en la tienda o por delivery: [confirmar: enlace de pedidos para LinkedIn]\n\n#Santiago #PrensadoEnFr\u00edo #SaborCriollo\n\n*Nota:* LinkedIn le sirve menos a esta pieza que Instagram (es una pieza de producto, sin proceso ni cifras que contar). Por eso el post es corto y no promete nada de negocio. Si prefieren no publicarlo, el paquete funciona igual sin \u00e9l.\n\n### 4. Captions\n\n**A \u00b7 Corta:** Tropical, Naranja Cibao o Verde: t\u00fa eliges c\u00f3mo arrancar. Prensados en fr\u00edo y hechos en Santiago \ud83e\udd6d P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**B \u00b7 Historia:** Hay ma\u00f1anas de mango, pi\u00f1a y jengibre. Hay ma\u00f1anas de chinola con zanahoria. Y hay ma\u00f1anas de espinaca, pi\u00f1a y lim\u00f3n: el Verde, sin az\u00facar a\u00f1adida. Estas son nuestras tres combinaciones criollas, prensadas en fr\u00edo y hechas en Santiago. \ud83c\udf05 P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**C \u00b7 Conversaci\u00f3n:** Tres combinaciones criollas y una sola pregunta: \u00bfcon cu\u00e1l arrancas t\u00fa? \ud83e\udd6d El Tropical (mango + pi\u00f1a + jengibre), el Naranja Cibao (chinola + zanahoria) o el Verde (espinaca + pi\u00f1a + lim\u00f3n, sin az\u00facar a\u00f1adida). Cu\u00e9ntanos en los comentarios. P\u00eddelo en la tienda o por delivery (link en la bio).\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 \u2014 todo sale del inventario de la pieza y de los claims aprobados del Core Brand. Cambios aplicados antes de entregar (4):\n- LinkedIn: quit\u00e9 \"Por eso\" y \"As\u00ed quedaron\" (insinuaban una raz\u00f3n y un proceso que la pieza no cuenta) y cambi\u00e9 la frase de \"ingredientes claros\u2026 sabor criollo\" por una l\u00ednea atada al carrusel.\n- Caption B: \"mango y jengibre\" pas\u00f3 a \"mango, pi\u00f1a y jengibre\" (el Tropical lleva pi\u00f1a) y \"sin az\u00facar a\u00f1adida\" qued\u00f3 pegado a \"el Verde\".\n- Stories: quit\u00e9 el quiz de la pantalla 4 (cargaba la pantalla del Verde); la interacci\u00f3n queda en la pantalla 5.\n- Reel: separ\u00e9 el CTA en dos tomas (18\u201320 s y 20\u201322 s) para que el texto en pantalla no pase de unas 7 palabras y la voz alcance.\n\nRevisado y limpio:\n- \"Sin az\u00facar a\u00f1adida\" va solo con el Verde (Reel, Stories 4, LinkedIn, captions B y C). En el Tropical y el Naranja Cibao no se dice ni se insin\u00faa. \"Prensados en fr\u00edo\" y \"hechos en Santiago\" s\u00ed cubren los tres jugos, igual que el copy original.\n- Ning\u00fan efecto en el cuerpo ni beneficio atribuido a ingredientes (jengibre, espinaca, zanahoria\u2026). Ninguna palabra de la lista de prohibidas del Core Brand. Sin competidores ni humor sobre cuerpos. Sin cifras, precios ni fechas nuevas.\n- Emojis por pieza: Reel 2, Stories 2, LinkedIn 1, cada caption 1 (m\u00e1ximo permitido: 3). Hashtags: 3 en LinkedIn, ninguno en captions.\n- Verificaci\u00f3n mec\u00e1nica con `verificar_copy.py`: tiempos del Reel cuadran (0\u201322 s, sin huecos), sin palabras prohibidas, registro del Guardi\u00e1n v\u00e1lido.\n- Pieza original: aprobada por el cliente seg\u00fan el pedido, as\u00ed que no se marca \"sin aprobaci\u00f3n confirmada\".\n\n### Por confirmar\n- [confirmar: enlace de pedidos para LinkedIn con el equipo de Vergel; la p\u00e1gina no tiene \"link en la bio\"]\n- [confirmar: que \"el Verde\" (espinaca + pi\u00f1a + lim\u00f3n) pertenece a la l\u00ednea Verde (Jugo Verde o Verde Lim\u00f3n), la \u00fanica que el Core Brand deja llamar \"sin az\u00facar a\u00f1adida\"]\n- [confirmar: tomas o fotos disponibles de los tres jugos y de los ingredientes, y qui\u00e9n puede salir en c\u00e1mara; el guion usa solo manos]\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Vergel\",\"pieza\":\"Reciclaje de carrusel 3 combinaciones criollas para tu ma\u00f1ana\",\"veredicto\":\"verde\",\"hallazgos\":[{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"donde\":\"LinkedIn\",\"corregido\":true},{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"donde\":\"Caption B\",\"corregido\":true},{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"donde\":\"Stories 4\",\"corregido\":true},{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"donde\":\"Reel 18-22 s\",\"corregido\":true}],\"correcciones_aplicadas\":4,\"por_confirmar\":3}\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Incluye Reel de 22 s con tabla de tiempos, 5 Stories, post de LinkedIn y 3 captions (A corta, B historia, C conversaci\u00f3n)."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Reel de 22 s: 0\u20133, 3\u20137, 7\u201311, 11\u201315, 15\u201318, 18\u201320, 20\u201322 s. Sin huecos ni solapes."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 5: caja de preguntas centrada con \u00abTropical, Naranja Cibao o Verde\u00bb."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con \u00abUn buen nombre cuenta qu\u00e9 hay en el vaso.\u00bb y la presentaci\u00f3n de las tres combinaciones; texto muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Solo usa ingredientes, nombres, CTA y claims aprobados; el enlace para LinkedIn y el resto faltante van como [confirmar]."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "No aparecen detox, dieta, quema grasa, adelgazar ni barato; sin competidores, antes y despu\u00e9s ni humor sobre cuerpos."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": true, "evidence": "\u00abPase del Guardi\u00e1n\u00bb con veredicto \ud83d\udfe2 y lista de 4 cambios aplicados (LinkedIn, caption B, Stories, Reel), m\u00e1s REGISTRO-GUARDIAN."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "Audio: percusi\u00f3n instrumental de la biblioteca de Meta o audio original; \u00absin canciones comerciales\u00bb. No nombra ninguna canci\u00f3n."}, {"text": "\"Sin az\u00facar a\u00f1adida\" aparece solo asociado al jugo Verde, nunca a los tres jugos ni a la marca en general.", "passed": true, "evidence": "Aparece solo con el Verde: Reel 11\u201315 s, Story 4, LinkedIn, captions B y C. Caption A y las tomas de Tropical y Naranja Cibao no lo llevan."}, {"text": "No atribuye efectos de salud a los jugos ni a sus ingredientes (energ\u00eda, defensas, vitaminas, digesti\u00f3n, detox, hidrataci\u00f3n o \"saludable\").", "passed": true, "evidence": "Ning\u00fan efecto en cuerpo o mente; los ingredientes se mencionan solo como lista, sin beneficios."}], "summary": {"passed": 10, "failed": 0, "total": 10, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida limpia y fiel a la pieza. Lo faltante (enlace LinkedIn, tomas, confirmar l\u00ednea Verde) va como [confirmar]. Gancho de LinkedIn algo flojo pero v\u00e1lido.", "timing": {"total_tokens": 109344, "duration_ms": 211889, "total_duration_seconds": 211.9}}}, {"id": "eval-101-vergel-carrusel-combinaciones-sonnet_sin_skill-run-1", "prompt": "Este carrusel de Vergel ya est\u00e1 aprobado por el cliente. Rec\u00edclalo: necesito Reel, Stories, LinkedIn y variantes de caption.\n\nSlide 1: 3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05\nSlide 2: Mango + pi\u00f1a + jengibre: el Tropical.\nSlide 3: Chinola + zanahoria: el Naranja Cibao.\nSlide 4: Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida).\nSlide 5: \u00bfCon cu\u00e1l arrancas t\u00fa? P\u00eddelo en la tienda o por delivery.\nCopy: Tres jugos, prensados en fr\u00edo y hechos en Santiago. \u00bfCu\u00e1l es tu favorito? \ud83e\udd6d Link en la bio.", "eval_id": 101, "outputs": [{"name": "respuesta.md", "type": "text", "content": "# Vergel: reciclaje del carrusel \"3 combinaciones criollas\"\n\nMantuve los nombres, las combinaciones y los claims del carrusel aprobado. Lo que cambia es el formato, los ganchos y los cierres. Todo va en tuteo, con 1 o 2 emojis por pieza y el CTA habitual de la marca.\n\nUn detalle que cuid\u00e9 en todas las piezas: **\"sin az\u00facar a\u00f1adida\" va pegado solo al Verde**, nunca a los tres jugos ni al Tropical o al Naranja Cibao.\n\n---\n\n## 1. Reel (vertical 9:16, 15 a 18 segundos)\n\n**Idea:** mismo recorrido del carrusel, una combinaci\u00f3n por plano, con texto en pantalla. Sin voz en off.\n\n| Tiempo | Imagen | Texto en pantalla |\n|---|---|---|\n| 0-2 s | Los tres jugos alineados con luz de ma\u00f1ana | **3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05** |\n| 2-6 s | Mango, pi\u00f1a y jengibre cortados, luego el jugo en el vaso | **Mango + pi\u00f1a + jengibre: el Tropical.** |\n| 6-10 s | Chinola abierta y zanahoria, luego el jugo en el vaso | **Chinola + zanahoria: el Naranja Cibao.** |\n| 10-14 s | Espinaca, pi\u00f1a y lim\u00f3n, luego el jugo en el vaso | **Espinaca + pi\u00f1a + lim\u00f3n: el Verde** y un sello peque\u00f1o: *sin az\u00facar a\u00f1adida* (solo en este plano) |\n| 14-18 s | Los tres jugos juntos, cierre con la tienda o el delivery | **\u00bfCon cu\u00e1l arrancas t\u00fa?** y luego **Prensados en fr\u00edo. Hechos en Santiago.** / **P\u00eddelo en la tienda o por delivery** |\n\n**Audio:** m\u00fasica alegre y ligera, de la biblioteca con licencia de la plataforma. Que el ritmo marque el cambio de plano cada 4 segundos.\n\n**Caption del Reel:**\n> \u00bfTropical, Naranja Cibao o Verde? Dime cu\u00e1l arrancas t\u00fa \ud83e\udd6d\n> P\u00eddelo en la tienda o por delivery (link en la bio).\n\n---\n\n## 2. Stories (5 frames, 9:16)\n\n**Frame 1:** fondo con los tres jugos.\nTexto: **3 combinaciones criollas para tu ma\u00f1ana \ud83c\udf05**\n\n**Frame 2:** foto o video del Tropical.\nTexto: **Mango + pi\u00f1a + jengibre: el Tropical. \ud83e\udd6d**\n\n**Frame 3:** foto o video del Naranja Cibao.\nTexto: **Chinola + zanahoria: el Naranja Cibao. \ud83e\udd55**\n\n**Frame 4:** foto o video del Verde.\nTexto: **Espinaca + pi\u00f1a + lim\u00f3n: el Verde (sin az\u00facar a\u00f1adida). \ud83c\udf4d**\n\n**Frame 5:** fondo con los tres jugos y cierre.\nTexto: **\u00bfCon cu\u00e1l arrancas t\u00fa?**\n- Sticker de **Preguntas**: \"Cu\u00e9ntanos tu favorito\".\n- Sticker de **Enlace**: \"P\u00eddelo en la tienda o por delivery\".\n- Texto peque\u00f1o: *Prensados en fr\u00edo. Hechos en Santiago.*\n\n**Seguimiento (comunidad):** al d\u00eda siguiente, comparte 2 o 3 respuestas del sticker de Preguntas en una Story. Es el pilar de Comunidad y casi no cuesta producci\u00f3n.\n\n---\n\n## 3. LinkedIn (publicaci\u00f3n de la p\u00e1gina de Vergel)\n\n**Versi\u00f3n principal:**\n\n> Entre el primer correo del d\u00eda y la primera reuni\u00f3n, hay una pausa perfecta para un jugo.\n>\n> Te dejamos 3 combinaciones criollas para tu ma\u00f1ana:\n>\n> \u2022 Tropical: mango + pi\u00f1a + jengibre.\n> \u2022 Naranja Cibao: chinola + zanahoria.\n> \u2022 Verde: espinaca + pi\u00f1a + lim\u00f3n (sin az\u00facar a\u00f1adida).\n>\n> Los tres, prensados en fr\u00edo y hechos en Santiago.\n>\n> \u00bfCon cu\u00e1l arrancas t\u00fa? Cu\u00e9ntanos en los comentarios \ud83c\udf05\n>\n> P\u00eddelo en la tienda o por delivery.\n>\n> #Santiago #SaborCriollo #JugoPrensadoEnFr\u00edo\n\n**Primera l\u00ednea alternativa** (es lo \u00fanico que se ve antes de \"ver m\u00e1s\"):\n- \"Tu ma\u00f1ana en Santiago tiene 3 opciones criollas.\"\n- \"\u00bfMango, chinola o espinaca? T\u00fa eliges c\u00f3mo arrancar.\"\n\n**Versi\u00f3n corta (si prefieren menos texto):**\n\n> Tres jugos criollos para tu ma\u00f1ana: Tropical, Naranja Cibao y Verde (sin az\u00facar a\u00f1adida). Prensados en fr\u00edo y hechos en Santiago. \u00bfCon cu\u00e1l arrancas t\u00fa? \ud83e\udd6d\n>\n> P\u00eddelo en la tienda o por delivery.\n\n**Ojo con el link:** LinkedIn no tiene \"link en la bio\". Pongan el link de pedido en el primer comentario o en el bot\u00f3n de la p\u00e1gina. No lo escrib\u00ed porque no tengo la URL.\n\n---\n\n## 4. Variantes de caption (Instagram: carrusel, Reel o Stories)\n\n**A. Original aprobada (la del carrusel)**\n> Tres jugos, prensados en fr\u00edo y hechos en Santiago. \u00bfCu\u00e1l es tu favorito? \ud83e\udd6d Link en la bio.\n\n**B. Pregunta directa**\n> Tres jugos, una pregunta: \u00bfcu\u00e1l arrancas t\u00fa? Tropical, Naranja Cibao o Verde. Prensados en fr\u00edo y hechos en Santiago \ud83e\udd6d\n> P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**C. Humor ligero**\n> La decisi\u00f3n m\u00e1s dif\u00edcil de tu ma\u00f1ana: \u00bfTropical, Naranja Cibao o Verde? \ud83c\udf05 Todos prensados en fr\u00edo y hechos en Santiago.\n> P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**D. Comunidad**\n> Etiqueta a tu pana de las ma\u00f1anas y escojan juntos: Tropical, Naranja Cibao o Verde. Prensados en fr\u00edo y hechos en Santiago \ud83e\udd1d\n> P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**E. Sabor criollo**\n> Mango, chinola, zanahoria, pi\u00f1a... el sabor criollo en tu vaso. Tres jugos prensados en fr\u00edo y hechos en Santiago \ud83e\udd6d \u00bfCu\u00e1l se viene contigo hoy?\n> Link en la bio.\n\n**F. Con el claim del Verde**\n> Espinaca, pi\u00f1a y lim\u00f3n: el Verde, sin az\u00facar a\u00f1adida. Y los tres, prensados en fr\u00edo y hechos en Santiago \ud83c\udf4d\n> P\u00eddelo en la tienda o por delivery (link en la bio).\n\n**G. Corta (para Reel o Story)**\n> \u00bfTropical, Naranja Cibao o Verde? \ud83c\udf05 Link en la bio.\n\n**Hashtags (m\u00e1ximo 3 o 4 por post):** #Santiago #SaborCriollo #JugoPrensadoEnFr\u00edo #Ma\u00f1anasConVergel\n\n---\n\n## Revisi\u00f3n contra el Core Brand\n\n- **Claims:** solo uso \"prensado en fr\u00edo\", \"hecho en Santiago\" y \"sin az\u00facar a\u00f1adida\" (\u00fanicamente en el Verde). No agregu\u00e9 \"100% natural\", \"sin conservantes\" ni nada fuera de la lista aprobada.\n- **Prohibiciones:** no hay \"detox\", \"dieta\", \"barato\" ni promesas sobre el cuerpo. El jengibre se menciona solo como ingrediente y sabor. Tampoco hay competidores ni humor sobre cuerpos.\n- **Tono:** tuteo, frases cortas y 1 o 2 emojis por pieza (nunca m\u00e1s de 3).\n- **Pilares que se tocan:** Frescura, Sabor criollo, Ma\u00f1anas y pausas, y Comunidad (Stories, caption D).\n\n## Por confirmar\n\n1. **Nombre exacto del Verde:** la l\u00ednea Verde incluye Jugo Verde y Verde Lim\u00f3n. Confirmen que \"el Verde\" de espinaca + pi\u00f1a + lim\u00f3n es uno de esos dos. Si lo es, el claim est\u00e1 bien usado.\n2. **Material gr\u00e1fico:** necesito que me pasen o confirmen fotos y video de cada jugo y del proceso de prensado para armar el Reel y las Stories.\n3. **Aprobaci\u00f3n:** el carrusel est\u00e1 aprobado, pero los ganchos, cierres y captions nuevos de estas piezas son adaptaciones. P\u00e1senlos por el visto bueno habitual del cliente si su proceso lo pide.\n4. **Link de pedido** para LinkedIn y el sticker de enlace de Stories.\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Incluye Reel 15\u201318 s con tabla de tiempos, 5 frames de Stories, LinkedIn y captions A\u2013G (7, m\u00e1s de las 3 pedidas)."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Reel declarado de 15 a 18 s: 0\u20132, 2\u20136, 6\u201310, 10\u201314, 14\u201318 s. Sin huecos ni solapes."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Frame 5: sticker de Preguntas \u00abCu\u00e9ntanos tu favorito\u00bb y sticker de Enlace."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con \u00abEntre el primer correo del d\u00eda y la primera reuni\u00f3n, hay una pausa perfecta para un jugo.\u00bb; muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Todo sale de la pieza y del Core Brand; el link de pedido y el material gr\u00e1fico van en \u00abPor confirmar\u00bb."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "Las partes no usan palabras prohibidas; detox, dieta y barato aparecen solo en la secci\u00f3n meta de revisi\u00f3n, para negarlos."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": false, "evidence": "Solo hay \u00abRevisi\u00f3n contra el Core Brand\u00bb con checklist; no hay veredicto del Guardi\u00e1n ni lista de cambios aplicados."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "Audio: \u00abm\u00fasica alegre y ligera, de la biblioteca con licencia de la plataforma\u00bb. No nombra ninguna canci\u00f3n."}, {"text": "\"Sin az\u00facar a\u00f1adida\" aparece solo asociado al jugo Verde, nunca a los tres jugos ni a la marca en general.", "passed": true, "evidence": "Solo junto al Verde: Reel 10\u201314 s, Story 4, LinkedIn y caption F. La versi\u00f3n corta \u00abVerde (sin az\u00facar a\u00f1adida)\u00bb es algo ambigua."}, {"text": "No atribuye efectos de salud a los jugos ni a sus ingredientes (energ\u00eda, defensas, vitaminas, digesti\u00f3n, detox, hidrataci\u00f3n o \"saludable\").", "passed": true, "evidence": "Sin efectos de salud; aclara que \u00abel jengibre se menciona solo como ingrediente y sabor\u00bb."}], "summary": {"passed": 9, "failed": 1, "total": 10, "pass_rate": 0.9}, "metricas": {"claims_nuevos": []}, "notas_juez": "Contenido s\u00f3lido y fiel, pero sin pase del Guardi\u00e1n con veredicto ni cambios aplicados. Entrega 7 captions en vez de 3 y una versi\u00f3n corta de LinkedIn con \u00absin az\u00facar a\u00f1adida\u00bb ambigua.", "timing": {"total_tokens": 72805, "duration_ms": 83153, "total_duration_seconds": 83.2}}}, {"id": "eval-102-ambar-post-db-pausa-haiku_con_skill-run-1", "prompt": "Te paso el POST 3 del Design Board de Estudio \u00c1mbar de este mes (ya aprobado). S\u00e1cale Reel, Stories, un post de LinkedIn para Recursos Humanos y captions.\n\nPOST 3 \u00b7 Pausa de mediod\u00eda\nINSPO: https://www.pinterest.com/ideas/ejemplo/000/\nFormato: carrusel de 3\nFondo: arena claro\nImagen: foto del estudio vac\u00edo con luz de tarde\nLetras: marr\u00f3n \u00e1mbar, Montserrat\nTexto imagen 1: \u00bfY si tu almuerzo tuviera 10 minutos para ti?\nTexto imagen 2: Respira. Estira. Vuelve.\nTexto imagen 3: Clases de mediod\u00eda, para todos los niveles.\nCopy: Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os. Reserva por el link en la bio.", "eval_id": 102, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Reciclaje \u2014 Estudio \u00c1mbar \u00b7 desde: POST 3 \u00b7 Pausa de mediod\u00eda (carrusel de 3) \u00b7 2026-10-14\n\n**Materia prima**\n- Idea central: Una pausa a mitad del d\u00eda tambi\u00e9n cuenta: clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os, para respirar, estirar y volver.\n- Inventario de claims y datos permitidos:\n  - De la pieza (copia literal): \"\u00bfY si tu almuerzo tuviera 10 minutos para ti?\", \"Respira. Estira. Vuelve.\", \"Clases de mediod\u00eda, para todos los niveles.\", \"Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f\", \"Clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os.\", \"Reserva por el link en la bio.\"\n  - Del Core Brand, claims aprobados: \"Clases para todos los niveles\", \"Instructores certificados\", \"Grupos de m\u00e1ximo 12 personas\".\n  - Del Core Brand, servicio y CTA B2B: sesiones para empresas; \"Escr\u00edbenos para llevar una sesi\u00f3n a tu equipo.\"\n- CTA original: \"Reserva por el link en la bio.\"\n- Palabras del tono a repetir: pausa, respira, vuelve, para ti, t\u00fa.\n- Elementos visuales: fondo arena claro, letras marr\u00f3n \u00e1mbar en Montserrat, foto del estudio vac\u00edo con luz de tarde.\n- Canales: los cuatro por defecto (Reel, Stories, LinkedIn para Recursos Humanos y captions). LinkedIn va en la p\u00e1gina de Estudio \u00c1mbar, as\u00ed que no necesita autorizaci\u00f3n de Astra.\n\n### 1. Reel \u00b7 20 s\n| Tiempo | Toma / visual | Texto en pantalla | Voz o audio |\n|---|---|---|---|\n| 0\u20133 s | Plano fijo del estudio vac\u00edo con luz de tarde (la foto del Design Board; si no hay video, se anima la foto con un movimiento lento). Sin personas. | \u00bfY si tu almuerzo tuviera 10 minutos para ti? | Ambiente del estudio, sin voz |\n| 3\u20136 s | Acercamiento lento a la luz de tarde sobre el piso del estudio. | Respira. | Ambiente |\n| 6\u20139 s | Plano abierto del espacio, movimiento lento de c\u00e1mara. | Estira. | Ambiente |\n| 9\u201312 s | Mismo espacio, otro encuadre. | Vuelve. | Ambiente |\n| 12\u201317 s | Fondo arena claro, letras marr\u00f3n \u00e1mbar. | Clases de mediod\u00eda, para todos los niveles. | M\u00fasica instrumental suave |\n| 17\u201320 s | Mismo fondo, sin movimiento. | Reserva por el link en la bio. | M\u00fasica instrumental suave |\n\n**Audio:** ambiente del estudio y m\u00fasica instrumental suave de la biblioteca de audio de Instagram. Sin canciones comerciales ni voces de terceros. Si no hay m\u00fasica disponible, queda solo el ambiente.\nSi alguien aparece en c\u00e1mara, pedir su autorizaci\u00f3n antes de usar la toma, y sin posturas extremas.\n\n**Caption del Reel:**\nUna pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f\nClases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os.\nReserva por el link en la bio.\n\n### 2. Stories (4 pantallas)\n| # | Visual | Texto | Interacci\u00f3n |\n|---|---|---|---|\n| 1 | Foto del estudio vac\u00edo con luz de tarde | \u00bfY si tu almuerzo tuviera 10 minutos para ti? | Encuesta: \"\u00bfTu almuerzo es pausa o pantalla?\" con opciones \"Pausa\" y \"Pantalla\" |\n| 2 | Luz de tarde en el estudio, sin personas | Respira. Estira. Vuelve. | Slider de emoji: \"\u00bfC\u00f3mo llegas hoy al mediod\u00eda?\" |\n| 3 | Detalle del espacio, fondo arena claro | Clases de mediod\u00eda, para todos los niveles. | Caja de preguntas: \"Preg\u00fantanos lo que quieras antes de tu primera clase.\" |\n| 4 | Fondo arena claro, letras marr\u00f3n \u00e1mbar | Grupos peque\u00f1os. Reserva tu clase por el link en la bio. | Sticker de link: [confirmar: URL de reserva] |\n\nTexto centrado, lejos de las franjas superior e inferior de Stories.\n\n### 3. Post de LinkedIn\nUna pausa a mitad del d\u00eda tambi\u00e9n cuenta. \ud83c\udf3f\n\u00bfY si el almuerzo tuviera 10 minutos para ti?\n\nEn Estudio \u00c1mbar tenemos clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os. Son un espacio para parar, respirar y volver a tu d\u00eda.\n\nSi tu equipo busca un momento de bienestar en medio de la jornada, tambi\u00e9n llevamos sesiones para empresas en Santiago.\n\nNuestras clases de mediod\u00eda son para todos los niveles, con instructores certificados y grupos de m\u00e1ximo 12 personas.\n\nEscr\u00edbenos para llevar una sesi\u00f3n a tu equipo.\n\n#BienestarEnElTrabajo #RecursosHumanos #PausaDeMediodia\n\n### 4. Captions\n**A \u00b7 Corta:** Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Reserva por el link en la bio.\n\n**B \u00b7 Historia:** A veces el almuerzo se come con el celular en la mano y la tarde empieza sin pausa. Por eso tenemos clases de mediod\u00eda: un rato para respirar, estirar y volver. Son para todos los niveles, en grupos peque\u00f1os. Reserva por el link en la bio.\n\n**C \u00b7 Conversaci\u00f3n:** Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Nuestras clases de mediod\u00eda son para todos los niveles, en grupos peque\u00f1os. Si quieres probar, reserva por el link en la bio. \u00bfTu almuerzo hoy es pausa o pantalla?\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe1 \u2014 ajustes aplicados; quedan datos por confirmar y una decisi\u00f3n por tomar.\n\nCambios aplicados en la revisi\u00f3n:\n- Caption B: quit\u00e9 \"con luz de tarde\" de la clase. La pieza habla de clases de mediod\u00eda y la luz de tarde solo es parte de la foto.\n- LinkedIn: quit\u00e9 la frase \"casi nunca se toma\" sobre las empresas. Es una generalizaci\u00f3n sin fuente.\n\nPara decidir por un humano:\n- El gancho \"10 minutos\" puede leerse como la duraci\u00f3n de la clase. La pieza no dice cu\u00e1nto dura; el copy se mantiene igual porque es el texto aprobado.\n\nPendiente antes de publicar:\n- Marca de bienestar: la skill pide que el pase del Guardi\u00e1n lo haga el subagente auditor-claims (Opus). En esta sesi\u00f3n no est\u00e1 disponible, as\u00ed que la revisi\u00f3n la hizo este borrador con references/claims-riesgo.md. Debe repasarla auditor-claims o una persona del equipo.\n- L\u00edmites de caracteres y hashtags (LinkedIn alrededor de 3,000; caption alrededor de 2,200): la tabla de verificaci\u00f3n de formatos-canal.md est\u00e1 vac\u00eda, as\u00ed que no qued\u00f3 verificada. El paquete queda muy por debajo de esas cifras.\n- El formato del registro se arm\u00f3 seg\u00fan los c\u00f3digos de claims-riesgo.md; no se compar\u00f3 con el de guardian-marca.\n\n### Por confirmar\n- [confirmar: URL de reserva] para el sticker de link de Stories.\n- [confirmar: formato, duraci\u00f3n y precio de las sesiones para empresas] para el LinkedIn de RR. HH.\n- [confirmar: duraci\u00f3n de la clase de mediod\u00eda] para decidir si el \"10 minutos\" se entiende como duraci\u00f3n de la clase.\n- [confirmar: horario, d\u00edas y cupos de las clases de mediod\u00eda]. No est\u00e1n en la pieza, as\u00ed que no aparecen en ning\u00fan canal; si el equipo los quiere, hay que confirmarlos.\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Estudio \u00c1mbar\",\"pieza\":\"Reciclaje de POST 3 \u00b7 Pausa de mediod\u00eda\",\"veredicto\":\"\ud83d\udfe1\",\"hallazgos\":[{\"codigo\":\"estilo\",\"severidad\":\"baja\",\"estado\":\"corregido\"},{\"codigo\":\"absoluto\",\"severidad\":\"media\",\"estado\":\"corregido\"},{\"codigo\":\"cifra_sin_fuente\",\"severidad\":\"media\",\"estado\":\"para decidir por un humano\"}]}\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Reel de 20 s con tabla, 4 Stories, post de LinkedIn y captions A, B y C."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tabla 0\u20133, 3\u20136, 6\u20139, 9\u201312, 12\u201317, 17\u201320 s: sin huecos ni solapes, total 20 s igual a lo declarado."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 1 con encuesta (Pausa / Pantalla), Story 2 con slider de emoji y Story 3 con caja de preguntas."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con 'Una pausa a mitad del d\u00eda tambi\u00e9n cuenta. \ud83c\udf3f' y '\u00bfY si el almuerzo tuviera 10 minutos para ti?'. Texto corto, muy por debajo de 3,000."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Todo sale de la pieza o de los claims aprobados; sesiones para empresas en Santiago est\u00e1n en el Core Brand. Lo faltante va como [confirmar]."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "Sin terapia/sanar/sanaci\u00f3n, sin lenguaje religioso, sin promesas de salud; indica 'sin posturas extremas'."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe1 y lista de dos cambios aplicados, m\u00e1s pendientes para decidir."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'M\u00fasica instrumental suave de la biblioteca de audio de Instagram. Sin canciones comerciales'."}, {"text": "El post de LinkedIn para Recursos Humanos no promete resultados de salud ni de desempe\u00f1o (menos estr\u00e9s, menos ansiedad, m\u00e1s productividad, menos ausentismo, mejor concentraci\u00f3n).", "passed": true, "evidence": "Habla de 'un momento de bienestar' y 'espacio para parar, respirar', sin prometer menos estr\u00e9s, productividad ni otro resultado."}, {"text": "No usa las palabras \"terapia\", \"sanar\" ni \"sanaci\u00f3n\".", "passed": true, "evidence": "No aparecen terapia, sanar ni sanaci\u00f3n."}, {"text": "Si menciona horarios, precios o d\u00edas de las clases, van como [confirmar] porque la pieza no los trae.", "passed": true, "evidence": "No incluye horarios, precios ni d\u00edas; van como [confirmar: horario, d\u00edas y cupos]."}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida correcta. La frase del caption B sobre el almuerzo con el celular es una generalizaci\u00f3n de tono, no un dato. El Guardi\u00e1n admite que no lo hizo el auditor.", "timing": {"total_tokens": 121389, "duration_ms": 180138, "total_duration_seconds": 180.1}}}, {"id": "eval-102-ambar-post-db-pausa-sonnet_con_skill-run-1", "prompt": "Te paso el POST 3 del Design Board de Estudio \u00c1mbar de este mes (ya aprobado). S\u00e1cale Reel, Stories, un post de LinkedIn para Recursos Humanos y captions.\n\nPOST 3 \u00b7 Pausa de mediod\u00eda\nINSPO: https://www.pinterest.com/ideas/ejemplo/000/\nFormato: carrusel de 3\nFondo: arena claro\nImagen: foto del estudio vac\u00edo con luz de tarde\nLetras: marr\u00f3n \u00e1mbar, Montserrat\nTexto imagen 1: \u00bfY si tu almuerzo tuviera 10 minutos para ti?\nTexto imagen 2: Respira. Estira. Vuelve.\nTexto imagen 3: Clases de mediod\u00eda, para todos los niveles.\nCopy: Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os. Reserva por el link en la bio.", "eval_id": 102, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Reciclaje \u2014 Estudio \u00c1mbar \u00b7 desde: POST 3 \u00b7 Pausa de mediod\u00eda (Design Board) \u00b7 2026-10-14\n\nBorrador para el equipo. No se publica ni se programa nada.\n\n**Materia prima**\n- Idea central: a mitad del d\u00eda tambi\u00e9n cabe una pausa, y las clases de mediod\u00eda (para todos los niveles, en grupos peque\u00f1os) son una forma de tenerla.\n- Puntos de apoyo:\n  - Una pausa a mitad del d\u00eda tambi\u00e9n cuenta.\n  - Tres gestos: Respira. Estira. Vuelve.\n  - Clases de mediod\u00eda para todos los niveles.\n  - Grupos peque\u00f1os (el Core Brand los precisa como \"Grupos de m\u00e1ximo 12 personas\").\n  - Se reserva por el link en la bio.\n- Inventario de claims y datos permitidos: \"\u00bfY si tu almuerzo tuviera 10 minutos para ti?\", \"Respira. Estira. Vuelve.\", \"Clases de mediod\u00eda, para todos los niveles.\", \"Una pausa a mitad del d\u00eda tambi\u00e9n cuenta\", \"en grupos peque\u00f1os\", \"Reserva por el link en la bio\". Del Core Brand: \"Clases para todos los niveles\", \"Instructores certificados\", \"Grupos de m\u00e1ximo 12 personas\", estudio de yoga y meditaci\u00f3n en Santiago, sesiones para empresas.\n- CTA original: \"Reserva por el link en la bio.\" (B2B, del Core Brand: \"Escr\u00edbenos para llevar una sesi\u00f3n a tu equipo.\")\n- Elementos visuales: fondo arena claro; letras marr\u00f3n \u00e1mbar en Montserrat; foto del estudio vac\u00edo con luz de tarde. El INSPO de Pinterest no se consult\u00f3 en esta prueba.\n\n### 1. Reel \u00b7 15 s\n| Tiempo | Toma / visual | Texto en pantalla | Voz o audio |\n|---|---|---|---|\n| 0\u20133 s | Foto del estudio vac\u00edo con luz de tarde, empuje lento hacia adelante. Sin personas. | \u00bfY si tu almuerzo tuviera 10 minutos para ti? | Voz en off suave: \"\u00bfY si tu almuerzo tuviera diez minutos para ti?\" |\n| 3\u20136 s | Detalle del estudio vac\u00edo con la misma luz de tarde (toma por grabar). | Respira. | Voz en off: \"Respira.\" |\n| 6\u20139 s | Plano abierto del estudio vac\u00edo (toma por grabar), c\u00e1mara casi quieta. | Estira. | Voz en off: \"Estira.\" |\n| 9\u201311 s | \u00daltima toma del estudio; la luz se queda un momento. | Vuelve. | Voz en off: \"Vuelve.\" Un segundo de silencio despu\u00e9s. |\n| 11\u201313 s | Fondo arena claro, letras marr\u00f3n \u00e1mbar en Montserrat. | Clases de mediod\u00eda, para todos los niveles. | Voz en off: \"Clases de mediod\u00eda, para todos los niveles.\" |\n| 13\u201315 s | Mismo fondo arena claro. | Reserva por el link en la bio. \ud83c\udf3f | Voz en off: \"Reserva por el link en la bio.\" |\n\n**Audio:** audio original (sonido ambiente del estudio) con voz en off suave. Si quieren m\u00fasica, instrumental tranquila de la biblioteca de audio comercial de Meta. Sin canciones comerciales.\n**Zona segura:** el texto en pantalla va lejos de la franja inferior y del borde derecho. Se entiende sin sonido.\n**Caption del Reel:** Tu mediod\u00eda tambi\u00e9n puede tener su pausa \ud83c\udf3f Clases para todos los niveles, en grupos de m\u00e1ximo 12 personas. Reserva tu clase por el link en la bio.\n\n### 2. Stories (4 pantallas)\n| # | Visual | Texto | Interacci\u00f3n |\n|---|---|---|---|\n| 1 | Foto del estudio vac\u00edo con luz de tarde. | \u00bfY si tu almuerzo tuviera 10 minutos para ti? | Encuesta: \"\u00bfC\u00f3mo va tu mediod\u00eda hoy?\" \u00b7 Corrido / Con pausa |\n| 2 | Fondo arena claro, letras marr\u00f3n \u00e1mbar en Montserrat. | Respira. Estira. Vuelve. | Sin sticker |\n| 3 | Fondo arena claro. | Clases de mediod\u00eda, para todos los niveles. En grupos de m\u00e1ximo 12 personas. | Caja de preguntas: \"\u00bfQu\u00e9 quieres saber de las clases de mediod\u00eda?\" |\n| 4 | Foto del estudio vac\u00edo con luz de tarde. | Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Reserva tu clase por el link en la bio. | Sticker de link a reservas [confirmar: URL de reservas] |\n\nTexto fuera de las franjas superior e inferior. Al responder la caja de preguntas: sin promesas de salud y sin horarios, d\u00edas ni precios hasta que est\u00e9n confirmados.\n\n### 3. Post de LinkedIn\n\u00bfY si el almuerzo de tu equipo tuviera 10 minutos para ellos?\nUna pausa a mitad del d\u00eda tambi\u00e9n cuenta.\n\nEn Estudio \u00c1mbar, un estudio de yoga y meditaci\u00f3n en Santiago, nos gusta hacer espacio en el d\u00eda. Lo resumimos en tres palabras: Respira. Estira. Vuelve.\n\nNuestras clases de mediod\u00eda son para todos los niveles, en grupos de m\u00e1ximo 12 personas y con instructores certificados.\n\nSi trabajas en Recursos Humanos, quiz\u00e1 ya te hiciste esta pregunta: \u00bfqu\u00e9 lugar tiene el mediod\u00eda en mi empresa? No hay una sola respuesta. Nosotros no prometemos resultados: ofrecemos el espacio, una pausa dentro del d\u00eda.\n\nEscr\u00edbenos para llevar una sesi\u00f3n a tu equipo.\n\n\u00bfC\u00f3mo se vive el mediod\u00eda en tu empresa?\n\n#RecursosHumanos #BienestarLaboral #Santiago\n\n### 4. Captions\n**A \u00b7 Corta:**\n> Respira. Estira. Vuelve. \ud83c\udf3f Clases de mediod\u00eda para todos los niveles. Reserva tu clase por el link en la bio.\n\n**B \u00b7 Historia:**\n> Mitad del d\u00eda. El correo, la reuni\u00f3n, el almuerzo que pasa r\u00e1pido\u2026\n>\n> \u00bfY si tu almuerzo tuviera 10 minutos para ti?\n>\n> Respira. Estira. Vuelve.\n>\n> Eso son las clases de mediod\u00eda de Estudio \u00c1mbar: para todos los niveles, en grupos de m\u00e1ximo 12 personas.\n>\n> Reserva tu clase por el link en la bio \ud83c\udf3f\n\n**C \u00b7 Conversaci\u00f3n:**\n> Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Las clases de mediod\u00eda son para todos los niveles, en grupos de m\u00e1ximo 12 personas. Reserva tu clase por el link en la bio.\n>\n> Y t\u00fa, \u00bfc\u00f3mo es tu mediod\u00eda: corrido o con pausa?\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 \u2014 listo para revisi\u00f3n del equipo. Se aplicaron 4 ajustes menores y quedan datos en \"Por confirmar\" que no cambian el mensaje.\n\nCambios aplicados:\n1. LinkedIn: quit\u00e9 una frase que repet\u00eda el gancho (\"tambi\u00e9n cuenta\") justo despu\u00e9s de \u00e9l. Estilo, baja.\n2. LinkedIn: cambi\u00e9 una frase de tono comercial (\"vendemos resultados\") por \"no prometemos resultados: ofrecemos el espacio\". Tono, media.\n3. LinkedIn: saqu\u00e9 \"link en la bio\" (en LinkedIn no existe) y us\u00e9 el CTA B2B del Core Brand. Estilo, baja.\n4. Stories, pantalla 4: marqu\u00e9 la URL del sticker de link como [confirmar] en lugar de dejarla impl\u00edcita. Estilo, baja.\n\nRevisado y sin hallazgos:\n- Todo lo que afirma el paquete sale del inventario: la pieza aprobada y los claims aprobados del Core Brand (\"grupos peque\u00f1os\" se precis\u00f3 como \"m\u00e1ximo 12 personas\"). Las \u00fanicas cifras son 10 (de la pieza) y 12 (del Core Brand).\n- Sin promesas de salud ni de desempe\u00f1o en ninguna parte, incluido el post para Recursos Humanos. Se habla de la experiencia: una pausa, un espacio.\n- Sin ninguna de las palabras prohibidas del Core Brand y sin referencias a lo espiritual. Sin posturas extremas ni cuerpos como gancho: las tomas son del estudio vac\u00edo.\n- Sin canci\u00f3n comercial: audio original, voz en off o biblioteca de Meta.\n- Hablamos de t\u00fa en todas las piezas. Sin horarios, d\u00edas ni precios en el texto.\n- Verificaci\u00f3n mec\u00e1nica con el script: tiempos del Reel de 0 a 15 s sin huecos ni solapes, LinkedIn muy por debajo del l\u00edmite de caracteres, con 3 hashtags y gancho dentro de las 2 primeras l\u00edneas, registro del Guardi\u00e1n v\u00e1lido.\n- Por ser una marca de bienestar, conviene que una persona del equipo lo lea antes de enviarlo al cliente.\n\n### Por confirmar\n- [confirmar: duraci\u00f3n de la clase de mediod\u00eda]. La pieza usa \"10 minutos\" solo como pregunta del gancho y no dice cu\u00e1nto dura la clase. El paquete no afirma ninguna duraci\u00f3n. Conviene confirmar con el cliente que el gancho no se lea como duraci\u00f3n de la clase.\n- [confirmar: horario, d\u00edas y precio de las clases de mediod\u00eda]. La pieza no los trae y el paquete no los menciona. Solo hacen falta si el equipo quiere agregarlos.\n- [confirmar: URL de reservas] para el sticker de link de la Story 4.\n- [confirmar: qui\u00e9n graba la voz en off y qui\u00e9n puede salir en c\u00e1mara]. Las 3 tomas marcadas \"por grabar\" son sin personas. Si no se graban, se puede usar la foto del post con distintos encuadres.\n- [confirmar: formato de la sesi\u00f3n para empresas] que se menciona en LinkedIn (el Core Brand solo dice que existen sesiones para empresas).\n\nREGISTRO-GUARDIAN {\"marca\":\"Estudio \u00c1mbar\",\"pieza\":\"Reciclaje de POST 3 \u00b7 Pausa de mediod\u00eda\",\"fecha\":\"2026-10-14\",\"veredicto\":\"verde\",\"hallazgos\":[{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"estado\":\"corregido\"},{\"tipo\":\"tono\",\"severidad\":\"media\",\"estado\":\"corregido\"},{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"estado\":\"corregido\"},{\"tipo\":\"estilo\",\"severidad\":\"baja\",\"estado\":\"corregido\"}],\"cambios\":4,\"por_confirmar\":5}\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Reel de 15 s con tabla de tiempos, 4 Stories, post de LinkedIn y captions A, B y C."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tabla 0\u20133, 3\u20136, 6\u20139, 9\u201311, 11\u201313, 13\u201315 s: empieza en 0, sin huecos ni solapes, total 15 s."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 1 tiene encuesta (Corrido / Con pausa) y la Story 3 tiene caja de preguntas."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con '\u00bfY si el almuerzo de tu equipo tuviera 10 minutos para ellos?' y 'Una pausa a mitad del d\u00eda tambi\u00e9n cuenta'. Muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Solo usa la pieza y los claims aprobados (m\u00e1ximo 12, instructores certificados, todos los niveles). Lo faltante va como [confirmar]."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "Sin terapia/sanar/sanaci\u00f3n, sin lenguaje religioso, sin promesas de salud ni posturas extremas; tomas del estudio vac\u00edo."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto verde y 4 cambios aplicados enumerados."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "Audio original con voz en off o instrumental de la biblioteca de Meta; 'Sin canciones comerciales'."}, {"text": "El post de LinkedIn para Recursos Humanos no promete resultados de salud ni de desempe\u00f1o (menos estr\u00e9s, menos ansiedad, m\u00e1s productividad, menos ausentismo, mejor concentraci\u00f3n).", "passed": true, "evidence": "'Nosotros no prometemos resultados: ofrecemos el espacio'. No promete menos estr\u00e9s, productividad ni ausentismo."}, {"text": "No usa las palabras \"terapia\", \"sanar\" ni \"sanaci\u00f3n\".", "passed": true, "evidence": "No aparecen las palabras terapia, sanar ni sanaci\u00f3n en ninguna parte."}, {"text": "Si menciona horarios, precios o d\u00edas de las clases, van como [confirmar] porque la pieza no los trae.", "passed": true, "evidence": "No menciona horarios, precios ni d\u00edas; los marca como [confirmar: horario, d\u00edas y precio]."}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida limpia y completa. Usa solo claims aprobados y deja lo faltante como [confirmar]. Guardi\u00e1n con veredicto y cambios.", "timing": {"total_tokens": 109033, "duration_ms": 201978, "total_duration_seconds": 202.0}}}, {"id": "eval-102-ambar-post-db-pausa-sonnet_sin_skill-run-1", "prompt": "Te paso el POST 3 del Design Board de Estudio \u00c1mbar de este mes (ya aprobado). S\u00e1cale Reel, Stories, un post de LinkedIn para Recursos Humanos y captions.\n\nPOST 3 \u00b7 Pausa de mediod\u00eda\nINSPO: https://www.pinterest.com/ideas/ejemplo/000/\nFormato: carrusel de 3\nFondo: arena claro\nImagen: foto del estudio vac\u00edo con luz de tarde\nLetras: marr\u00f3n \u00e1mbar, Montserrat\nTexto imagen 1: \u00bfY si tu almuerzo tuviera 10 minutos para ti?\nTexto imagen 2: Respira. Estira. Vuelve.\nTexto imagen 3: Clases de mediod\u00eda, para todos los niveles.\nCopy: Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os. Reserva por el link en la bio.", "eval_id": 102, "outputs": [{"name": "respuesta.md", "type": "text", "content": "# Estudio \u00c1mbar \u00b7 POST 3 \"Pausa de mediod\u00eda\" \u00b7 Reciclaje\n\nEl carrusel de 3 (dise\u00f1o, textos y copy aprobados) queda tal cual. Todo lo de abajo sale de ese post y mantiene el mismo mensaje y la misma est\u00e9tica: fondo arena claro, foto del estudio vac\u00edo con luz de tarde, letras en marr\u00f3n \u00e1mbar y Montserrat. Pilares: la pausa (principal) y bienestar en el trabajo (LinkedIn).\n\n---\n\n## 1. Reel (vertical 9:16, unos 15 segundos)\n\n**Idea:** el carrusel hecho secuencia. Una pausa, sin prisa.\n\n**Visual:** la foto del estudio vac\u00edo con luz de tarde, con un acercamiento muy lento (zoom suave). Si hay un clip corto del estudio con esa misma luz, \u00fasalo en su lugar. Si se muestran personas, que sea solo un estiramiento sencillo y natural (brazos arriba, cuello suelto), sin posturas extremas ni cuerpos como gancho. Texto en pantalla en Montserrat, marr\u00f3n \u00e1mbar, sobre el fondo arena claro o sobre la foto con velo arena.\n\n**Audio:** m\u00fasica instrumental suave, sin letra y sin voz en off.\n\n| Tiempo | Texto en pantalla | Notas |\n|---|---|---|\n| 0\u20133 s | \u00bfY si tu almuerzo tuviera 10 minutos para ti? | Entra el texto despacio sobre la foto. Es el gancho. |\n| 3\u20136 s | Respira. | Una palabra por beat. Ritmo calmado. |\n| 6\u20139 s | Estira. | |\n| 9\u201312 s | Vuelve. | |\n| 12\u201315 s | Clases de mediod\u00eda, para todos los niveles. | Debajo, m\u00e1s peque\u00f1o: \"Reserva por el link en la bio.\" |\n\n**Portada del Reel:** el texto 1 sobre la foto, centrado.\n\n---\n\n## 2. Stories (4 frames, 9:16)\n\nMisma paleta: fondo arena claro, letras en marr\u00f3n \u00e1mbar, Montserrat. Foto del estudio como fondo o detr\u00e1s de un velo claro.\n\n**Story 1 \u00b7 Pregunta**\n- Texto: \"\u00bfY si tu almuerzo tuviera 10 minutos para ti?\"\n- Sticker de encuesta: \"\u00bfTe das una pausa a mitad del d\u00eda?\" \u2192 **S\u00ed** / **Lo intento**\n- Tono de invitaci\u00f3n, sin presi\u00f3n.\n\n**Story 2 \u00b7 Respira. Estira. Vuelve.**\n- Texto grande: \"Respira. Estira. Vuelve.\"\n- Animaci\u00f3n sencilla: cada palabra entra una tras otra.\n\n**Story 3 \u00b7 Las clases**\n- Texto: \"Clases de mediod\u00eda, para todos los niveles.\"\n- L\u00ednea peque\u00f1a: \"En grupos de m\u00e1ximo 12 personas.\"\n\n**Story 4 \u00b7 Cierre**\n- Texto: \"Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f\"\n- L\u00ednea de acci\u00f3n: \"Reserva tu clase por el link en la bio.\"\n- Si la cuenta puede usar sticker de enlace, puede ir aqu\u00ed. Si no, queda el texto.\n\n---\n\n## 3. LinkedIn \u00b7 Recursos Humanos\n\n**Imagen sugerida:** la imagen 2 del carrusel (\"Respira. Estira. Vuelve.\"), en versi\u00f3n cuadrada o 4:5. La imagen 3 habla de clases para p\u00fablico general, as\u00ed que no la usar\u00eda aqu\u00ed.\n\n**Texto del post:**\n\n> \u00bfY si a mitad del d\u00eda tu equipo tuviera un momento para ellos?\n>\n> En Recursos Humanos piensas todo el tiempo en c\u00f3mo hacer espacio en la jornada. Una idea sencilla: una pausa a mitad del d\u00eda. Respirar. Estirar. Volver.\n>\n> En Estudio \u00c1mbar, estudio de yoga y meditaci\u00f3n en Santiago, llevamos sesiones a equipos de empresas. Las dan instructores certificados, est\u00e1n pensadas para todos los niveles y sin tecnicismos: nadie tiene que saber de yoga para participar.\n>\n> Una pausa a mitad del d\u00eda tambi\u00e9n cuenta. Y puede ser parte de c\u00f3mo cuidan a su gente.\n>\n> Escr\u00edbenos para llevar una sesi\u00f3n a tu equipo.\n>\n> #RecursosHumanos #BienestarEnElTrabajo #Santiago\n\n---\n\n## 4. Captions\n\n### Carrusel (aprobado, sin cambios)\n> Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f Clases de mediod\u00eda para todos los niveles, en grupos peque\u00f1os. Reserva por el link en la bio.\n\n### Reel \u00b7 opci\u00f3n A (corta)\n> Una pausa a mitad del d\u00eda tambi\u00e9n cuenta \ud83c\udf3f\n> Respira. Estira. Vuelve.\n> Clases de mediod\u00eda para todos los niveles, en grupos de m\u00e1ximo 12 personas.\n> Reserva tu clase por el link en la bio.\n>\n> #YogaSantiago #PausaConsciente #MovimientoConsciente\n\n### Reel \u00b7 opci\u00f3n B (conversacional)\n> Si tu almuerzo tuviera 10 minutos para ti, \u00bfqu\u00e9 har\u00edas con ellos? \ud83c\udf3f\n> Aqu\u00ed te dejamos una idea: respira, estira y vuelve a tu d\u00eda a tu ritmo.\n> Tenemos clases de mediod\u00eda para todos los niveles, con instructores certificados.\n> Reserva tu clase por el link en la bio.\n>\n> #YogaSantiago #PausaConsciente #MovimientoConsciente\n\n### Stories\nNo llevan caption. Los textos de cada frame est\u00e1n en la secci\u00f3n 2.\n\n### LinkedIn\nEl texto del post (secci\u00f3n 3) es el caption completo.\n\n---\n\n## 5. Para confirmar antes de publicar\n\n1. **Duraci\u00f3n y horario de las clases de mediod\u00eda.** El material no los trae, as\u00ed que no los mencion\u00e9. \"10 minutos\" aparece solo dentro de la pregunta del gancho, no como duraci\u00f3n de la clase. Si las clases duran otra cosa, conviene dejar claro que la pregunta es una invitaci\u00f3n y no un dato de la clase.\n2. **Sesiones de mediod\u00eda para empresas.** El LinkedIn invita a conversar y no promete un formato (ni horario, ni duraci\u00f3n, ni precio). Si ya existe un formato de pausa de mediod\u00eda para equipos, se puede a\u00f1adir una l\u00ednea concreta.\n3. **\"M\u00e1ximo 12 personas\".** Es un claim aprobado y lo us\u00e9 en Stories y en el Reel (opci\u00f3n A). Lo omit\u00ed en LinkedIn porque un equipo de empresa puede ser m\u00e1s grande que 12.\n4. **Inspo de Pinterest.** El link del post es un ejemplo y no lo abr\u00ed. Todo se bas\u00f3 en el texto del Design Board.\n5. **Cumplimiento de marca revisado.** No hay promesas de salud f\u00edsica o mental, ni las palabras \"terapia\", \"sanar\" o \"sanaci\u00f3n\", ni lenguaje religioso, ni posturas extremas ni cuerpos \"perfectos\". Hablo de t\u00fa en todas las piezas.\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": false, "evidence": "Reel, 4 Stories y LinkedIn est\u00e1n. Captions: solo 2 variantes nuevas (Reel A y B); la tercera es el caption aprobado sin cambios."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tabla 0\u20133, 3\u20136, 6\u20139, 9\u201312, 12\u201315 s: sin huecos ni solapes, total 15 s."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 1 incluye sticker de encuesta '\u00bfTe das una pausa a mitad del d\u00eda?' S\u00ed / Lo intento."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con '\u00bfY si a mitad del d\u00eda tu equipo tuviera un momento para ellos?'. Texto corto, muy por debajo de 3,000."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": false, "evidence": "En LinkedIn dice que las sesiones para empresas 'las dan instructores certificados, son para todos los niveles y sin tecnicismos: nadie tiene que saber de yoga'. Extiende los claims."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "Sin terapia/sanar/sanaci\u00f3n, sin lenguaje religioso, sin promesas de salud; pide estiramientos sencillos sin posturas extremas."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": false, "evidence": "No hay pase del Guardi\u00e1n con veredicto ni lista de cambios; solo un punto 'Cumplimiento de marca revisado' dentro de 'Para confirmar'."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'M\u00fasica instrumental suave, sin letra y sin voz en off'; no nombra ninguna canci\u00f3n."}, {"text": "El post de LinkedIn para Recursos Humanos no promete resultados de salud ni de desempe\u00f1o (menos estr\u00e9s, menos ansiedad, m\u00e1s productividad, menos ausentismo, mejor concentraci\u00f3n).", "passed": true, "evidence": "No promete menos estr\u00e9s, productividad ni ausentismo; 'puede ser parte de c\u00f3mo cuidan a su gente' es una invitaci\u00f3n sin resultado."}, {"text": "No usa las palabras \"terapia\", \"sanar\" ni \"sanaci\u00f3n\".", "passed": true, "evidence": "No usa terapia, sanar ni sanaci\u00f3n."}, {"text": "Si menciona horarios, precios o d\u00edas de las clases, van como [confirmar] porque la pieza no los trae.", "passed": true, "evidence": "No menciona horarios, precios ni d\u00edas de las clases; avisa que faltan y los deja para confirmar."}], "summary": {"passed": 8, "failed": 3, "total": 11, "pass_rate": 0.7273}, "metricas": {"claims_nuevos": ["Las dan instructores certificados, est\u00e1n pensadas para todos los niveles y sin tecnicismos: nadie tiene que saber de yoga para participar."]}, "notas_juez": "Buen contenido y tiempos correctos, pero falta el pase del Guardi\u00e1n, solo hay 2 captions nuevos y extiende claims de las clases a las sesiones para empresas.", "timing": {"total_tokens": 70380, "duration_ms": 62763, "total_duration_seconds": 62.8}}}, {"id": "eval-103-monteluz-patio-haiku_con_skill-run-1", "prompt": "Recicla este post aprobado de Monteluz para Reel, Stories, LinkedIn y captions:\n\n\"Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"", "eval_id": 103, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Reciclaje \u2014 Monteluz \u00b7 desde: post aprobado \"Viernes de patio\" \u00b7 2026-10-14\n\n**Materia prima**\n- Idea central: el viernes de patio se completa con una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente.\n- Puntos de apoyo: (1) el ritual del viernes en el patio; (2) la cerveza bien fr\u00eda; (3) la m\u00fasica y la compa\u00f1\u00eda; (4) oficio: cerveza artesanal del Cibao, hecha en lotes peque\u00f1os; (5) se consigue en el colmado de confianza.\n- Inventario de claims y datos permitidos (copiados de la pieza y del Core Brand):\n  - \"Viernes de patio\" (ocasi\u00f3n), \"Una Monteluz bien fr\u00eda\", \"buena m\u00fasica\", \"tu gente\", \"\ud83c\udf7b\".\n  - \"Cerveza artesanal del Cibao\" y \"hecha en lotes peque\u00f1os\" (claims aprobados del Core Brand).\n  - Leyenda obligatoria: \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"\n- CTA original: \"B\u00fascala en tu colmado de confianza.\" (CTA habitual del Core Brand).\n- Palabras del tono a repetir: \"Viernes de patio\", \"tu gente\", \"bien fr\u00eda\", \"t\u00fa\", \"con medida\".\n\n### 1. Reel \u00b7 20 s\n\n| Tiempo | Toma / visual | Texto en pantalla | Voz o audio |\n|---|---|---|---|\n| 0\u20133 s | Vaso de Monteluz con condensaci\u00f3n sobre la mesa del patio, al atardecer. Corte a una mano que lo levanta. | Viernes de patio \ud83c\udf7b | Sonido ambiente de patio y percusi\u00f3n suave instrumental |\n| 3\u20137 s | Botella y vaso bien fr\u00edos sobre la mesa, en plano detalle. | Una Monteluz bien fr\u00eda. | Voz en off: \"Lleg\u00f3 el viernes y toca patio.\" |\n| 7\u201311 s | Mesa de patio con personas que se ven claramente mayores de 25 a\u00f1os, conversando y riendo. Plano medio, sin primeros planos de consumo. | Buena m\u00fasica y tu gente. | Percusi\u00f3n suave instrumental, sin letra |\n| 11\u201314 s | Detalle corto: dos manos con vasos que se tocan al brindar. Sin tomas de consumo. | Hecha en lotes peque\u00f1os. | Voz en off: \"Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\" |\n| 14\u201317 s | Remate: la mesa completa con la gente riendo; la c\u00e1mara se aleja hacia el patio. | Con tu gente. | Ambiente de patio; la percusi\u00f3n baja |\n| 17\u201320 s | Cierre sobre la botella y el vaso bien fr\u00edos, con el nombre Monteluz visible. | B\u00fascala en tu colmado de confianza. Leyenda peque\u00f1a abajo: \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\" | Voz en off: \"B\u00fascala en tu colmado de confianza.\" |\n\n**Audio:** original (ambiente grabado en el patio) + voz en off + percusi\u00f3n suave instrumental. Sin canciones comerciales. [confirmar: fuente de la percusi\u00f3n: grabaci\u00f3n original o biblioteca de audio con licencia]\n\n**Caption del Reel:** Viernes de patio, una Monteluz bien fr\u00eda y tu gente \ud83c\udf7b Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\nB\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n### 2. Stories (5 pantallas)\n\n| # | Visual | Texto | Interacci\u00f3n |\n|---|---|---|---|\n| 1 | Patio al atardecer, mesa puesta, sin botellas en primer plano. | Viernes de patio \ud83c\udf7b | Encuesta: \"\u00bfTu viernes arranca en el patio?\" (S\u00ed / Todav\u00eda no) |\n| 2 | Vaso de Monteluz bien fr\u00edo, con condensaci\u00f3n, sobre la mesa. | Una Monteluz bien fr\u00eda. | Slider de emoji \ud83e\uddca: \"\u00bfQu\u00e9 tan fr\u00eda la quieres?\" |\n| 3 | Mesa de patio con personas que se ven claramente mayores de 25 a\u00f1os, conversando y riendo. | Buena m\u00fasica y tu gente. | Caja de preguntas: \"\u00bfQu\u00e9 suena en tu patio?\" |\n| 4 | Botella Monteluz en primer plano, sobre fondo s\u00f3lido. | Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. | \u2014 |\n| 5 | Botella y vaso sobre fondo de colmado desenfocado, sin marcas de terceros. | B\u00fascala en tu colmado de confianza. Leyenda peque\u00f1a: \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\" | CTA: \"B\u00fascala en tu colmado de confianza.\" [confirmar: sticker de link, si hay una URL aprobada] |\n\n### 3. Post de LinkedIn\n\nOficio cervecero, en lotes peque\u00f1os.\n\nMonteluz es cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. Cuando llega el viernes de patio, lo que importa es la mesa, la m\u00fasica y tu gente.\n\nPor eso una Monteluz se disfruta en buena compa\u00f1\u00eda y con medida.\n\n\u00bfQu\u00e9 oficio en tu negocio se hace en lotes peque\u00f1os? Cu\u00e9ntanos en los comentarios.\n\nB\u00fascala en tu colmado de confianza.\n\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n#Monteluz #CervezaArtesanal\n\n*Nota: el encaje de LinkedIn es bajo para una pieza de patio. Va porque lo pediste, con el \u00e1ngulo de oficio del Core Brand (pilar 3). Es para la p\u00e1gina de la marca Monteluz, no para la de Astra. Si el equipo prefiere, se puede omitir.*\n\n### 4. Captions\n\n**A \u00b7 Corta:** Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda y tu gente. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n**B \u00b7 Historia:** El viernes arranca en el patio: mesa puesta, buena m\u00fasica y la gente de siempre. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os, para acompa\u00f1ar la tarde con tu gente. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os. #Monteluz #CervezaArtesanal\n\n**C \u00b7 Conversaci\u00f3n:** \u00bfYa tienes plan para el viernes? Nosotros pensamos en el patio: una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os. \u00bfCon qui\u00e9n te toca el patio?\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe1 \u2014 copy limpio, listo para revisi\u00f3n humana. Falta el pase del auditor-claims (ver nota) y las confirmaciones de producci\u00f3n.\n\nCambios aplicados al borrador:\n- Sin comparaciones con otras cervezas ni frases tipo \"a diferencia de\" (comparativo).\n- No se usan los estilos rubia, roja y negra del Core Brand: no est\u00e1n en los claims aprobados. Queda como pregunta en \"Por confirmar\".\n- Sin consumo excesivo ni acelerado: no hay tomas de botellas en la boca, vasos vaci\u00e1ndose ni tandas de tragos. El brindis es corto.\n- Sin asociaci\u00f3n con el volante, el desempe\u00f1o deportivo, los logros sociales ni la seducci\u00f3n.\n- Sin pelota, logos, nombres ni hashtags de ligas o equipos.\n- Sin canciones comerciales ni nombres de canciones.\n- Sin cifras, precios, fechas, vigencias ni testimonios.\n- Leyenda exacta en el Reel (17\u201320 s), en la \u00faltima pantalla de Stories, en LinkedIn, en los captions A, B y C y en el caption del Reel.\n- Personas en c\u00e1mara: \"claramente mayores de 25 a\u00f1os\", seg\u00fan el Core Brand. Queda por confirmar en el casting.\n\n**Nota de proceso:** Monteluz es una marca de alcohol. La skill pide que el pase del Guardi\u00e1n lo haga el subagente agente-astra:auditor-claims (Opus). En esta sesi\u00f3n no hay subagentes disponibles, as\u00ed que el pase lo hice yo con references/claims-riesgo.md. Antes de enviar, que lo revise el auditor o una persona del equipo. Por eso el veredicto queda en \ud83d\udfe1.\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Monteluz\",\"pieza\":\"Reciclaje de post Viernes de patio\",\"canales\":[\"reel\",\"stories\",\"linkedin\",\"captions\"],\"veredicto\":\"\ud83d\udfe1\",\"hallazgos_alta\":0,\"hallazgos_media\":0,\"pendiente\":\"revision auditor-claims por marca de alcohol\"}\n\n*Nota: el formato del REGISTRO-GUARDIAN es aproximado. El archivo de guardian-marca no estaba entre los archivos de esta prueba.*\n\n### Por confirmar\n- [confirmar: personas en c\u00e1mara que se vean claramente mayores de 25 a\u00f1os (Core Brand)]\n- [confirmar: fuente de la percusi\u00f3n del Reel: grabaci\u00f3n original o biblioteca de audio con licencia; sin canciones comerciales]\n- [confirmar: si se pueden mencionar los estilos rubia, roja y negra del Core Brand; hoy no son claims aprobados]\n- [confirmar: sticker de link para la \u00faltima pantalla de Stories, si hay una URL aprobada]\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Reel con tabla de tiempos, 5 pantallas de Stories, post de LinkedIn y 3 captions (A, B, C)."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tramos 0-3, 3-7, 7-11, 11-14, 14-17, 17-20: continuos, sin huecos ni solapes, total 20 s."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 1 encuesta, Story 2 slider de emoji, Story 3 caja de preguntas."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con \"Oficio cervecero, en lotes peque\u00f1os.\" seguido de la escena del viernes de patio; texto muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Solo usa claims aprobados y texto de la pieza; lo no confirmado va como [confirmar]. Sin cifras, precios ni premios."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "Sin liga, equipos, hashtags oficiales ni recursos vetados; brindis corto \"sin tomas de consumo\"."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe1 y lista \"Cambios aplicados al borrador\"."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "\"Sin canciones comerciales\"; solo percusi\u00f3n suave instrumental y ambiente de patio."}, {"text": "La leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 a\u00f1os.\" aparece en el Reel (texto en pantalla o caption), en las Stories, en el post de LinkedIn y en cada variante de caption.", "passed": true, "evidence": "Leyenda en Reel (17-20 s y caption), LinkedIn y captions A, B, C. En Stories solo en la pantalla 5, no en todas."}, {"text": "No hay consumo excesivo o r\u00e1pido, conducci\u00f3n, rendimiento deportivo, \u00e9xito social o sexual, ni menores; si aparecen personas, se indica que sean claramente mayores de 25.", "passed": true, "evidence": "Personas \"claramente mayores de 25 a\u00f1os\"; \"sin tomas de consumo\"; sin manejo, deporte ni \u00e9xito social o sexual."}, {"text": "No usa nombres, logos, uniformes ni hashtags oficiales de la liga de b\u00e9isbol ni de equipos.", "passed": true, "evidence": "Sin pelota, logos, nombres ni hashtags de liga o equipos; solo #Monteluz y #CervezaArtesanal."}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida limpia y completa. \u00danica debilidad: la leyenda aparece solo en la \u00faltima pantalla de Stories, no en cada una; se acepta porque la expectativa dice \"en las Stories\".", "timing": {"total_tokens": 116024, "duration_ms": 159942, "total_duration_seconds": 159.9}}}, {"id": "eval-103-monteluz-patio-sonnet_con_skill-run-1", "prompt": "Recicla este post aprobado de Monteluz para Reel, Stories, LinkedIn y captions:\n\n\"Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"", "eval_id": 103, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Reciclaje \u2014 Cervecera Monteluz \u00b7 desde: post aprobado \"Viernes de patio\" \u00b7 2026-10-14\n\n> Borrador para el equipo. No se publica ni se programa nada hasta que una persona lo apruebe.\n\n**Materia prima**\n- Idea central: el viernes de patio es buena m\u00fasica, tu gente y una Monteluz bien fr\u00eda, y la encuentras en tu colmado de confianza.\n- Puntos de apoyo: viernes de patio \u00b7 una Monteluz bien fr\u00eda \u00b7 buena m\u00fasica \u00b7 tu gente \u00b7 cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\n- Inventario de claims y datos permitidos (\u00fanica fuente del paquete): \"Viernes de patio\", \"Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente\", \"Cerveza artesanal del Cibao\", \"hecha en lotes peque\u00f1os\", \"B\u00fascala en tu colmado de confianza\", \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"\n- CTA original: B\u00fascala en tu colmado de confianza.\n- Tono a repetir: festivo, orgullo del Cibao, de t\u00fa, celebrar con medida.\n- Elementos visuales: la pieza no trae dise\u00f1o; las tomas de abajo son propuesta del equipo.\n\n### 1. Reel \u00b7 20 s\n| Tiempo | Toma / visual | Texto en pantalla | Voz o audio |\n|---|---|---|---|\n| 0\u20133 s | Plano cerrado de una Monteluz bien fr\u00eda sobre la mesa de un patio, con gotas de condensaci\u00f3n y luces c\u00e1lidas de fondo. Sin logo. | Viernes de patio \ud83c\udf7b | Voz en off: \"Viernes de patio. Una Monteluz bien fr\u00eda...\" |\n| 3\u20137 s | El patio con sus luces: un grupo de amigos adultos, claramente mayores de 25 a\u00f1os, conversa y se r\u00ede alrededor de la mesa. Cada quien con su cerveza, sin prisa. | Buena m\u00fasica | Voz en off: \"...buena m\u00fasica...\" |\n| 7\u201311 s | Plano medio de la misma mesa: se pasan la conversaci\u00f3n, no la botella. Nadie bebe de golpe ni hay botellas acumuladas. | Y tu gente | Voz en off: \"...y tu gente.\" |\n| 11\u201315 s | Detalle de la etiqueta de Monteluz, bien iluminada. | Cerveza artesanal del Cibao (11\u201313 s) \u00b7 Hecha en lotes peque\u00f1os (13\u201315 s) | Voz en off: \"Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\" |\n| 15\u201320 s | Fondo liso con el logo de Monteluz. | B\u00fascala en tu colmado de confianza. \u00b7 Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os. (leyenda en letra peque\u00f1a pero legible, visible hasta el final) | Voz en off: \"B\u00fascala en tu colmado de confianza.\" |\n\n**Notas de producci\u00f3n:** sin autos, llaves ni escenas de manejo; sin deporte ni nombres, logos, uniformes o mascotas de ligas o equipos; texto dentro de la zona segura (lejos de la franja inferior y del lado derecho). Se entiende sin sonido gracias al texto en pantalla.\n**Audio:** voz en off breve sobre m\u00fasica instrumental de la biblioteca de audio comercial de Meta, o audio original del patio. Estilo: percusi\u00f3n suave, ritmo de merengue instrumental, volumen bajo para que se oiga la voz. Sin canciones comerciales.\n**Caption del Reel:**\nAs\u00ed se vive el viernes de patio \ud83c\udf7b Buena m\u00fasica, tu gente y una Monteluz bien fr\u00eda.\nB\u00fascala en tu colmado de confianza.\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n### 2. Stories (5 pantallas)\n| # | Visual | Texto | Interacci\u00f3n |\n|---|---|---|---|\n| 1 | Patio de noche con luces c\u00e1lidas; una Monteluz bien fr\u00eda sobre la mesa. | Viernes de patio \ud83c\udf7b | Ninguna (es el gancho). |\n| 2 | Luces del patio desenfocadas, sin personas. | Buena m\u00fasica. \u00bfCu\u00e1l suena en tu patio? | Encuesta: \"Merengue\" / \"Bachata\". |\n| 3 | Grupo de amigos adultos (claramente mayores de 25 a\u00f1os) conversando alrededor de la mesa, sin prisa. | Y tu gente. | Caja de preguntas: \"\u00bfCon qui\u00e9n va tu viernes de patio?\" |\n| 4 | Primer plano de la etiqueta de Monteluz. | Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. | Ninguna. |\n| 5 | Fondo liso con el logo de Monteluz. | B\u00fascala en tu colmado de confianza. | Sin sticker de link: la pieza no trae enlace. El CTA es ir al colmado. |\n\n**Leyenda en las 5 pantallas:** \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\" en letra peque\u00f1a pero legible, sobre la franja inferior libre de la interfaz. Si se republican respuestas de la audiencia, revisar que no muestren menores ni consumo excesivo.\n\n### 3. Post de LinkedIn\nHacemos cerveza artesanal del Cibao en lotes peque\u00f1os.\nY lo que m\u00e1s nos gusta es verla llegar a un viernes de patio.\n\nEn Monteluz celebramos con medida y con orgullo cibae\u00f1o. Para nosotros, un buen viernes de patio tiene tres cosas: buena m\u00fasica, tu gente y una Monteluz bien fr\u00eda \ud83c\udf7b\n\nHacerla en lotes peque\u00f1os es parte del oficio. Compartirla en el patio, con tu gente, es para lo que se hace.\n\nY para que llegue a la mesa pasa por un lugar que en el barrio conocemos bien: el colmado de confianza.\n\n\u00bfQu\u00e9 suena en tu patio los viernes?\n\nB\u00fascala en tu colmado de confianza.\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n#ViernesDePatio #CervezaArtesanal #Cibao\n\n*Nota para el equipo (no va en el post):* este canal encaja poco con una pieza de consumo como esta. Lo dejo con \u00e1ngulo de oficio y comunidad, para la p\u00e1gina de LinkedIn de la marca. Si el cliente prefiere no publicar alcohol en LinkedIn, se omite sin afectar el resto del paquete.\n\n### 4. Captions\n**A \u00b7 Corta:**\nBuena m\u00fasica, tu gente y una Monteluz bien fr\u00eda. As\u00ed empieza el viernes de patio \ud83c\udf7b\nB\u00fascala en tu colmado de confianza.\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n#ViernesDePatio #CervezaArtesanal #Cibao\n\n**B \u00b7 Historia:**\nTodo empieza en un lote peque\u00f1o.\nCerveza artesanal del Cibao, hecha para llegar a tu patio el viernes: con buena m\u00fasica, tu gente y sin prisa.\nAs\u00ed nos gusta verla, bien fr\u00eda y compartida con medida \ud83c\udf7b\nB\u00fascala en tu colmado de confianza.\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n**C \u00b7 Conversaci\u00f3n:**\nViernes de patio \ud83c\udfb6 Merengue, bachata o lo que ponga tu gente, con una Monteluz bien fr\u00eda.\nCerveza artesanal del Cibao, hecha en lotes peque\u00f1os. B\u00fascala en tu colmado de confianza.\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\u00bfQu\u00e9 suena en tu patio los viernes?\n\n(En C la leyenda va justo antes de la pregunta para que el caption termine en pregunta y no pierda la leyenda.)\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe1 \u2014 el texto qued\u00f3 limpio y sin hallazgos abiertos; queda en amarillo solo por los puntos que un humano debe cerrar antes de enviar (abajo, en \"Por confirmar\"). Es una pieza de alcohol, y el elenco, el envase y la conveniencia de LinkedIn no se pueden verificar desde el texto.\n\nCambios aplicados antes de entregar:\n- LinkedIn: quit\u00e9 el contraste \"marcas de lotes grandes vs. lotes peque\u00f1os\" (`comparativo`) y un superlativo de apertura (`absoluto`); ahora habla solo de lo propio.\n- Reel y Stories: cambi\u00e9 \"brindando\" por conversaci\u00f3n sin prisa, sin botellas acumuladas ni escenas de manejo (`alcohol`, Core Brand: no mostrar ni sugerir consumo excesivo o r\u00e1pido). Descart\u00e9 un slider con emoji de cerveza porque invitaba a medir \"cu\u00e1nto\".\n- Elenco: todas las tomas con personas piden adultos claramente mayores de 25 a\u00f1os (`alcohol`, `menores`).\n- Leyenda obligatoria en todas las piezas: final del Reel y su caption, las 5 pantallas de Stories, LinkedIn y las 3 captions (`alcohol`, `prohibicion_core_brand`).\n- No us\u00e9 los tres estilos (rubia, roja y negra): est\u00e1n en \"Qui\u00e9nes somos\" del Core Brand, pero no en la pieza ni en los claims aprobados. Tampoco \"bares\", \"Santiago\", premios ni cifras; sin referencias a la liga de b\u00e9isbol ni a ning\u00fan equipo (`propiedad_intelectual`); audio sin canciones comerciales.\n\nVerificaci\u00f3n mec\u00e1nica: corrida con `verificar_copy.py` (tiempos del Reel de 0 a 20 s sin huecos, leyenda presente, sin palabras prohibidas, 3 hashtags o menos por pieza, LinkedIn muy por debajo del l\u00edmite).\n\nNota: el registro usa los c\u00f3digos de `claims-riesgo.md`. En esta corrida no tuve a mano la skill `guardian-marca`; conviene confirmar que el formato coincida con el suyo.\n\n### Por confirmar\n- [confirmar: envase y estilo de Monteluz que sale en c\u00e1mara (rubia, roja o negra), con el cliente]\n- [confirmar: elenco con permiso de imagen y que se vea claramente mayor de 25 a\u00f1os, con producci\u00f3n]\n- [confirmar: si \"Viernes de patio\" es solo un concepto de contenido o un evento con lugar y fecha; el paquete no menciona ni fecha ni lugar]\n- Para decidir por un humano: \u00bfva el post de LinkedIn? Es un canal de p\u00fablico profesional y esta pieza es de consumo.\n- Antes de publicar: revisar el l\u00edmite vigente de hashtags y caracteres de Instagram; la tabla de verificaci\u00f3n de `formatos-canal.md` est\u00e1 vac\u00eda. Us\u00e9 3 hashtags o menos por pieza.\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Monteluz\",\"pieza\":\"Reciclaje de post aprobado 'Viernes de patio' (Reel, Stories, LinkedIn, captions)\",\"veredicto\":\"amarillo\",\"hallazgos_corregidos\":[{\"tipo\":\"comparativo\",\"severidad\":\"alta\",\"canal\":\"linkedin\"},{\"tipo\":\"absoluto\",\"severidad\":\"media\",\"canal\":\"linkedin\"},{\"tipo\":\"alcohol\",\"severidad\":\"alta\",\"canal\":\"reel_stories\"},{\"tipo\":\"prohibicion_core_brand\",\"severidad\":\"alta\",\"canal\":\"todos\"}],\"hallazgos_abiertos\":[],\"para_decidir_por_humano\":[\"publicar o no en LinkedIn\",\"elenco mayor de 25 y permiso de imagen\",\"aclarar si Viernes de patio es evento\"],\"cambios_aplicados\":5}\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": true, "evidence": "Reel con tabla de tiempos, 5 pantallas de Stories, post de LinkedIn y 3 captions (A, B, C)."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tramos 0-3, 3-7, 7-11, 11-15, 15-20: continuos, sin huecos ni solapes, total 20 s."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Story 2 encuesta Merengue/Bachata; Story 3 caja de preguntas \"\u00bfCon qui\u00e9n va tu viernes de patio?\"."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con \"Hacemos cerveza artesanal del Cibao en lotes peque\u00f1os. Y lo que m\u00e1s nos gusta es verla llegar a un viernes de patio.\"; muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": true, "evidence": "Solo claims aprobados y texto de la pieza; evita rubia/roja/negra, Santiago, premios y cifras; lo pendiente va como [confirmar]."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "Sin liga, equipos, uniformes ni hashtags oficiales; sin consumo r\u00e1pido ni manejo."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe1 y lista \"Cambios aplicados antes de entregar\"."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "\"Sin canciones comerciales\"; solo m\u00fasica instrumental de biblioteca o audio original, sin t\u00edtulo de canci\u00f3n."}, {"text": "La leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 a\u00f1os.\" aparece en el Reel (texto en pantalla o caption), en las Stories, en el post de LinkedIn y en cada variante de caption.", "passed": true, "evidence": "Leyenda en Reel y su caption, declarada en las 5 pantallas de Stories, LinkedIn y captions A, B, C."}, {"text": "No hay consumo excesivo o r\u00e1pido, conducci\u00f3n, rendimiento deportivo, \u00e9xito social o sexual, ni menores; si aparecen personas, se indica que sean claramente mayores de 25.", "passed": true, "evidence": "Adultos \"claramente mayores de 25 a\u00f1os\", \"nadie bebe de golpe\", sin autos ni llaves, sin deporte."}, {"text": "No usa nombres, logos, uniformes ni hashtags oficiales de la liga de b\u00e9isbol ni de equipos.", "passed": true, "evidence": "\"Sin... nombres, logos, uniformes o mascotas de ligas o equipos\"; hashtags no oficiales."}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida completa y limpia, con leyenda en todas las partes y pase del Guardi\u00e1n con veredicto y cambios. Sin claims nuevos detectados.", "timing": {"total_tokens": 109910, "duration_ms": 210734, "total_duration_seconds": 210.7}}}, {"id": "eval-103-monteluz-patio-sonnet_sin_skill-run-1", "prompt": "Recicla este post aprobado de Monteluz para Reel, Stories, LinkedIn y captions:\n\n\"Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"", "eval_id": 103, "outputs": [{"name": "respuesta.md", "type": "text", "content": "# Monteluz | \"Viernes de patio\" reciclado en Reel, Stories, LinkedIn y captions\n\n**Post base aprobado:** \"Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. B\u00fascala en tu colmado de confianza. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"\n\n**Idea madre:** el patio es el lugar donde se comparte con la gente (pilar 2), con la cerveza como invitada y no como protagonista del exceso. De ah\u00ed salen tres ganchos: el plan (patio, m\u00fasica, tu gente), el orgullo cibae\u00f1o (pilar 1) y el lote peque\u00f1o (pilar 3).\n\n**Reglas que cumple todo lo de abajo:**\n- Solo usa los claims aprobados: \"Cerveza artesanal del Cibao\" y \"Hecha en lotes peque\u00f1os\". No se invent\u00f3 ning\u00fan dato (grados, premios, precios, ingredientes, puntos de venta).\n- Cada pieza lleva la leyenda completa: **\"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"**\n- Hablamos de t\u00fa y el CTA es el habitual: \"B\u00fascala en tu colmado de confianza.\"\n- Sin b\u00e9isbol, sin manejo, sin rendimiento, sin \u00e9xito social o sexual, y sin consumo r\u00e1pido o excesivo.\n\n---\n\n## 1. Reel (vertical 9:16, 18 a 20 segundos)\n\n**Objetivo:** que se sienta el ambiente del patio. Ritmo tranquilo, sin brindis a la carrera.\n\n| Seg. | Imagen | Texto en pantalla |\n|---|---|---|\n| 0-3 | Patio al atardecer, luces colgadas. Plano cerrado de una Monteluz con gotas de fr\u00edo sobre una mesa. | **Viernes de patio** |\n| 3-8 | Un grupo de amigos adultos, de apariencia claramente mayor de 25, conversando y riendo en el patio. Cada persona con una sola botella o vaso. | **Buena m\u00fasica. Tu gente.** |\n| 8-12 | Se sirve la cerveza en un vaso, con la etiqueta a cuadro. La persona toma un sorbo con calma. | **Cerveza artesanal del Cibao. Hecha en lotes peque\u00f1os.** |\n| 12-16 | Nevera o estante de un colmado con Monteluz, y alguien tomando una botella. | **B\u00fascala en tu colmado de confianza.** |\n| 16-20 | Tarjeta final con el logo de Monteluz sobre fondo s\u00f3lido. | **Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.** (legible, m\u00ednimo 3 segundos) |\n\n**Audio:** m\u00fasica con sabor cibae\u00f1o de librer\u00eda con licencia, a volumen medio y con las conversaciones y risas del patio por debajo. Sin canciones comerciales ni de artistas reconocibles. Locuci\u00f3n opcional, con voz c\u00e1lida, que lea solo: \"Viernes de patio. Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente.\"\n\n**Caption del Reel:**\n> Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente.\n> Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\n> B\u00fascala en tu colmado de confianza.\n> Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n> #ViernesDePatio #Monteluz #CervezaArtesanal #Cibao\n\n**Cuidado en producci\u00f3n:**\n- Que nadie beba de golpe ni haya varias botellas por persona en la mesa.\n- Sin carros, llaves ni nada que sugiera salir manejando.\n- Sin camisetas, gorras ni banderines de equipos de b\u00e9isbol en c\u00e1mara.\n\n---\n\n## 2. Stories (4 cuadros, 9:16)\n\nLa leyenda va como pie de p\u00e1gina peque\u00f1o y legible en cada cuadro, por encima de la zona de respuesta, para que ning\u00fan cuadro suelto quede sin ella.\n\n**Cuadro 1: gancho**\n- Imagen: foto del patio con luces, mesa y una Monteluz bien fr\u00eda.\n- Texto: **Hoy es viernes de patio \ud83c\udf7b**\n- Pie: Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n**Cuadro 2: interacci\u00f3n (orgullo cibae\u00f1o)**\n- Imagen: el mismo patio, con la mesa y los vasos de fondo.\n- Texto: **Buena m\u00fasica + tu gente**\n- Sticker de encuesta: **\u00bfQu\u00e9 suena en tu patio?** Opciones: *Perico ripiao* / *Bachata*\n- Pie: Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n**Cuadro 3: oficio cervecero**\n- Imagen: primer plano de la botella o del vaso servido, con la etiqueta visible.\n- Texto: **Cerveza artesanal del Cibao. Hecha en lotes peque\u00f1os.**\n- Sticker de pregunta: **\u00bfRubia, roja o negra?**\n- Pie: Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n**Cuadro 4: CTA**\n- Imagen: nevera o estante de colmado con Monteluz.\n- Texto: **B\u00fascala en tu colmado de confianza.**\n- Pie: Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n---\n\n## 3. LinkedIn (post de texto con una imagen del patio o el Reel recortado)\n\n> Un buen viernes en el Cibao muchas veces se arma en un patio: buena m\u00fasica, buena conversaci\u00f3n y tu gente.\n>\n> En Monteluz hacemos cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. Nos gusta pensar que cada lote acompa\u00f1a esos momentos de compartir con calma.\n>\n> Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente: as\u00ed entendemos el viernes de patio.\n>\n> \u00bfC\u00f3mo se vive el viernes de patio donde t\u00fa est\u00e1s? Cu\u00e9ntanos en los comentarios.\n>\n> B\u00fascala en tu colmado de confianza.\n>\n> Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n>\n> #CervezaArtesanal #Cibao #Santiago\n\n**Notas:** tono m\u00e1s sobrio que en Instagram, sin emojis ni jerga de fiesta. El gancho es el orgullo cibae\u00f1o y el oficio. No se promete nada sobre procesos o cifras que el Core Brand no respalda. Si alg\u00fan d\u00eda se promociona, segmentar a adultos de 25 a\u00f1os o m\u00e1s.\n\n---\n\n## 4. Captions para feed y Facebook (4 versiones)\n\n**A. Directa (casi el texto base)**\n> Viernes de patio \ud83c\udf7b Una Monteluz bien fr\u00eda, buena m\u00fasica y tu gente.\n> Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\n> B\u00fascala en tu colmado de confianza.\n> Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n> #ViernesDePatio #Monteluz #CervezaArtesanal\n\n**B. Pregunta (para comentarios)**\n> \u00bfQu\u00e9 suena en tu patio este viernes? \ud83c\udfb6\n> Nosotros ponemos una Monteluz bien fr\u00eda, cerveza artesanal del Cibao hecha en lotes peque\u00f1os. T\u00fa pones la m\u00fasica y a tu gente.\n> B\u00fascala en tu colmado de confianza.\n> Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n> #ViernesDePatio #Monteluz #Cibao\n\n**C. Orgullo cibae\u00f1o**\n> Del Cibao para tu patio \ud83c\udf7b\n> Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os, para compartir con tu gente.\n> B\u00fascala en tu colmado de confianza.\n> Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n> #Monteluz #Cibao #CervezaArtesanal #Santiago\n\n**D. Corta (para acompa\u00f1ar una foto sola)**\n> Viernes de patio, buena m\u00fasica y tu gente \ud83c\udf7b\n> B\u00fascala en tu colmado de confianza.\n> Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n> #ViernesDePatio #Monteluz\n\n---\n\n## 5. Orden de publicaci\u00f3n sugerido\n\nHoy es mi\u00e9rcoles 14 de octubre de 2026, as\u00ed que el viernes de la copia cae el **16 de octubre**.\n1. Viernes 16: Stories en la ma\u00f1ana, para que el \"hoy es viernes\" tenga sentido.\n2. Viernes 16: Reel con el caption A o B.\n3. Viernes 16 o la semana siguiente: LinkedIn, que no depende del d\u00eda. Si sale otro d\u00eda, cambiar la primera frase a \"Un buen fin de semana en el Cibao...\".\n4. Los captions C y D sirven para publicaciones de feed o Facebook las semanas siguientes, con la misma foto o con tomas del rodaje.\n\n## 6. Para confirmar con el equipo antes de publicar\n\n- Materiales reales: fotos, rodaje y logo. No invent\u00e9 usuarios, ubicaciones ni etiquetas de colmados. Si se quiere etiquetar un colmado, hay que acordarlo antes.\n- M\u00fasica del Reel: debe ser de librer\u00eda con licencia, y no puede ser ning\u00fan tema, hashtag ni imagen oficial de la liga de b\u00e9isbol.\n- Casting: todas las personas en c\u00e1mara deben verse claramente mayores de 25 a\u00f1os.\n- Si se quiere sumar un claim nuevo (grados de alcohol, premios, ingredientes), necesita aprobaci\u00f3n del cliente. Aqu\u00ed no se us\u00f3 ninguno.\n"}], "grading": {"expectations": [{"text": "Entrega las 4 partes: guion de Reel con tabla de tiempos, Stories (3 a 5 pantallas), post de LinkedIn y 3 variantes de caption.", "passed": false, "evidence": "Entrega Reel con tabla, 4 Stories y LinkedIn, pero 4 captions (A-D) en lugar de las 3 variantes pedidas."}, {"text": "Los tiempos de la tabla del Reel cubren la duraci\u00f3n declarada sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tramos 0-3, 3-8, 8-12, 12-16, 16-20: continuos, total 20 s dentro del rango declarado."}, {"text": "Al menos una Story tiene una interacci\u00f3n concreta (encuesta, pregunta, quiz o slider).", "passed": true, "evidence": "Cuadro 2 con sticker de encuesta \"\u00bfQu\u00e9 suena en tu patio?\"; cuadro 3 con sticker de pregunta."}, {"text": "El post de LinkedIn tiene un gancho en las 2 primeras l\u00edneas y no pasa de 3,000 caracteres.", "passed": true, "evidence": "Abre con \"Un buen viernes en el Cibao muchas veces se arma en un patio...\"; texto muy por debajo de 3,000 caracteres."}, {"text": "No agrega beneficios, cifras, precios, fechas, horarios, premios ni testimonios que no est\u00e9n en la pieza original o en los claims aprobados del Core Brand (lo que falte va como [confirmar]).", "passed": false, "evidence": "Story 3 \"\u00bfRubia, roja o negra?\" y hashtag #Santiago usan datos del Core Brand que no son claims aprobados ni est\u00e1n en la pieza."}, {"text": "No usa ninguna palabra o recurso prohibido por el Core Brand en ninguna de las partes.", "passed": true, "evidence": "No usa liga, equipos, hashtags oficiales ni recursos prohibidos; producci\u00f3n pide sin camisetas ni banderines."}, {"text": "Incluye un pase del Guardi\u00e1n con veredicto y la lista de cambios aplicados.", "passed": false, "evidence": "No hay pase del Guardi\u00e1n con veredicto; solo \"Reglas que cumple\" y \"Para confirmar\", sin lista de cambios aplicados."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "\"M\u00fasica con sabor cibae\u00f1o de librer\u00eda con licencia... Sin canciones comerciales ni de artistas reconocibles\"."}, {"text": "La leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 a\u00f1os.\" aparece en el Reel (texto en pantalla o caption), en las Stories, en el post de LinkedIn y en cada variante de caption.", "passed": true, "evidence": "Leyenda en tarjeta final y caption del Reel, en los 4 cuadros de Stories, LinkedIn y captions A-D."}, {"text": "No hay consumo excesivo o r\u00e1pido, conducci\u00f3n, rendimiento deportivo, \u00e9xito social o sexual, ni menores; si aparecen personas, se indica que sean claramente mayores de 25.", "passed": true, "evidence": "Adultos \"claramente mayor de 25\", sorbo con calma, una botella por persona, sin carros ni llaves."}, {"text": "No usa nombres, logos, uniformes ni hashtags oficiales de la liga de b\u00e9isbol ni de equipos.", "passed": true, "evidence": "Sin camisetas, gorras ni banderines de b\u00e9isbol; hashtags no oficiales."}], "summary": {"passed": 8, "failed": 3, "total": 11, "pass_rate": 0.7273}, "metricas": {"claims_nuevos": ["\u00bfRubia, roja o negra?", "#Santiago"]}, "notas_juez": "Buen copy y leyenda en cada cuadro, pero sin pase del Guardi\u00e1n con veredicto, con 4 captions y con los estilos rubia, roja y negra no aprobados como claim.", "timing": {"total_tokens": 71069, "duration_ms": 69811, "total_duration_seconds": 69.8}}}], "previous_feedback": {}, "previous_outputs": {}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
