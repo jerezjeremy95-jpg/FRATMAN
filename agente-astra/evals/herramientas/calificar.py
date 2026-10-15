@@ -82,13 +82,33 @@ def veredicto_de_texto(texto: str):
     return None
 
 
+# Encabezado (## …) o etiqueta en negrita (**…**) de la versión corregida. Acepta las
+# variantes que usan las salidas sin skill: "Propuesta corregida", "Versión propuesta",
+# "Propuesta de guion corregido".
+ENCABEZADO_CORREGIDA_RE = re.compile(
+    r"^(?:(?P<h>#+)\s*|\*\*)(?:\d+\.\s*)?(?:versi[oó]n|propuesta|guion|caption|copy|texto)\b"
+    r"[^\n*]{0,40}?(?:corregid[ao]|propuest[ao])[^\n*]*(?:\*\*)?(?P<resto>[^\n]*)$",
+    re.IGNORECASE | re.MULTILINE)
+# Notas que algunas salidas ponen debajo de la versión corregida (citan las frases quitadas).
+NOTAS_RE = re.compile(r"^\s*[*_]*\s*(notas?\b|por qu[eé]|qu[eé] se cambi|cambios\b|se conserv|corr[ií] la verificaci|cumple\b|\(sin\b)",
+                      re.IGNORECASE)
+
+
 def seccion_corregida(texto: str):
-    """Texto de la versión corregida (del encabezado hasta el siguiente encabezado)."""
-    m = re.search(r"#+\s*versi[oó]n corregida[^\n]*\n(.*?)(?=\n#+\s|\nREGISTRO-GUARDIAN|\Z)", texto, re.IGNORECASE | re.DOTALL)
-    if m and m.group(1).strip():
-        return m.group(1)
-    m = re.search(r"versi[oó]n corregida\**:?\**(.*?)(?=\n#+\s|\nREGISTRO-GUARDIAN|\Z)", texto, re.IGNORECASE | re.DOTALL)
-    return m.group(1) if m and m.group(1).strip() else None
+    """Texto de la versión corregida: del encabezado hasta el siguiente encabezado, el
+    registro o las notas de la corrección."""
+    m = ENCABEZADO_CORREGIDA_RE.search(texto)
+    if not m:
+        return None
+    # En un encabezado, lo que sigue al título es descripción; en una etiqueta en negrita
+    # ("**Versión corregida:** …"), es el copy.
+    lineas = [m.group("resto")] if not m.group("h") and m.group("resto").strip() else []
+    for linea in texto[m.end():].splitlines():
+        if re.match(r"^#+\s", linea) or linea.startswith("REGISTRO-GUARDIAN") or NOTAS_RE.match(linea):
+            break
+        lineas.append(linea)
+    cuerpo = "\n".join(lineas).strip()
+    return cuerpo or None
 
 
 def chequeos_guardian(caso: dict, texto: str) -> dict:

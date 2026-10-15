@@ -3,12 +3,13 @@
 y el texto exacto de la instrucción para cada subagente ejecutor.
 
 Uso:
-    python3 preparar.py <iteracion> <skill> <config> [<config> ...]
+    python3 preparar.py <iteracion> <skill> <config> [<config> ...] [--casos 201,203]
 
 Ejemplo:
     python3 preparar.py 1 guardian-marca opus_con_skill sonnet_con_skill sonnet_sin_skill
 
-Cada config tiene la forma <modelo>_con_skill o <modelo>_sin_skill.
+Cada config tiene la forma <modelo>_con_skill o <modelo>_sin_skill. Con --casos solo se
+preparan esos casos (útil para repetir en una iteración nueva solo lo que falló).
 Escribe en evals/workspace/iteration-<n>/<skill>/eval-<id>-<nombre>/<config>/run-1/
 y deja la instrucción del ejecutor en instruccion.txt dentro de cada run.
 """
@@ -56,10 +57,18 @@ def main() -> None:
     if len(sys.argv) < 4:
         print(__doc__)
         sys.exit(1)
-    iteracion, skill, configs = sys.argv[1], sys.argv[2], sys.argv[3:]
+    args = sys.argv[1:]
+    casos = None
+    if "--casos" in args:
+        i = args.index("--casos")
+        casos = {int(x) for x in args[i + 1].split(",")}
+        del args[i:i + 2]
+    iteracion, skill, configs = args[0], args[1], args[2:]
     datos = json.loads((EVALS / f"{skill}.evals.json").read_text())
     base = EVALS / "workspace" / f"iteration-{iteracion}" / skill
     for caso in datos["evals"]:
+        if casos and caso["id"] not in casos:
+            continue
         eval_dir = base / f"eval-{caso['id']}-{caso['nombre']}"
         meta = {
             "eval_id": caso["id"],
