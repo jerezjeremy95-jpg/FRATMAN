@@ -44,13 +44,14 @@ Referencias de esta skill (léelas antes de la primera revisión de la conversac
    - ¿Choca con una prohibición o con el tono del Core Brand?
 4. **Clasifica** cada hallazgo con un tipo y una severidad según `references/claims-riesgo.md`. Si dudas por falta de información, sube la severidad y agrega la pregunta en "Para decidir por un humano".
 5. **Corrige.** Misma intención, tono de la marca y largo parecido. Si no hay versión segura, recomienda eliminar. La corrección solo puede usar lo que ya decía la pieza o los claims aprobados del Core Brand; no inventes beneficios, ingredientes ni datos nuevos.
+   - Un claim que quitas no vuelve con otras palabras. Si quitas una cifra o un respaldo sin fuente ("8 de cada 10 nos recomiendan", "más de 500 hogares"), no lo cambies por una versión vaga del mismo claim ("casi todos nos recomiendan", "cada día más hogares nos eligen", "el favorito de la ciudad"): o va `[confirmar: dato y fuente]` o se quita.
 6. **Veredicto:**
    - 🔴 **No publicar**: hay al menos un hallazgo alto.
    - 🟡 **Ajustar**: hay hallazgos medios, pero ninguno alto.
    - 🟢 **Listo para aprobación humana**: solo hallazgos bajos o ninguno.
 7. **Autorrevisión antes de entregar:**
    - ¿La versión corregida conserva el mensaje y suena a la marca?
-   - ¿Quedó algún riesgo dentro de la versión corregida?
+   - ¿Quedó algún riesgo dentro de la versión corregida? ¿Alguna frase de la corrección es un claim que no estaba en la pieza ni en los aprobados?
    - ¿Marqué algo que en realidad está bien (ver "Lo que NO es problema")? Si es así, quítalo.
    - ¿Agrupé repeticiones? Agrupa la misma promesa repetida en el copy y los hashtags en un solo hallazgo.
    - Si puedes ejecutar código: guarda la versión corregida en un archivo aparte y corre `scripts/verificar_copy.py` (está en la carpeta de esta skill) con las palabras prohibidas y la leyenda del Core Brand, para confirmar que no sobrevive ninguna. Córrelo también sobre el reporte completo para validar la línea de registro.
@@ -58,11 +59,11 @@ Referencias de esta skill (léelas antes de la primera revisión de la conversac
 ### En Cowork o Claude Code con el plugin agente-astra
 Delega por modelo para ahorrar uso sin perder criterio:
 - Pieza larga o en archivo: el subagente `agente-astra:extractor-piezas` (Haiku) saca el texto literal.
-- Juicio de claims en marcas de salud, bienestar, alimentos o bebidas alcohólicas, o con mecánicas de datos o sorteos: el subagente `agente-astra:auditor-claims` (Opus, esfuerzo alto). Pásale la pieza, el Core Brand y las rutas de `references/claims-riesgo.md` y `references/marco-rd.md` de esta skill.
+- Juicio de claims cuando la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada: el subagente `agente-astra:auditor-claims` (Opus, esfuerzo alto). Pásale la pieza, el Core Brand y las rutas de `references/claims-riesgo.md` y `references/marco-rd.md` de esta skill.
 - El reporte final lo armas tú, con el formato de abajo.
-- El comando `/agente-astra:guardian` corre toda la revisión en Opus.
+- El comando `/agente-astra:guardian` corre la revisión en Sonnet y delega en `auditor-claims` (Opus) las piezas sensibles.
 
-En Claude.ai no hay subagentes: haz todo en la conversación. Para marcas de salud, bienestar o alcohol, recomienda al usuario usar Opus.
+En Claude.ai no hay subagentes: haz todo en la conversación. Sonnet basta para la revisión del día a día; si la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada, recomienda al usuario usar Opus.
 
 ## Formato de salida
 

@@ -27,12 +27,23 @@ Sirven para **medir el riesgo con datos** en vez de suponerlo: cuántos riesgos 
 # 1. Preparar carpetas e instrucciones
 python3 evals/herramientas/preparar.py <iteración> guardian-marca opus_con_skill sonnet_con_skill haiku_con_skill sonnet_sin_skill haiku_sin_skill
 # 2. Lanzar un subagente por run (modelo = el de la config) con el texto de instruccion.txt
-# 3. Armar los paquetes anónimos para el juez y lanzar un juez por caso
+# 3. Armar los paquetes anónimos para el juez, escribir su instrucción y lanzar un juez por caso
 python3 evals/herramientas/calificar.py paquetes evals/workspace/iteration-<n>/guardian-marca
+python3 evals/herramientas/instruir_juez.py evals/workspace/iteration-<n>/guardian-marca evals/herramientas/juez_guardian.txt <ids>
 # 4. Unir el juicio con los chequeos automáticos y resumir
 python3 evals/herramientas/calificar.py consolidar evals/workspace/iteration-<n>/guardian-marca
 python3 evals/herramientas/calificar.py resumen evals/workspace/iteration-<n>/guardian-marca
+# Repetir en una iteración nueva solo los casos que fallaron
+python3 evals/herramientas/preparar.py 2 guionista-reels haiku_con_skill --casos 201,203
 ```
+
+## Iteraciones
+- **Iteración 1 (14 y 15 de octubre):** los 14 casos con Haiku, Sonnet y Opus con skill (Opus solo en el Guardián) y Sonnet sin skill.
+- **Iteración 2 (15 de octubre):** solo los casos que fallaron, después de ajustar la skill. Guionista 201 y 203 en Haiku (regla de no inventar horas ni escasez) y Guardián 1 en Opus y 5 en Haiku (regla de no reformular un claim quitado).
+- **Siguiente:** los seis casos difíciles de la auditoría independiente (`guardian-marca-dificiles.evals.json`, ids 9 a 14), que no se corrieron todavía.
+
+## Nota sobre la leyenda de alcohol
+Tras la investigación legal, la leyenda de Monteluz pasó a incluir "El consumo de alcohol perjudica la salud" (Ley 42-01, art. 123), con `herramientas/ajuste_leyenda_alcohol.py`. Las corridas del Reciclador (103) y del Guionista (202) ya se habían hecho con la leyenda anterior. Por eso sus paquetes del juez se armaron con esa leyenda y llevan una nota. Las corridas del Guardián se hicieron con la leyenda nueva.
 
 ## Resultados
 - `resultados/`: resúmenes por iteración y visor HTML con todas las salidas.
@@ -42,4 +53,4 @@ python3 evals/herramientas/calificar.py resumen evals/workspace/iteration-<n>/gu
 - Son pocos casos: sirven para comparar configuraciones y detectar fallas, no como garantía estadística.
 - Un run por configuración en la primera iteración: puede haber variación entre corridas.
 - Las marcas ficticias son más "obvias" que la vida real. En producción aparecerán riesgos más sutiles; por eso el Guardián no reemplaza la aprobación humana.
-- **Contaminación controlada:** los ejemplos de las skills y del catálogo usan otras marcas y otras frases que los casos de prueba (se revisó con búsqueda literal). Sí comparten vocabulario estándar de alerta ("quema grasa", "sin efectos secundarios"), porque cualquier catálogo serio de claims lo incluye.
+- **Contaminación controlada:** los ejemplos de las skills y del catálogo usan otras marcas y otras frases que los casos de prueba (se revisó con búsqueda literal). Sí comparten vocabulario estándar de alerta ("quema grasa", "sin efectos secundarios"), porque cualquier catálogo serio de claims lo incluye. Los ejemplos de la regla agregada en la iteración 2 ("8 de cada 10 nos recomiendan", "cada día más hogares nos eligen") tampoco aparecen en los casos.

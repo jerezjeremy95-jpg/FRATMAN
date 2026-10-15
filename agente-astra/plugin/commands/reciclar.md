@@ -4,6 +4,6 @@ argument-hint: "[marca] [pieza aprobada o ruta del archivo] [canales opcionales]
 model: sonnet
 ---
 
-Usa la skill `reciclador-contenido` con la pieza de abajo. Si la marca es de salud, bienestar, alimentos o alcohol y está disponible el subagente `auditor-claims`, delega en él el pase del Guardián (corre en Opus).
+Usa la skill `reciclador-contenido` con la pieza de abajo. Si la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada y está disponible el subagente `auditor-claims`, delega en él el pase del Guardián (corre en Opus).
 
 $ARGUMENTS

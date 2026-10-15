@@ -21,7 +21,8 @@ Se integra con las skills que el equipo ya usa (Radar Cibao, Design Board) y con
 |---|---|---|
 | Mecánico: extraer texto, contar, sumar tiempos | **Haiku** | Subagentes `extractor-piezas` y `verificador-formato`, comando `/agente-astra:extraer` |
 | Redacción: guiones, Stories, LinkedIn, captions | **Sonnet** | Subagente `redactor-multicanal`, comandos `/agente-astra:reciclar` y `/agente-astra:guion` |
-| Juicio: claims de salud, alcohol y datos; veredicto | **Opus** (esfuerzo alto) | Subagente `auditor-claims`, comando `/agente-astra:guardian` |
+| Guardián del día a día | **Sonnet** | Comando `/agente-astra:guardian` |
+| Juicio de piezas sensibles: salud, alcohol, datos, sorteos, menores, pauta | **Opus** (esfuerzo alto) | Subagente `auditor-claims` (el Guardián delega en él) |
 | Crítico: auditoría antes de una campaña grande | **Fable** | A pedido, en el chat |
 
 En Claude.ai el modelo lo elige la persona y el agente recomienda cuál usar. En Cowork y Claude Code el enrutamiento es automático. Detalle y resultados medidos: [`compartido/enrutamiento-modelos.md`](compartido/enrutamiento-modelos.md).
@@ -54,7 +55,7 @@ En versiones anteriores a la 2.1.275, en dos pasos: `/plugin marketplace add jer
 - "Recicla este carrusel aprobado de [marca] para Reel, Stories y LinkedIn."
 - "Guion de Reel de 20 s para [marca] por el inicio de la temporada de pelota."
 - "Agente Astra: del Design Board de [marca] de este mes, revisa los posts y recicla los dos mejores."
-- En Cowork o Claude Code: `/agente-astra:guardian [marca] [copy]` corre la revisión en Opus.
+- En Cowork o Claude Code: `/agente-astra:guardian [marca] [copy]` corre la revisión en Sonnet y pasa a Opus las piezas sensibles.
 
 ## Principios
 Todo es borrador; del material de clientes solo se usa lo autorizado; no se inventan precios ni cifras; sin promesas médicas; los datos de asistentes requieren consentimiento y son del cliente; la anfitriona del evento es la marca; una agencia a la vez; costo cero. Texto completo: [`compartido/principios-astra.md`](compartido/principios-astra.md).

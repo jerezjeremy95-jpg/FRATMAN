@@ -1,0 +1,9 @@
+[
+  {
+    "config": "haiku_con_skill",
+    "runs": 2,
+    "pass_rate": 1.0,
+    "tokens_prom": 111490,
+    "segundos_prom": 135.7
+  }
+]

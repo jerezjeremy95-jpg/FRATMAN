@@ -42,7 +42,7 @@ Referencias de esta skill:
 ### En Cowork o Claude Code con el plugin agente-astra
 - Escribir hooks, tomas y caption: subagente `agente-astra:redactor-multicanal` (Sonnet), con la ruta de `references/formatos-canal.md`.
 - Revisar que los tiempos sumen y contar caracteres: subagente `agente-astra:verificador-formato` (Haiku), con la ruta de `scripts/verificar_copy.py`.
-- Pase del Guardián en marcas de salud, bienestar, alimentos o alcohol: subagente `agente-astra:auditor-claims` (Opus), con la ruta de `references/claims-riesgo.md`.
+- Pase del Guardián cuando la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada: subagente `agente-astra:auditor-claims` (Opus), con la ruta de `references/claims-riesgo.md`.
 
 ## Formato de salida
 

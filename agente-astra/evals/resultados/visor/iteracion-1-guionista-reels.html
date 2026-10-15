@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "guionista-reels (iteraci\u00f3n 1)", "runs": [{"id": "eval-201-vergel-ola-de-calor-haiku_con_skill-run-1", "prompt": "Guion de Reel para Vergel. El Radar Cibao de esta semana trajo que se anuncia una ola de calor en Santiago (fuente: aviso meteorol\u00f3gico del 13/10; fecha l\u00edmite para publicar: 17/10). Objetivo: pedidos por delivery. Puede salir el equipo de la tienda, ya firmaron autorizaci\u00f3n de imagen. Que dure entre 20 y 30 segundos.", "eval_id": 201, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Guion Reel \u2014 Vergel \u00b7 Ola de calor en Santiago \u00b7 25 s \u00b7 2026-10-14\n**\u00c1ngulo:** Para j\u00f3venes de Santiago que est\u00e1n bajo el calor, mostrar el jugo prensado en fr\u00edo que les llega a la puerta para que pidan por delivery.\n**Objetivo:** pedidos por delivery \u00b7 **Fuente de la idea:** Radar Cibao de esta semana, aviso meteorol\u00f3gico del 13/10 (fecha l\u00edmite para publicar: 17/10)\n\n**Hooks**\n1. Pregunta: \"\u00bfQu\u00e9 te tomas con esta ola de calor?\" En pantalla: \"\u00bfQu\u00e9 te tomas con este calor?\"\n2. Contraste: \"Mismo sol, distinto plan.\" La misma acera: primero la persona sin nada en la mano; despu\u00e9s, con un vaso de Vergel.\n3. POV local: \"POV: 2 de la tarde en Santiago y ya se te acab\u00f3 el jugo.\" En pantalla: \"POV: 2 p. m. en Santiago\"\n\n**Recomendado:** n.\u00ba 3, porque cualquiera en Santiago reconoce la escena en el primer segundo y deja la salida natural: pedir otro jugo por delivery.\n\n| Tiempo | Toma | Acci\u00f3n | Texto en pantalla | Voz o audio |\n|---|---|---|---|---|\n| 0\u20133 s | Exterior, acera frente a la tienda, sol fuerte. Plano medio. | Una persona del equipo sale a la acera y mira el vaso que trae en la mano: est\u00e1 vac\u00edo. | POV: 2 p. m. en Santiago | \"Dos de la tarde en Santiago\u2026 y ya se te acab\u00f3 el jugo.\" |\n| 3\u20137 s | Interior. Primer plano del vaso que se llena, con condensaci\u00f3n. | El vaso se llena de jugo sacado de la nevera. | Prensado en fr\u00edo | \"Pues tu jugo ya te est\u00e1 esperando.\" |\n| 7\u201311 s | Detalle de manos y fruta del d\u00eda entrando a la prensa. | Se prensa la fruta; el jugo cae al vaso. | Fruta del d\u00eda | \"Fruta del d\u00eda, prensada en fr\u00edo.\" |\n| 11\u201315 s | Dos tomas cortas (2 s cada una): vasos en fila sobre el mostrador, luego frutas criollas en primer plano. | El equipo pasa los vasos de una mano a otra. | Sabor criollo | \"Sabor criollo, hecho en Santiago.\" |\n| 15\u201318 s | Plano medio del mostrador con la bolsa de la marca. | Se cierra la bolsa de delivery y se pega la etiqueta del pedido, sin datos de clientes. | Pide tu delivery | \"\u00bfNo sales? Te lo llevamos.\" |\n| 18\u201322 s | Plano medio en la acera o en la puerta: la persona recibe la bolsa. | Saca el vaso, da un sorbo y sonr\u00ede. | Tu jugo, a tu puerta | \"Calor de Santiago, jugo de Vergel.\" |\n| 22\u201325 s | Cierre: vaso en alto con el equipo al fondo. | El equipo levanta los vasos y aparece el nombre de la marca. | P\u00eddelo en la tienda o por delivery \u00b7 Link en la bio | \"P\u00eddelo en la tienda o por delivery. Link en la bio.\" |\n\n**CTA:** P\u00eddelo en la tienda o por delivery (link en la bio).\n**Audio:** Original, sin canciones comerciales: ambiente de tienda (hielo, prensa) y percusi\u00f3n suave, estilo merengue instrumental, que sube un poco en la toma de 18 a 22 s. Voz en off cercana, en t\u00fa.\n**Caption:** Con esta ola de calor, tu jugo ya tiene plan \ud83c\udf4a Prensado en fr\u00edo, con fruta del d\u00eda y hecho en Santiago. P\u00eddelo en la tienda o por delivery (link en la bio). \ud83d\udd25\n\n**Notas de producci\u00f3n**\n- Orden pr\u00e1ctico de grabaci\u00f3n (no el de edici\u00f3n):\n  1. Exterior, con sol fuerte: toma 1 (hook) y toma 6 (entrega en la acera o en la puerta de la tienda).\n  2. Interior, con los vasos reci\u00e9n sacados de la nevera: tomas 2 y 4 (la condensaci\u00f3n se ve mejor as\u00ed).\n  3. Prensa y fruta del d\u00eda: toma 3, con la fruta que haya ese d\u00eda.\n  4. Empaque de la bolsa: toma 5, con la bolsa de la marca.\n  5. Cierre: toma 7, con el equipo al fondo y el nombre de la marca.\n- Props: vasos de la marca, prensa, fruta del d\u00eda, bolsa de delivery de la marca. Sin logos de apps de delivery de terceros.\n- Etiqueta del pedido: sin nombres, tel\u00e9fonos ni direcciones reales de clientes.\n- Locaci\u00f3n: tienda propia y su acera. No hace falta permiso adicional; si la toma 6 se graba en una casa, pedir permiso de la locaci\u00f3n.\n- Qui\u00e9n sale en c\u00e1mara: equipo de la tienda, con autorizaci\u00f3n de imagen firmada. Si la persona de la toma 6 no es del equipo, debe estar cubierta por una autorizaci\u00f3n de imagen.\n- Texto en pantalla: centrado, dentro de la zona segura, lejos de la franja inferior (nombre y caption) y de los botones de la derecha.\n- Plazo: publicar antes del 17/10 (fecha l\u00edmite del Radar). Hoy es 14/10: hay tres d\u00edas para grabar, editar y aprobar.\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 \u2014 cambios aplicados:\n- Sin promesas de salud ni de efectos en el cuerpo, ni de hidrataci\u00f3n o vitalidad. Se describe el producto y la sensaci\u00f3n (\"prensado en fr\u00edo\").\n- Sin cifras: la ola de calor se cita sin grados ni fechas de duraci\u00f3n, porque el aviso no est\u00e1 en los materiales de la pieza.\n- Sin precio, promo ni urgencia: el guion no inventa descuentos.\n- Claims usados: \"Prensado en fr\u00edo\" y \"Hecho en Santiago\", ambos aprobados. No se usa ninguna menci\u00f3n de az\u00facar, porque ese claim solo aplica a la l\u00ednea Verde.\n- Sin humor sobre cuerpos: no hay sudor ni cuerpos en ninguna toma.\n- Sin marcas de terceros: ni la liga, ni apps de delivery, ni canciones comerciales.\n- Sin competidores ni comparativos.\n- Tono: en t\u00fa, frases cortas, 2 emojis en el caption (el m\u00e1ximo del Core Brand es 3).\n\n### Por confirmar\n- [confirmar: que la ola de calor siga vigente el d\u00eda de publicaci\u00f3n; el aviso es del 13/10]\n- [confirmar: que la autorizaci\u00f3n de imagen del equipo cubra redes sociales y, si aplica, pauta]\n- [confirmar: frutas del d\u00eda para las tomas 3 y 4; el guion no cita variedades ni origen]\n- [confirmar: que el link de la bio lleve a pedidos por delivery]\n- [confirmar: si hay promo esta semana; el guion no incluye precios ni descuentos]\n\nREGISTRO-GUARDIAN {\"pieza\":\"Guion Reel: Vergel \u00b7 ola de calor en Santiago\",\"marca\":\"Vergel\",\"fecha\":\"2026-10-14\",\"veredicto\":\"verde\",\"hallazgos\":[],\"fuente\":\"Radar Cibao, aviso meteorol\u00f3gico 13/10, fecha l\u00edmite 17/10\"}\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": true, "evidence": "Tres hooks: Pregunta, Contraste ('Mismo sol, distinto plan') y POV local; recomienda el n.\u00ba 3 con raz\u00f3n (escena reconocible, salida natural al delivery)."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tabla 0-3, 3-7, 7-11, 11-15, 15-18, 18-22, 22-25: contigua, sin huecos ni solapes, total 25 s dentro del rango."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 7 tomas llevan texto en pantalla ('Prensado en fr\u00edo', 'Pide tu delivery', 'Tu jugo, a tu puerta'); el mensaje de delivery se entiende sin voz."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA en la tienda o delivery; caption con \ud83c\udf4a y \ud83d\udd25 (2 emojis); notas con autorizaci\u00f3n de imagen del equipo y locaci\u00f3n propia."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": false, "evidence": "Inventa una hora en el gancho: 'POV: 2 p. m. en Santiago' y 'Dos de la tarde en Santiago'; no est\u00e1 en el pedido ni marcada [confirmar]."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'Original, sin canciones comerciales': ambiente de tienda y percusi\u00f3n estilo merengue instrumental; es un g\u00e9nero, no una canci\u00f3n espec\u00edfica."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe2 y REGISTRO-GUARDIAN con JSON v\u00e1lido (pieza, marca, fecha, veredicto, hallazgos, fuente)."}, {"text": "No promete efectos en el cuerpo (hidrataci\u00f3n, energ\u00eda, defensas, bajar de peso); habla de sabor, frescura y experiencia.", "passed": true, "evidence": "Guion habla de fruta del d\u00eda, prensado en fr\u00edo, sabor criollo y delivery; ninguna frase promete hidrataci\u00f3n, energ\u00eda ni efecto corporal."}, {"text": "Respeta las prohibiciones del Core Brand de Vergel (detox, dieta, quema grasa, adelgazar, barato, competidores).", "passed": true, "evidence": "No usa detox, dieta, quema grasa, adelgazar, barato ni competidores; sin humor sobre cuerpos."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": true, "evidence": "v\u00e1lido"}], "summary": {"passed": 9, "failed": 1, "total": 10, "pass_rate": 0.9}, "metricas": {"claims_nuevos": ["POV: 2 p. m. en Santiago", "Dos de la tarde en Santiago\u2026 y ya se te acab\u00f3 el jugo."]}, "notas_juez": "Buena estructura, pero el Guardi\u00e1n dice 'Sin cifras' mientras el hook recomendado usa una hora inventada (2 p. m.). El resto cumple.", "timing": {"total_tokens": 110643, "duration_ms": 142028, "total_duration_seconds": 142.0}}}, {"id": "eval-201-vergel-ola-de-calor-sonnet_con_skill-run-1", "prompt": "Guion de Reel para Vergel. El Radar Cibao de esta semana trajo que se anuncia una ola de calor en Santiago (fuente: aviso meteorol\u00f3gico del 13/10; fecha l\u00edmite para publicar: 17/10). Objetivo: pedidos por delivery. Puede salir el equipo de la tienda, ya firmaron autorizaci\u00f3n de imagen. Que dure entre 20 y 30 segundos.", "eval_id": 201, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Guion Reel \u2014 Vergel \u00b7 Ola de calor: el jugo llega a tu puerta \u00b7 24 s \u00b7 2026-10-14\n**\u00c1ngulo:** Para j\u00f3venes profesionales y gente activa de Santiago, mostrar con humor que, si anuncian ola de calor, el jugo prensado en fr\u00edo les llega hasta la puerta, para que lo pidan por delivery.\n**Objetivo:** Pedidos por delivery \u00b7 **Fuente de la idea:** Radar Cibao de esta semana, aviso meteorol\u00f3gico del 13/10 (se anuncia ola de calor en Santiago). **Fecha l\u00edmite para publicar: 17/10/2026 (s\u00e1bado).**\n\n**Hooks** (primeros 3 s)\n1. Pregunta: la persona del equipo, junto a la puerta y abanic\u00e1ndose con un cart\u00f3n liso, mira a c\u00e1mara. Texto: \"\u00bfOla de calor? \u00bfSales o lo pides?\"\n2. Contraste: corte r\u00e1pido entre la calle a pleno sol, vista desde la puerta, y un vaso de jugo sudado en primer plano. Texto: \"Afuera, solazo. En tu mano, jugo.\"\n3. POV local: plano en primera persona junto a la puerta, con el cart\u00f3n de abanico en la mano y la calle soleada de fondo. Texto: \"POV: anunciaron ola de calor en Santiago\". Voz: \"Anunciaron ola de calor en Santiago\u2026\"\n\n**Recomendado:** n.\u00ba 3, porque es una escena que cualquiera en Santiago reconoce, lleva el humor ligero de la marca, se entiende sin sonido y se cierra sola en el remate (misma puerta, otro final). Los hooks 1 y 2 sirven como variante para probar: el resto de la tabla no cambia.\n\n| Tiempo | Toma | Acci\u00f3n | Texto en pantalla | Voz o audio |\n|---|---|---|---|---|\n| 0\u20133 s | 1 \u00b7 Hook POV | Puerta de la tienda, plano en primera persona. Una persona del equipo (en el papel de \"cliente\") se abanica con un cart\u00f3n liso; afuera se ve la calle con sol. | POV: anunciaron ola de calor en Santiago | Sonido directo (ventilador, ambiente). Voz de la persona: \"Anunciaron ola de calor en Santiago\u2026\" |\n| 3\u20136 s | 2 \u00b7 Fruta | Plano detalle: manos del equipo meten la fruta del d\u00eda en la prensa, en el mostrador. | Calma: la fruta la ponemos nosotros | Voz: \"Calma, la fruta la ponemos nosotros.\" |\n| 6\u201310 s | 3 \u00b7 Vaso | El jugo cae sobre el hielo en un vaso de Vergel. Cierre en el vaso sudado. | Prensado en fr\u00edo. Hecho en Santiago. | Sonido directo (jugo, hielo), sin voz. |\n| 10\u201313 s | 4 \u00b7 Empaque | Manos del equipo meten el vaso en la bolsa de delivery y la sellan. La etiqueta se ve sin datos de ning\u00fan cliente. | Lo empacamos | Voz: \"Lo empacamos\u2026\" |\n| 13\u201316 s | 5 \u00b7 Sale | El repartidor, con casco, sale de la tienda con la bolsa hacia su moto. | \u2026y sale para tu casa | Voz: \"\u2026y sale para tu casa.\" |\n| 16\u201318 s | 6 \u00b7 Entrega | Misma puerta del hook. El repartidor entrega la bolsa a la persona del cart\u00f3n. | En tu puerta | Voz: \"Y listo.\" |\n| 18\u201321 s | 7 \u00b7 Remate | Mismo plano y mismo \u00e1ngulo del hook. La persona saca el vaso, da el primer sorbo y baja el cart\u00f3n con cara de \"ahhh\". | \u00bfOla de calor? Aqu\u00ed, con mi jugo | Voz: \"\u00bfOla de calor? Aqu\u00ed, con mi jugo.\" |\n| 21\u201324 s | 8 \u00b7 CTA | Dos del equipo, en el mostrador, levantan el vaso hacia la c\u00e1mara. | P\u00eddelo por delivery. Link en la bio | Voz: \"P\u00eddelo por delivery. Link en la bio.\" |\n\nLa tabla cubre de 0 a 24 s sin huecos ni solapes: 3 + 3 + 4 + 3 + 3 + 2 + 3 + 3 = 24 s.\n\n**CTA:** \"P\u00eddelo por delivery (link en la bio).\" Es la variante de delivery del CTA habitual de Vergel, porque el objetivo es una sola acci\u00f3n: el pedido. La tienda queda en el caption.\n**Audio:** audio original (sonido directo de la tienda, el jugo y el hielo) m\u00e1s una base de percusi\u00f3n suave con ritmo tropical ligero, tomada de la biblioteca de audio comercial de Instagram para cuentas de empresa. Sin canciones comerciales. [confirmar: elegir la pista dentro de lo que le aparezca disponible a la cuenta de Vergel]\n**Caption:**\nAnunciaron ola de calor en Santiago y la fruta ya est\u00e1 lista \u2600\ufe0f\nJugo prensado en fr\u00edo, hecho en Santiago, hasta tu puerta \ud83c\udf4a\nP\u00eddelo por delivery (link en la bio).\n\n**Notas de producci\u00f3n**\n- **Formato:** vertical 9:16, 1080 \u00d7 1920 px, con el celular. El texto va centrado, lejos de la franja superior, de la inferior y del borde derecho, que tapa la interfaz de Instagram. M\u00e1ximo 7 palabras por pantalla.\n- **Lista de tomas para grabar, en orden pr\u00e1ctico:**\n  1. Mostrador, con luz de d\u00eda: tomas 2, 3 y 4 seguidas. Hay que tener la fruta cortada y los vasos listos.\n  2. Exterior de la tienda: toma 5, el repartidor saliendo con la bolsa.\n  3. La puerta, con el mismo vestuario y el mismo \u00e1ngulo: toma 1 (hook), toma 6 (entrega) y toma 7 (remate). Graba la 1 y la 7 con el mismo encuadre para que el \"mismo plano, otro final\" funcione.\n  4. Mostrador, con el equipo: toma 8 (CTA).\n- **Qui\u00e9n sale:** el equipo de la tienda: una persona en el rol de \"cliente\" (tomas 1, 6 y 7), una en la prensa (tomas 2 a 4), el repartidor (tomas 5 y 6) y dos del equipo para el CTA (toma 8). Es una escena actuada: no pongas frases de testimonio ni presentes a nadie como cliente real en el caption.\n- **Props:** cart\u00f3n liso sin logos para el abanico, vasos y bolsa de Vergel, fruta del d\u00eda cortada, hielo y la prensa. Cubre o quita de cuadro cualquier marca de terceros (neveras, envases, cajas) y las etiquetas con nombres o direcciones de clientes.\n- **Si ese d\u00eda no hay sol:** abre la persiana o graba la calle desde la puerta con la luz m\u00e1s fuerte que haya. Ese plano es el \u00fanico que depende del clima.\n- **Seguridad:** el repartidor lleva casco puesto en pantalla y no se muestra manejo apurado. Nada de tiempos de entrega ni de zonas de cobertura en pantalla, voz o caption, porque no tenemos esos datos.\n- **Sin consejos de salud:** el Reel no da recomendaciones para aguantar el calor. El jugo se presenta por sabor, frescura y comodidad. Tampoco se bromea con quien lo pasa mal con el calor.\n- **Calendario sugerido (propuesta):** grabar el jueves 15/10, aprobar el viernes 16/10 y publicar ese mismo d\u00eda. Queda el s\u00e1bado 17/10 de margen, que es la fecha l\u00edmite, y el aviso del 13/10 pierde fuerza con cada d\u00eda que pasa.\n- **Permisos:**\n  - Autorizaci\u00f3n de imagen firmada de todos los que salen: la persona del cart\u00f3n, la de la prensa, el repartidor y los dos del CTA. [confirmar: que la firmada cubra redes sociales y este Reel, y que incluya al repartidor]\n  - Permiso de la locaci\u00f3n: la tienda es propia, as\u00ed que basta con el visto bueno del due\u00f1o o encargado. Si se graba la entrega en una puerta ajena, hace falta permiso de esa persona.\n  - Licencias: ninguna, siempre que se use audio de la biblioteca de Instagram o audio original y no salgan marcas de terceros.\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2. El guion no tiene hallazgos y se puede pasar al cliente una vez confirmados los datos de \"Por confirmar\". Cambios que apliqu\u00e9 mientras lo escrib\u00eda:\n- Quit\u00e9 \"llega bien fr\u00edo\" y cualquier tiempo de entrega, porque son promesas de servicio sin respaldo.\n- Ninguna frase promete un efecto en el cuerpo ni en c\u00f3mo se siente el calor. El calor aparece como contexto, y el jugo, como sabor, frescura y comodidad.\n- No puse ninguna temperatura, fecha de la ola de calor, precio ni horario. Solo se usa el dato de la fuente: se anuncia ola de calor en Santiago, aviso del 13/10.\n- No us\u00e9 \"Sin az\u00facar a\u00f1adida\", porque no se sabe qu\u00e9 jugo sale en c\u00e1mara y el claim aplica solo a la l\u00ednea Verde.\n- El humor es sobre la situaci\u00f3n (el cart\u00f3n de abanico) y no sobre cuerpos. No hay competidores, apps de delivery ni m\u00fasica de terceros, y se respetan todas las prohibiciones del Core Brand de Vergel.\n- **Verificaci\u00f3n mec\u00e1nica** (`verificar_copy.py`, con las palabras prohibidas del Core Brand): los tiempos de la tabla cuadran con los 24 s, no aparece ninguna palabra prohibida, el registro es JSON v\u00e1lido y el caption tiene 2 emojis.\n\n### Por confirmar\n- [confirmar: que el aviso meteorol\u00f3gico del 13/10 siga vigente el d\u00eda de publicar, y qu\u00e9 organismo lo emiti\u00f3. Si el aviso se cancela antes del 17/10, no se publica o se cambia el hook a una versi\u00f3n sin \"ola de calor\"]\n- [confirmar: que el link de la bio lleve directo a pedidos de delivery y est\u00e9 activo al publicar]\n- [confirmar: qui\u00e9n hace el reparto (equipo propio o servicio externo) y si el repartidor est\u00e1 entre los que firmaron la autorizaci\u00f3n de imagen. Si es una plataforma externa, no se muestran sus logos ni su uniforme]\n- [confirmar: que las autorizaciones de imagen firmadas cubren redes sociales y este uso, y que todos los que salen son mayores de edad]\n- [confirmar: qu\u00e9 jugos y sabores salen en c\u00e1mara, para elegir si va \"Sin az\u00facar a\u00f1adida\" solo en los de la l\u00ednea Verde (Jugo Verde, Verde Lim\u00f3n)]\n- [confirmar: pista de la biblioteca de audio disponible para la cuenta de Vergel]\n- [confirmar: aprobaci\u00f3n del cliente antes de programar; este guion es un borrador, no se publica ni se programa solo]\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Vergel\",\"pieza\":\"Guion Reel: Ola de calor, el jugo llega a tu puerta (24 s)\",\"veredicto\":\"verde\",\"hallazgos\":[],\"conteo\":{\"alta\":0,\"media\":0,\"baja\":0},\"pendientes\":[\"aviso_vigente\",\"link_bio_delivery\",\"repartidor_autorizacion\",\"autorizaciones_imagen\",\"sabores_en_camara\",\"pista_audio\",\"aprobacion_cliente\"]}\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": true, "evidence": "Hooks: Pregunta, Contraste y POV local; recomienda el n.\u00ba 3 porque cualquiera en Santiago reconoce la escena y se entiende sin sonido."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tabla 0-3, 3-6, 6-10, 10-13, 13-16, 16-18, 18-21, 21-24: sin huecos ni solapes, total 24 s dentro de 20-30 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 8 tomas llevan texto en pantalla (ej. 'En tu puerta', 'Prensado en fr\u00edo. Hecho en Santiago.') y la historia se sigue sin voz."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA 'P\u00eddelo por delivery (link en la bio)'; caption con \u2600\ufe0f y \ud83c\udf4a; permisos de autorizaci\u00f3n de imagen y de locaci\u00f3n en notas."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "Solo usa el aviso del 13/10; sin temperaturas, precios ni horarios; lo faltante va como [confirmar]. Datos de producci\u00f3n (7 palabras por pantalla) son t\u00e9cnicos."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'Sin canciones comerciales': audio original y percusi\u00f3n suave de la biblioteca de Instagram, pista a [confirmar]. No nombra canci\u00f3n."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe2 y REGISTRO-GUARDIAN con JSON v\u00e1lido (fecha, marca, veredicto, hallazgos, conteo, pendientes)."}, {"text": "No promete efectos en el cuerpo (hidrataci\u00f3n, energ\u00eda, defensas, bajar de peso); habla de sabor, frescura y experiencia.", "passed": true, "evidence": "Habla de sabor, frescura y comodidad; el Guardi\u00e1n confirma que no hay efectos en el cuerpo. La cara de 'ahhh' es reacci\u00f3n de sabor."}, {"text": "Respeta las prohibiciones del Core Brand de Vergel (detox, dieta, quema grasa, adelgazar, barato, competidores).", "passed": true, "evidence": "Sin detox, dieta, quema grasa, adelgazar, barato ni competidores; el humor es sobre el cart\u00f3n-abanico, no sobre cuerpos."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": true, "evidence": "v\u00e1lido"}], "summary": {"passed": 10, "failed": 0, "total": 10, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida m\u00e1s completa y sin claims nuevos; cumple todo, incluido el Guardi\u00e1n con JSON rico. \u00danico punto discutible: 'Aqu\u00ed, con mi jugo' frente al calor, pero no promete efecto corporal.", "timing": {"total_tokens": 107049, "duration_ms": 185337, "total_duration_seconds": 185.3}}}, {"id": "eval-201-vergel-ola-de-calor-sonnet_sin_skill-run-1", "prompt": "Guion de Reel para Vergel. El Radar Cibao de esta semana trajo que se anuncia una ola de calor en Santiago (fuente: aviso meteorol\u00f3gico del 13/10; fecha l\u00edmite para publicar: 17/10). Objetivo: pedidos por delivery. Puede salir el equipo de la tienda, ya firmaron autorizaci\u00f3n de imagen. Que dure entre 20 y 30 segundos.", "eval_id": 201, "outputs": [{"name": "respuesta.md", "type": "text", "content": "# Guion de Reel \u2014 Vergel: \"Que venga la ola\"\n\n**Objetivo:** pedidos por delivery\n**Duraci\u00f3n:** 25 segundos aprox. (rango pedido: 20 a 30 s)\n**Formato:** vertical 9:16\n**Qui\u00e9n sale:** solo el equipo de la tienda (2 personas, en el guion A y B). Ya firmaron autorizaci\u00f3n de imagen.\n**Gancho de actualidad:** ola de calor anunciada en Santiago (aviso meteorol\u00f3gico del 13/10)\n**Publicar:** hoy es 14/10 y el l\u00edmite es el 17/10. Recomiendo grabar entre hoy y ma\u00f1ana y publicar el 15 o el 16/10. As\u00ed el Reel sale mientras la gente todav\u00eda est\u00e1 hablando del calor y queda un d\u00eda de colch\u00f3n antes del l\u00edmite.\n\n---\n\n## Guion por escenas\n\n| Tiempo | Imagen | Voz / di\u00e1logo | Texto en pantalla |\n|---|---|---|---|\n| **0-3 s** (gancho) | A est\u00e1 en la puerta de la tienda, abanic\u00e1ndose con el men\u00fa y con cara de \"no puede ser\". Se ve el sol afuera. | **A:** \"Se anuncia una ola de calor en Santiago.\" | \"OLA DE CALOR EN SANTIAGO \u2600\ufe0f\". Abajo, peque\u00f1o: \"Seg\u00fan el aviso meteorol\u00f3gico del 13/10\". |\n| **3-8 s** | B entra al cuadro con calma y un vaso de jugo en la mano. Corte r\u00e1pido a detalles: fruta del d\u00eda, el jugo cayendo al vaso. | **B:** \"Tranqui, aqu\u00ed tenemos plan. Fruta del d\u00eda, prensada en fr\u00edo.\" | \"Prensado en fr\u00edo\" |\n| **8-15 s** | Montaje r\u00e1pido de A y B armando el pedido: tapan el vaso, lo meten en la bolsa y le ponen el sello. | **A:** \"T\u00fa no salgas al sol. Nosotros te lo llevamos.\" | \"Hecho en Santiago\" |\n| **15-21 s** | La bolsa sale por la puerta de la tienda. A la mira irse y, con cara de misi\u00f3n seria, levanta el pulgar. Corte a un plano cerrado del vaso con gotas de fr\u00edo por fuera. | **A:** \"Misi\u00f3n del d\u00eda: que llegue bien fr\u00edo.\" | \"Delivery\" |\n| **21-26 s** (cierre y CTA) | Plano POV: la mano de B le extiende el vaso a la c\u00e1mara, como si se lo entregara al que mira. A y B levantan sus vasos y brindan hacia la c\u00e1mara. | **A y B (juntos):** \"\u00a1Que venga la ola!\"<br>**B:** \"P\u00eddelo por delivery. Link en la bio.\" | \"P\u00eddelo en la tienda o por **delivery** (link en la bio)\" con \"delivery\" resaltado. Logo Vergel al final. |\n\n**Texto hablado total:** unas 45 palabras. Cabe holgado en 25 s con pausas y m\u00fasica.\n\n---\n\n## Copy para publicar\n\n> Ola de calor en Santiago \u2600\ufe0f Aqu\u00ed ya tenemos plan: jugo prensado en fr\u00edo, hecho en Santiago y directo a tu puerta. P\u00eddelo en la tienda o por delivery (link en la bio). \ud83e\udd64\n\n(2 emojis, tuteo, frases cortas.)\n\n---\n\n## Notas de producci\u00f3n\n\n- **Audio:** m\u00fasica ligera y alegre, con ritmo. Hay que dejar bien claras las voces. Yo no puedo confirmar qu\u00e9 audios est\u00e1n en tendencia, as\u00ed que elige uno del banco de audios libres de la cuenta.\n- **Ritmo:** cortes cada 2 o 3 segundos, sin plano largo. Los planos de fruta y jugo cayendo son los que dan antojo, as\u00ed que deben quedar bien iluminados.\n- **Locaci\u00f3n:** la propia tienda con luz natural. En el gancho conviene que se vea el sol de afuera.\n- **Clientes:** que no salga ning\u00fan cliente ni ning\u00fan transe\u00fante reconocible. La autorizaci\u00f3n firmada cubre solo al equipo.\n- **Producto:** muestra los jugos que haya ese d\u00eda en tienda. No se nombran sabores ni precios en el guion, porque no tengo el men\u00fa actual.\n\n---\n\n## Chequeo contra el Core Brand\n\n- Tono fresco, cercano y alegre, en t\u00fa, con frases cortas y humor ligero. El humor est\u00e1 en el sol y el men\u00fa-abanico, nada sobre cuerpos.\n- Claims usados: solo \"Prensado en fr\u00edo\" y \"Hecho en Santiago\", ambos aprobados.\n- No uso \"sin az\u00facar a\u00f1adida\". Ese claim es solo para la l\u00ednea Verde (Jugo Verde y Verde Lim\u00f3n). Si en el video se muestra uno de esos dos, se puede a\u00f1adir en texto: \"Jugo Verde: sin az\u00facar a\u00f1adida\". Para cualquier otro jugo, no.\n- No uso \"detox\", \"dieta\", \"quema grasa\" ni \"adelgazar\". Tampoco prometo efectos en el cuerpo: no digo que hidrata, que baja la temperatura ni nada parecido.\n- No uso la palabra \"barato\", no hay competidores, no hay fotos de antes y despu\u00e9s.\n- Pilares que toca: frescura (fruta del d\u00eda, prensado en fr\u00edo) y ma\u00f1anas y pausas, esta vez con el jugo como pausa del calor.\n- El CTA es el habitual, \"P\u00eddelo en la tienda o por delivery (link en la bio)\", con el delivery resaltado porque es el objetivo.\n\n---\n\n## Por confirmar antes de grabar\n\n1. **El aviso meteorol\u00f3gico.** Yo no vi el aviso del 13/10, solo me lleg\u00f3 la referencia. Por eso el guion dice \"se anuncia una ola de calor\" sin temperaturas, fechas ni intensidad. Si el aviso trae datos, hay que validar antes de ponerlos en pantalla.\n2. **Qui\u00e9n lleva el pedido.** Si Vergel tiene motorizado propio, se puede mostrar a la persona del equipo saliendo en la moto. Si el delivery va por plataforma o un tercero, el guion queda como est\u00e1: la bolsa sale por la puerta y no se muestra qui\u00e9n la lleva.\n3. **Link en la bio.** Verificar que el link de pedidos est\u00e9 activo y apunte al delivery antes de publicar.\n4. **Promociones o tiempos de entrega.** No invent\u00e9 ninguno. Si el cliente quiere sumar una oferta o un tiempo de entrega, hay que pedirle el dato exacto y revisar que no use la palabra \"barato\".\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": false, "evidence": "Solo hay un gancho (0-3 s, la ola de calor con A abanic\u00e1ndose). No propone tres hooks de tipos distintos ni recomienda uno."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tabla 0-3, 3-8, 8-15, 15-21, 21-26: contigua, sin huecos ni solapes; total 26 s (dice 25 aprox.), dentro del rango de 20-30 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 5 escenas llevan texto en pantalla ('OLA DE CALOR EN SANTIAGO', 'Prensado en fr\u00edo', 'Delivery'); el mensaje de delivery se entiende sin sonido."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA habitual con delivery resaltado; caption con \u2600\ufe0f y \ud83e\udd64; notas: autorizaci\u00f3n de imagen solo del equipo y locaci\u00f3n en la propia tienda."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": false, "evidence": "'Misi\u00f3n del d\u00eda: que llegue bien fr\u00edo.' es una promesa de servicio sin respaldo (el Guardi\u00e1n de A la quit\u00f3) y no va como [confirmar]."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'M\u00fasica ligera y alegre'; pide elegir del banco de audios libres de la cuenta. No nombra ninguna canci\u00f3n."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": false, "evidence": "No hay Pase del Guardi\u00e1n con veredicto ni l\u00ednea REGISTRO-GUARDIAN; solo un 'Chequeo contra el Core Brand' en texto libre."}, {"text": "No promete efectos en el cuerpo (hidrataci\u00f3n, energ\u00eda, defensas, bajar de peso); habla de sabor, frescura y experiencia.", "passed": true, "evidence": "Aclara que no dice que hidrata ni baja la temperatura; el guion habla de fruta del d\u00eda, prensado en fr\u00edo y delivery."}, {"text": "Respeta las prohibiciones del Core Brand de Vergel (detox, dieta, quema grasa, adelgazar, barato, competidores).", "passed": true, "evidence": "Copy sin detox, dieta, quema grasa, adelgazar, barato ni competidores; esas palabras solo aparecen en el chequeo interno como negaciones."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": false, "evidence": "no hay l\u00ednea REGISTRO-GUARDIAN"}], "summary": {"passed": 6, "failed": 4, "total": 10, "pass_rate": 0.6}, "metricas": {"claims_nuevos": ["Misi\u00f3n del d\u00eda: que llegue bien fr\u00edo."]}, "notas_juez": "Falla en estructura: un solo hook y sin pase del Guardi\u00e1n ni registro. Adem\u00e1s introduce la promesa 'llegue bien fr\u00edo'.", "timing": {"total_tokens": 69634, "duration_ms": 61664, "total_duration_seconds": 61.7}}}, {"id": "eval-202-monteluz-inicio-temporada-haiku_con_skill-run-1", "prompt": "Necesito un Reel de 15 a 20 segundos para Monteluz por el inicio de la temporada de b\u00e9isbol invernal. Queremos que la gente la pida en el colmado los d\u00edas de juego.", "eval_id": 202, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Guion Reel \u2014 Monteluz \u00b7 Inicio de la temporada de pelota invernal \u00b7 18 s \u00b7 2026-10-14\n**\u00c1ngulo:** Para adultos de 25 a 45 a\u00f1os del Cibao que pasan por el colmado en d\u00edas de juego, mostrar la pelota como excusa para compartir con tu gente, para que pidan Monteluz en su colmado de confianza.\n**Objetivo:** Venta en colmado (que la pidan en el punto de venta) y alcance \u00b7 **Fuente de la idea:** Brief del equipo (2026-10-14) + fecha comercial: arranque de la temporada de pelota invernal (vie 16 oct 2026; [confirmar: fecha oficial])\n\n**Hooks**\n1. Pregunta: \"\u00bfQu\u00e9 llevas al colmado pa' la pelota?\"\n2. Contraste: \"Misma pelota: \u00bfsolo o con tu gente?\"\n3. POV local: \"POV: ya arranc\u00f3 la pelota invernal\", con la entrada al colmado.\n**Recomendado:** n.\u00ba 3, porque es la escena que cualquiera en Santiago o el Cibao reconoce y lleva directo al colmado, que es donde queremos que la pidan.\n\n| Tiempo | Toma | Acci\u00f3n | Texto en pantalla | Voz o audio |\n|---|---|---|---|---|\n| 0\u20133 s | 1. POV desde la puerta del colmado, a la altura de los ojos | Entras y caminas hacia el mostrador; se ve la nevera al fondo | POV: ya arranc\u00f3 la pelota invernal | Voz: \"Llegas al colmado y ya arranc\u00f3 la pelota invernal.\" Ambiente del colmado |\n| 3\u20137 s | 2. Primer plano de la nevera abierta con las tres variedades en fila | La c\u00e1mara avanza despacio sobre las botellas | Rubia, roja o negra | Voz: \"Cerveza artesanal del Cibao, en rubia, roja o negra.\" |\n| 7\u201311 s | 3. Manos de adulto (sin cara) sobre el mostrador | Destapan una botella rubia; se oye la tapa al abrir | Hecha en lotes peque\u00f1os | Voz: \"Hecha en lotes peque\u00f1os, con orgullo cibae\u00f1o.\" |\n| 11\u201315 s | 4. Dos adultos (claramente mayores de 25) junto a la nevera, de perfil | Se pasan una botella y miran hacia la calle, como si siguieran el juego | Compartir con tu gente | Voz: \"Para compartir la pelota con tu gente.\" |\n| 15\u201318 s | 5. Plano medio del mostrador con las tres botellas en primer plano | Quieto; el logo de Monteluz aparece al final | D\u00edas de pelota: p\u00eddela en tu colmado. Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os. | Voz: \"P\u00eddela en tu colmado de confianza.\" |\n\n**CTA:** \"P\u00eddela en tu colmado de confianza\", con \"D\u00edas de pelota\" en el texto en pantalla.\n**Audio:** Voz en off en tono cercano (t\u00fa), grabada por el equipo, y ambiente del colmado de la locaci\u00f3n (ventilador, nevera, tapa al abrir, risas de fondo). Sin canciones comerciales ni audio de transmisiones de la liga. Si se quiere m\u00fasica: percusi\u00f3n suave, ritmo de merengue instrumental, de la biblioteca comercial de la plataforma o de audio original.\n**Caption:** Llegas al colmado y ya arranc\u00f3 la pelota invernal. \ud83c\udf7a Rubia, roja o negra: Monteluz, cerveza artesanal del Cibao, hecha en lotes peque\u00f1os. D\u00edas de pelota, p\u00eddela en tu colmado de confianza. \u26be\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n\n**Notas de producci\u00f3n**\n- Orden pr\u00e1ctico de grabaci\u00f3n: (1) toma 1 al entrar al colmado; (2) tomas 2 y 5 con la nevera y el mostrador, mismo encuadre; (3) toma 3, manos y tapa; (4) toma 4, con los dos adultos.\n- Formato: vertical 9:16 (1080 \u00d7 1920 px) con celular; estabilizador si hay.\n- Props: tres botellas Monteluz (rubia, roja y negra) fr\u00edas y un abridor. Sin bates, guantes, gorras ni banderines de equipo.\n- Locaci\u00f3n: un colmado de Santiago con permiso del due\u00f1o. Sin marcas de terceros visibles (otras cervezas, refrescos, letreros de bancos). Sin carros ni motos en escena.\n- Qui\u00e9n sale en c\u00e1mara: dos adultos (de la producci\u00f3n o amigos) claramente mayores de 25 a\u00f1os. Si no hay talento, la toma 4 se cambia por la nevera y el mostrador con voz en off, y el video se sostiene sin personas.\n- Permisos: autorizaci\u00f3n de imagen firmada por quienes aparecen, permiso escrito del due\u00f1o del colmado y licencia si se usa m\u00fasica.\n- El texto no menciona liga, equipos, estadio, sede ni horario de juegos: esos datos no est\u00e1n confirmados en la fuente (contradictorios). No publicar antes de la fecha oficial de arranque.\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 \u2014 sin hallazgos de copy despu\u00e9s de los ajustes; quedan datos de producci\u00f3n por confirmar. Controles aplicados:\n- Sin nombre, logo, hashtag, uniforme ni mascota de la liga o de equipos; \"pelota invernal\" solo como referencia gen\u00e9rica (`propiedad_intelectual`).\n- Sin patrocinio impl\u00edcito: nada de \"oficial\" ni \"patrocinador\" (`propiedad_intelectual`).\n- Una botella por toma, sin conteos ni invitaciones a seguir pidiendo (`alcohol`).\n- Sin carros ni motos en escena, sin equipo de juego, y el momento es de compartir, no de \u00e9xito ni de rendimiento (`alcohol`).\n- Solo adultos en c\u00e1mara; en la toma 3, solo manos (`menores`).\n- Claims solo los aprobados (\"Cerveza artesanal del Cibao\", \"Hecha en lotes peque\u00f1os\"); sin cifras, promociones ni sorteos (`cifra_sin_fuente`, `precio_promocion`).\n- Leyenda obligatoria en pantalla y en caption (`alcohol`).\n\n### Por confirmar\n- [confirmar: fecha oficial de arranque de la temporada; vie 16 oct 2026 seg\u00fan temporadas.md, confianza alta]\n- [confirmar: edad y autorizaci\u00f3n de quienes aparecen; deben verse claramente mayores de 25 a\u00f1os]\n- [confirmar: permiso escrito del due\u00f1o del colmado]\n- [confirmar: archivo del logo de Monteluz para el cierre]\n\nREGISTRO-GUARDIAN {\"marca\":\"Monteluz\",\"pieza\":\"Guion Reel: inicio de temporada de pelota invernal\",\"fecha\":\"2026-10-14\",\"veredicto\":\"verde\",\"hallazgos\":[],\"por_confirmar\":[\"fecha de arranque\",\"edad de quienes aparecen\",\"permiso del colmado\",\"logo\"]}\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": true, "evidence": "Hooks: pregunta ('\u00bfQu\u00e9 llevas al colmado pa' la pelota?'), contraste ('\u00bfsolo o con tu gente?'), POV local; recomienda el n.\u00ba 3 con raz\u00f3n."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tomas 0-3, 3-7, 7-11, 11-15, 15-18 s: continuas, sin huecos ni solapes, total 18 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Cada toma lleva texto en pantalla ('Rubia, roja o negra', 'Hecha en lotes peque\u00f1os', 'Compartir con tu gente'); se entiende sin sonido."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA 'P\u00eddela en tu colmado de confianza'; caption con \ud83c\udf7a y \u26be; permisos: autorizaci\u00f3n de imagen, permiso escrito del due\u00f1o del colmado, licencia de m\u00fasica."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "Sin cifras, precios ni horarios; fecha oficial de arranque y datos de producci\u00f3n van como [confirmar]; nota pide no publicar antes de la fecha oficial."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'Sin canciones comerciales ni audio de transmisiones de la liga'; solo percusi\u00f3n/merengue instrumental de biblioteca u original."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe2 y l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido."}, {"text": "No usa logos, nombres oficiales, uniformes, mascotas, jugadores ni hashtags oficiales de la liga o de equipos; usa referencias gen\u00e9ricas a la temporada.", "passed": true, "evidence": "'pelota invernal' solo como referencia gen\u00e9rica; sin liga, equipos, logos, uniformes ni hashtags; el logo que aparece es el de Monteluz."}, {"text": "Incluye la leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 a\u00f1os.\"", "passed": true, "evidence": "Leyenda exacta en el texto en pantalla de la toma 5 (15-18 s) y en el caption."}, {"text": "No muestra ni sugiere consumo excesivo o r\u00e1pido, conducci\u00f3n, rendimiento deportivo ni menores, y las notas de producci\u00f3n piden personas claramente mayores de 25.", "passed": true, "evidence": "Una botella por toma, sin carros ni motos, sin equipo deportivo; pide adultos 'claramente mayores de 25 a\u00f1os'; toma 3 solo manos."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": true, "evidence": "v\u00e1lido"}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Cumple todo. Observaci\u00f3n: 'ya arranc\u00f3 la pelota invernal' afirma que la temporada comenz\u00f3, pero la fecha est\u00e1 marcada [confirmar] y se advierte no publicar antes del arranque. El hook de contraste es d\u00e9bil (en forma de pregunta).", "timing": {"total_tokens": 119915, "duration_ms": 175044, "total_duration_seconds": 175.0}}}, {"id": "eval-202-monteluz-inicio-temporada-sonnet_con_skill-run-1", "prompt": "Necesito un Reel de 15 a 20 segundos para Monteluz por el inicio de la temporada de b\u00e9isbol invernal. Queremos que la gente la pida en el colmado los d\u00edas de juego.", "eval_id": 202, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Guion Reel \u2014 Monteluz \u00b7 \"D\u00eda de juego en el colmado\" \u00b7 18 s \u00b7 2026-10-14\n**\u00c1ngulo:** Para adultos del Cibao que ven la pelota invernal en el colmado, mostrar c\u00f3mo se pide una Monteluz en un d\u00eda de juego, para que la pidan por su nombre en su colmado de confianza.\n**Objetivo:** venta (que la pidan en el colmado los d\u00edas de juego) \u00b7 **Fuente de la idea:** brief del equipo (inicio de la temporada de b\u00e9isbol invernal) + fecha de temporada de `temporadas.md` (arranque previsto el vie 16 oct 2026, por confirmar)\n\n**Hooks** (los tres sustituyen solo la toma de 0 a 3 s; el resto del Reel no cambia)\n1. Pregunta: plano cenital de una lista escrita a mano en un cart\u00f3n de colmado: \"Hielo \u2713 \u00b7 Silla \u2713 \u00b7 Picadera \u2713 \u00b7 ______\" (la \u00faltima l\u00ednea, en blanco). Texto: **\"\u00bfQu\u00e9 le falta a tu d\u00eda de juego?\"**\n2. Contraste: corte seco entre dos planos del mismo mostrador. 0 a 1,5 s: colmado vac\u00edo, silencio, nevera cerrada. 1,5 a 3 s: el mismo colmado con gente adulta, ruido y el mostrador vivo. Texto: **\"Sin juego\u2026\" / \"D\u00eda de juego\"**\n3. POV local: c\u00e1mara subjetiva entrando al colmado a media tarde, luz c\u00e1lida, el colmadero levanta la vista y sonr\u00ede. Texto: **\"POV: d\u00eda de juego en el colmado\"**\n\n**Recomendado:** n.\u00ba 3, porque pone el gesto que queremos ver repetido (llegar al colmado y pedir) desde el segundo 1, es una escena que cualquiera en Santiago reconoce y no necesita un set aparte.\n\n| Tiempo | Toma | Acci\u00f3n | Texto en pantalla | Voz o audio |\n|---|---|---|---|---|\n| 0\u20133 s | 1. Hook (POV) | Entras al colmado; el colmadero (adulto) te ve y sonr\u00ede. | POV: d\u00eda de juego en el colmado | Ambiente de colmado: voces, nevera, una radio lejana sin narraci\u00f3n identificable. |\n| 3\u20136 s | 2. El pedido | Tu mano se apoya en el mostrador. El colmadero asiente. | Una Monteluz, que hoy hay pelota | Cliente (fuera de cuadro): \"Dame una Monteluz, que hoy hay pelota.\" |\n| 6\u20139 s | 3. Las tres | El colmadero saca de la nevera una rubia, una roja y una negra y las pone en el mostrador, solo para mostrarlas. | \u00bfRubia, roja o negra? | Colmadero: \"\u00bfRubia, roja o negra?\" |\n| 9\u201312 s | 4. El servido | Tu mano se\u00f1ala una. Primer plano: la abre y la sirve en un vaso inclinado, con espuma, sin prisa. | Cerveza artesanal del Cibao | Ambiente + percusi\u00f3n suave que entra. |\n| 12\u201315 s | 5. Compartir | Dos o tres adultos en el colmado hacen un brindis tranquilo. Uno mira hacia fuera de cuadro (el juego) y levanta los brazos; todos r\u00eden. | La pelota se disfruta con tu gente | Ambiente con risas y una reacci\u00f3n de grupo, m\u00fasica suave. |\n| 15\u201318 s | 6. Remate y CTA | Plano fijo del mostrador con las tres botellas Monteluz y el colmado al fondo. | B\u00fascala en tu colmado de confianza. | M\u00fasica suave que cierra; sin voz. |\n\n**Leyenda obligatoria:** \"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\" Fija en una banda peque\u00f1a de 12 a 18 s (tomas 5 y 6), legible, fuera de la franja inferior y de la derecha que tapa la interfaz.\n**CTA:** \"B\u00fascala en tu colmado de confianza.\" (CTA habitual del Core Brand.)\n**Audio:** audio original del rodaje (voces, ambiente de colmado) m\u00e1s una base instrumental de percusi\u00f3n suave, tipo tambora y g\u00fcira, a volumen bajo. Salir de la biblioteca de audio comercial de la plataforma o usar audio original; ninguna canci\u00f3n comercial ni narraci\u00f3n de un juego real. [confirmar: qu\u00e9 sonidos hay disponibles para la cuenta de empresa]\n**Caption:** La pelota invernal est\u00e1 de vuelta \u26be y el colmado ya tiene su cita. Rubia, roja o negra, hecha en lotes peque\u00f1os: p\u00eddela por su nombre y comp\u00e1rtela con tu gente \ud83c\udf7b\nB\u00fascala en tu colmado de confianza.\nDisfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\n#Monteluz #CervezaArtesanal #Cibao\n\n**Notas de producci\u00f3n**\n- **Una locaci\u00f3n, un bloque de rodaje.** Orden pr\u00e1ctico para grabar (no es el orden de edici\u00f3n):\n  1. Colmado vac\u00edo, antes de que llegue la gente: toma 6 (mostrador con las tres botellas) y, si se elige el hook 2, el plano \"Sin juego\".\n  2. Colmadero: tomas 3 y 4 (sacar las botellas y servir).\n  3. C\u00e1mara subjetiva: tomas 1 y 2 (entrada y mano en el mostrador), m\u00e1s la voz del cliente y la del colmadero en el lugar, con un respaldo de audio ambiente limpio.\n  4. Toma 5 al final, con las dos o tres personas del brindis. Es la que m\u00e1s energ\u00eda pide.\n  5. Si se elige el hook 1: cenital de la lista, y en la toma 6 volver a la lista con la l\u00ednea en blanco ya escrita: \"Monteluz\".\n- **Formato:** vertical 9:16, 1080 \u00d7 1920, con celular. Texto grande, corto y centrado. [confirmar: m\u00e1rgenes de zona segura vigentes de Instagram, porque la tabla de verificaci\u00f3n de `formatos-canal.md` todav\u00eda est\u00e1 vac\u00eda]\n- **Qui\u00e9n sale en c\u00e1mara:** el colmadero y de dos a tres adultos. Todos deben verse claramente mayores de 25 a\u00f1os (de 30 en adelante es lo m\u00e1s seguro). Sin talento pagado: personas del equipo de Monteluz o amistades. [confirmar: qui\u00e9nes son]\n- **Props:** las tres botellas Monteluz (limpias, con la etiqueta de frente), vasos de vidrio lisos y, para el hook 1, un cart\u00f3n y un marcador. Ropa neutra.\n- **Qu\u00e9 NO debe aparecer en cuadro:**\n  - Camisetas, gorras, colores o banderas que remitan a un equipo o a la liga.\n  - Una pantalla con la transmisi\u00f3n de un juego real: el TV queda fuera de cuadro o apagado, y el juego se sugiere con sonido ambiente y miradas.\n  - Marcas de terceros: otras cervezas, refrescos, toldos, mesas o neveras con logo. Elegir un colmado donde se puedan tapar o dejar fuera de plano.\n  - Menores de edad, ni de fondo ni de paso.\n  - Motos o carros con alguien al volante.\n- **Consumo con medida:** se sirve una sola cerveza en pantalla. Las tres botellas del mostrador son de muestra. Nadie bebe de un trago, no hay botellas vac\u00edas acumuladas ni \"otra ronda\".\n- **Permisos:** autorizaci\u00f3n de imagen firmada por el colmadero y por cada persona que aparece; permiso del due\u00f1o del colmado para grabar. [confirmar: colmado elegido y qui\u00e9n autoriza]\n- **Tiempo:** la temporada arranca en pocos d\u00edas. Para aprovechar el \"inicio de temporada\", conviene grabar esta semana y publicar cerca del arranque.\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 \u2014 Sin hallazgos altos ni medios pendientes. Cambios aplicados al revisar hooks, texto en pantalla, voz y caption:\n- El caption y los textos no afirman \"ya arranc\u00f3\" ni ponen una fecha: usan \"est\u00e1 de vuelta\", as\u00ed el Reel sirve aunque se publique un d\u00eda antes o despu\u00e9s.\n- El juego no se muestra: solo se oye y se sugiere con la mirada (sin transmisi\u00f3n, logos, uniformes ni narraci\u00f3n de terceros). Referencias gen\u00e9ricas \u00fanicamente: \"pelota\", \"d\u00eda de juego\".\n- Una sola cerveza servida; las tres del mostrador son de muestra. El brindis no se vincula a un resultado deportivo ni a un \u00e9xito social.\n- Solo se usan los dos claims aprobados (\"Cerveza artesanal del Cibao\" y \"Hecha en lotes peque\u00f1os\"): sin superlativos, comparaciones, cifras ni promociones.\n- La leyenda de consumo responsable va en el video y en el caption; el trato es de t\u00fa y los hashtags son propios de la marca (ninguno oficial de la liga ni de un equipo).\n\n### Por confirmar\n- [confirmar: fecha de arranque de la temporada con el calendario oficial. La referencia interna dice vie 16 oct 2026 (confianza alta, verificada el 2026-10-14), pero aqu\u00ed no pude recontrastarla. El guion no la usa; solo condiciona cu\u00e1ndo publicar]\n- [confirmar: aprobaci\u00f3n del cliente (Monteluz) del guion y del uso de las tres variedades en el mostrador]\n- [confirmar: colmado para grabar, permiso del due\u00f1o y qui\u00e9nes salen en c\u00e1mara, todos mayores de 25]\n- [confirmar: audio disponible en la biblioteca para cuenta de empresa]\n- [confirmar: medidas vigentes de zona segura del Reel]\n- [confirmar: que las tres variedades est\u00e9n en los colmados donde se va a invitar a pedirlas, para no mandar a la gente a buscar algo que no hay]\n- [confirmar: formato exacto de la l\u00ednea REGISTRO-GUARDIAN, que aqu\u00ed sigue los campos habituales y se puede ajustar]\n\nREGISTRO-GUARDIAN {\"fecha\":\"2026-10-14\",\"marca\":\"Monteluz\",\"pieza\":\"Guion Reel: D\u00eda de juego en el colmado \u00b7 18 s\",\"veredicto\":\"verde\",\"hallazgos_altos\":0,\"hallazgos_medios\":0,\"hallazgos_bajos\":0,\"correcciones_aplicadas\":[\"propiedad_intelectual\",\"alcohol\",\"prohibicion_core_brand\"],\"para_decidir_por_humano\":[\"fecha de arranque de la temporada\",\"locaci\u00f3n y talento\",\"audio disponible para cuenta de empresa\"]}\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": true, "evidence": "Hooks: 1 Pregunta, 2 Contraste, 3 POV local; recomienda el n.\u00ba 3 porque pone el gesto de pedir en el colmado desde el segundo 1."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tomas 0-3, 3-6, 6-9, 9-12, 12-15, 15-18 s: continuas, sin huecos ni solapes, total 18 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 6 tomas tienen texto en pantalla (p. ej. '\u00bfRubia, roja o negra?', 'B\u00fascala en tu colmado de confianza.'); el mensaje se entiende sin audio."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA 'B\u00fascala en tu colmado de confianza.'; caption con \u26be y \ud83c\udf7b; notas piden autorizaci\u00f3n de imagen firmada y permiso del due\u00f1o del colmado."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "Sin cifras, precios ni horarios; la fecha de arranque (16 oct) no se usa y queda [confirmar]; audio y zona segura tambi\u00e9n [confirmar]."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'ninguna canci\u00f3n comercial ni narraci\u00f3n de un juego real'; solo base instrumental de percusi\u00f3n suave."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": true, "evidence": "Pase del Guardi\u00e1n con veredicto \ud83d\udfe2 y l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido."}, {"text": "No usa logos, nombres oficiales, uniformes, mascotas, jugadores ni hashtags oficiales de la liga o de equipos; usa referencias gen\u00e9ricas a la temporada.", "passed": true, "evidence": "Solo 'pelota' y 'd\u00eda de juego'; proh\u00edbe camisetas, gorras, TV con juego real; hashtags propios (#Monteluz #CervezaArtesanal #Cibao)."}, {"text": "Incluye la leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 a\u00f1os.\"", "passed": true, "evidence": "Leyenda exacta fija de 12 a 18 s en el video y repetida en el caption."}, {"text": "No muestra ni sugiere consumo excesivo o r\u00e1pido, conducci\u00f3n, rendimiento deportivo ni menores, y las notas de producci\u00f3n piden personas claramente mayores de 25.", "passed": true, "evidence": "Una sola cerveza servida, nadie bebe de un trago, sin motos ni carros con conductor, sin menores; pide adultos 'claramente mayores de 25 a\u00f1os'."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": true, "evidence": "v\u00e1lido"}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "metricas": {"claims_nuevos": []}, "notas_juez": "Salida completa y sin claims nuevos; usa solo los dos claims aprobados. Menor: en notas dice 'la temporada arranca en pocos d\u00edas' (fuera del guion, fecha marcada [confirmar] aparte).", "timing": {"total_tokens": 102920, "duration_ms": 171132, "total_duration_seconds": 171.1}}}, {"id": "eval-202-monteluz-inicio-temporada-sonnet_sin_skill-run-1", "prompt": "Necesito un Reel de 15 a 20 segundos para Monteluz por el inicio de la temporada de b\u00e9isbol invernal. Queremos que la gente la pida en el colmado los d\u00edas de juego.", "eval_id": 202, "outputs": [{"name": "respuesta.md", "type": "text", "content": "# Reel Monteluz: \"Hoy hay juego\"\n\n**Duraci\u00f3n:** 18 segundos | **Formato:** vertical 9:16 | **Pilares:** Temporada de pelota (4) + Compartir con tu gente (2) + Orgullo cibae\u00f1o (1)\n**Objetivo:** que la gente pida Monteluz en el colmado los d\u00edas de juego.\n\n## Idea\n\nUn colmado de Santiago un d\u00eda de juego. Se oye la pelota por la radio (solo ambiente, sin nombres ni equipos), llegan tres vecinos y le piden al due\u00f1o del colmado una Monteluz de cada estilo: rubia, roja y negra. Se sientan, comparten, y el Reel cierra con la botella en el mostrador y la frase para llevar: **\"Los d\u00edas de juego, pide Monteluz.\"**\n\nLa pieza se queda en el colmado y en la conversaci\u00f3n. No hay estadio, ni jugadores, ni uniformes, ni nada que parezca patrocinio oficial.\n\n## Guion\n\n| Seg. | Imagen | Audio / voz | Texto en pantalla |\n|---|---|---|---|\n| **0-3** (gancho) | Plano cerrado de una pizarra de tiza en la pared del colmado que dice \"Hoy hay juego\". La c\u00e1mara baja al mostrador, donde hay una radio vieja encendida y la nevera al fondo. | Ambiente de radio de transmisi\u00f3n de pelota, bajito y sin que se entienda ning\u00fan nombre. El due\u00f1o del colmado (hombre de unos 45 a\u00f1os) dice sin mirar a c\u00e1mara: **\"Hoy hay juego\u2026 ya t\u00fa sabes.\"** | \"Hoy hay juego.\" |\n| **3-7** | Entran tres amigos o vecinos (entre 30 y 45 a\u00f1os) al colmado. Uno se apoya en el mostrador y se\u00f1ala la nevera. El due\u00f1o saca tres botellas cerradas y las pone en el mostrador, con gotas de fr\u00edo. | Amigo: **\"Don, una rubia, una roja y una negra\u2026 Monteluz.\"** Due\u00f1o, con una sonrisa: **\"Eso es de gente que sabe.\"** | \"Rubia. Roja. Negra.\" |\n| **7-12** | Los tres se sientan en una mesa frente al colmado. Planos de risas, de alguien que cuenta algo con las manos y de un brindis tranquilo. Cada uno tiene una sola botella; el ritmo es de conversaci\u00f3n, sin prisa. | M\u00fasica cibae\u00f1a instrumental suave, de fondo. Voz en off c\u00e1lida (la del due\u00f1o): **\"Cerveza artesanal del Cibao. Hecha en lotes peque\u00f1os.\"** | \"Cerveza artesanal del Cibao\" y luego \"Hecha en lotes peque\u00f1os\" |\n| **12-14** | Plano de las tres botellas en el mostrador. La mano del due\u00f1o se\u00f1ala la nevera. | Voz en off: **\"Vuelve la pelota. Los d\u00edas de juego, p\u00eddela.\"** | \"Los d\u00edas de juego, pide Monteluz.\" |\n| **14-18** (cierre) | Tarjeta final con el logo de Monteluz y las tres botellas. La leyenda legal se queda en pantalla hasta el final. | Voz en off: **\"B\u00fascala en tu colmado de confianza.\"** | \"B\u00fascala en tu colmado de confianza.\" y abajo, fija y legible: **\"Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.\"** |\n\n**Texto de voz completo (para locuci\u00f3n, unas 38 palabras):**\n\"Hoy hay juego\u2026 ya t\u00fa sabes. / Don, una rubia, una roja y una negra\u2026 Monteluz. / Eso es de gente que sabe. / Cerveza artesanal del Cibao. Hecha en lotes peque\u00f1os. / Vuelve la pelota. Los d\u00edas de juego, p\u00eddela. / B\u00fascala en tu colmado de confianza.\"\n\n## Audio\n\n- Ambiente de radio de pelota: murmullo y p\u00fablico de fondo, sin narrador identificable, sin nombres de equipos ni jugadores, sin cu\u00f1as ni jingles de la transmisi\u00f3n.\n- M\u00fasica: instrumental cibae\u00f1o suave, licenciada o libre de derechos. No uses canciones de himnos ni cu\u00f1as de equipos.\n- La voz del due\u00f1o del colmado hace de narrador. Si no se consigue locutor, la dice el actor del colmado.\n\n## Producci\u00f3n\n\n- **Elenco:** adultos que se vean claramente mayores de 25 a\u00f1os (entre 30 y 45 va bien). Ninguna persona joven ni de apariencia juvenil en c\u00e1mara.\n- **Vestuario:** ropa neutra, sin camisetas, gorras ni colores de ning\u00fan equipo. Nada con logos de la liga ni de equipos.\n- **Utiler\u00eda:** radio, pizarra de tiza, nevera, mesa de pl\u00e1stico o banco frente al colmado. Sin pelotas ni guantes con marcas, sin banderines.\n- **Ritmo de consumo:** una botella por persona en toda la pieza, tomada con calma. No hay planos de botellas vac\u00edas, brindis repetidos ni nadie bebiendo de un golpe. El resto de las botellas aparecen cerradas.\n- **Lo que no aparece:** nadie manejando ni con llaves de carro, nadie jugando o practicando deporte con cerveza en la mano, ning\u00fan gesto de \"ganar\" o \"triunfar\" ligado a la bebida.\n- **Locaci\u00f3n:** un colmado real de Santiago, con luz natural o de tarde para que se vea c\u00e1lido.\n- **Leyenda:** tiene que verse completa y legible durante los \u00faltimos 4 segundos, sin tapar por botones de la plataforma (mantenerla un poco por encima del borde inferior).\n\n## Caption sugerido\n\nHoy hay juego, y en el colmado ya lo saben. \ud83c\udf7a\n\nUna rubia, una roja y una negra para compartir con tu gente. Cerveza artesanal del Cibao, hecha en lotes peque\u00f1os.\n\nLos d\u00edas de juego, pide Monteluz. B\u00fascala en tu colmado de confianza.\n\n*Disfruta con responsabilidad. Prohibida su venta a menores de 18 a\u00f1os.*\n\n**Hashtags:** #Monteluz #CervezaArtesanal #Cibao #Santiago #Colmado #OrgulloCibae\u00f1o\n\n(Sin hashtags oficiales de la liga, de equipos ni de la temporada.)\n\n## Chequeo de la marca\n\n- Tono festivo, orgulloso del Cibao, trato de **t\u00fa**, con humor sano. \u2714\n- Claims usados tal cual: \"Cerveza artesanal del Cibao\" y \"Hecha en lotes peque\u00f1os\". \u2714\n- CTA habitual al cierre: \"B\u00fascala en tu colmado de confianza.\" \u2714\n- Sin patrocinio oficial: no aparecen la liga, equipos, logos, nombres oficiales, hashtags oficiales, uniformes, mascotas ni jugadores. Solo se habla de \"la pelota\" y de \"d\u00edas de juego\" en t\u00e9rminos generales. \u2714\n- Sin consumo excesivo ni r\u00e1pido: una botella por persona, ritmo de conversaci\u00f3n. \u2714\n- Sin asociaci\u00f3n con manejar, rendimiento deportivo, \u00e9xito social o sexual. \u2714\n- Sin menores ni elenco joven. \u2714\n- Leyenda obligatoria en el cierre y en el caption. \u2714\n\n## Para confirmar con el cliente\n\n1. **Fecha de inicio de la temporada.** Hoy es 14 de octubre de 2026 y no tengo confirmada la fecha de arranque, as\u00ed que el guion dice \"Vuelve la pelota\" y no menciona ninguna fecha. Si quieren publicar con una fecha concreta, hay que confirmarla antes.\n2. **Colmado.** Si el colmado de rodaje tiene letreros de otras cervezas o de equipos, hay que taparlos o cambiar de encuadre.\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": false, "evidence": "Solo hay un gancho (pizarra 'Hoy hay juego'); no propone tres hooks de tipos distintos ni recomienda uno."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "Tramos 0-3, 3-7, 7-12, 12-14, 14-18 s: continuos, sin huecos ni solapes, total 18 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Todas las filas tienen texto en pantalla ('Hoy hay juego.', 'Rubia. Roja. Negra.', claims y CTA); se entiende sin sonido."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": false, "evidence": "Hay CTA y caption con 1 emoji (\ud83c\udf7a), pero la secci\u00f3n Producci\u00f3n no menciona permisos de imagen ni de locaci\u00f3n."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "No usa cifras, precios ni horarios; no menciona fecha de arranque ('Vuelve la pelota'). Pide confirmar fecha con el cliente, sin etiqueta [confirmar]."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'M\u00fasica cibae\u00f1a instrumental suave, licenciada o libre de derechos'; no usa canciones comerciales."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": false, "evidence": "Solo un 'Chequeo de la marca' con \u2714; no hay veredicto del Guardi\u00e1n ni l\u00ednea REGISTRO-GUARDIAN con JSON."}, {"text": "No usa logos, nombres oficiales, uniformes, mascotas, jugadores ni hashtags oficiales de la liga o de equipos; usa referencias gen\u00e9ricas a la temporada.", "passed": true, "evidence": "Solo 'la pelota' y 'd\u00edas de juego'; sin liga, equipos, uniformes ni hashtags oficiales; hashtags propios y gen\u00e9ricos."}, {"text": "Incluye la leyenda \"Disfruta con responsabilidad. El consumo de alcohol perjudica la salud. Prohibida su venta a menores de 18 a\u00f1os.\"", "passed": true, "evidence": "Leyenda exacta fija en la tarjeta final (\u00faltimos 4 s) y en el caption."}, {"text": "No muestra ni sugiere consumo excesivo o r\u00e1pido, conducci\u00f3n, rendimiento deportivo ni menores, y las notas de producci\u00f3n piden personas claramente mayores de 25.", "passed": true, "evidence": "Una botella por persona, ritmo de conversaci\u00f3n, nadie manejando; pide adultos 'claramente mayores de 25 a\u00f1os'."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": false, "evidence": "no hay l\u00ednea REGISTRO-GUARDIAN"}], "summary": {"passed": 7, "failed": 4, "total": 11, "pass_rate": 0.6364}, "metricas": {"claims_nuevos": ["Eso es de gente que sabe."]}, "notas_juez": "Falla en hooks m\u00faltiples, permisos de producci\u00f3n y pase del Guardi\u00e1n con REGISTRO-GUARDIAN. La l\u00ednea 'Eso es de gente que sabe' es un elogio no aprobado, leve.", "timing": {"total_tokens": 68354, "duration_ms": 53570, "total_duration_seconds": 53.6}}}, {"id": "eval-203-ambar-diciembre-sin-personas-haiku_con_skill-run-1", "prompt": "Reel para Estudio \u00c1mbar para diciembre: una pausa antes de las fiestas. Sin personas en c\u00e1mara (solo el espacio, objetos y texto). 20 segundos. Objetivo: reservas para la clase especial del 20 de diciembre.", "eval_id": 203, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Guion Reel \u2014 Estudio \u00c1mbar \u00b7 Pausa antes de las fiestas \u00b7 20 s \u00b7 2026-10-14\n\n**\u00c1ngulo:** Para profesionales de 25 a 50 a\u00f1os que llegan a diciembre sin tiempo, mostrar una sala en silencio y una clase especial para que reserven su lugar.\n\n**Objetivo:** Reservas para la clase especial del 20 de diciembre \u00b7 **Fuente de la idea:** brief del equipo (pedido del usuario, 2026-10-14). Pilar: La pausa.\n\n**Hooks**\n1. Pregunta: \"\u00bfCu\u00e1ndo fue tu \u00faltima pausa?\", sobre una esterilla enrollada con la luz de la ventana.\n2. Contraste: un celular lleno de notificaciones que se apaga y cambia a la sala en silencio. Pide grabar una pantalla con notificaciones gen\u00e9ricas, sin marcas de terceros.\n3. POV local: c\u00e1mara a la altura de los ojos, como si entraras al estudio desde la calle en una tarde de diciembre en Santiago. Texto: \"Diciembre en Santiago. Entras y todo se calla.\"\n\n**Recomendado:** n.\u00ba 1 (Pregunta), porque es el \u00fanico que se entiende sin sonido y no pide escenas extra: todo se graba en la sala vac\u00eda. Invita en lugar de presionar, que es el tono del Core Brand, y abre el pilar \"La pausa\".\n\n| Tiempo | Toma | Acci\u00f3n | Texto en pantalla | Voz o audio |\n|---|---|---|---|---|\n| 0\u20133 s | 1. Esterilla enrollada sobre piso de madera, con la luz de la ventana. | Plano fijo. La luz entra despacio. | \u00bfCu\u00e1ndo fue tu \u00faltima pausa? | Ambiente de la sala grabado en el lugar. Sin m\u00fasica ni voz. |\n| 3\u20136 s | 2. Coj\u00edn y bloque de yoga en el suelo; la sombra de la ventana cruza el piso. | Dolly lento hacia el coj\u00edn. | Diciembre se llena r\u00e1pido. | Ambiente y pad suave (tonos largos, sin letra). |\n| 6\u20139 s | 3. Taza de t\u00e9 con vapor junto a la ventana. | Insert. El vapor sube. | Un rato para ti. | Ambiente y pad. |\n| 9\u201312 s | 4. Esterillas alineadas en la sala vac\u00eda, de d\u00eda. | Paneo lento de izquierda a derecha. | Grupos de m\u00e1ximo 12 personas. | Ambiente y pad. |\n| 12\u201315 s | 5. Sala de noche con la l\u00e1mpara encendida y las esterillas en fila. | Fade a luz c\u00e1lida. | Clase especial \u00b7 20 de diciembre \u00b7 [confirmar: hora] | El pad sube un poco. |\n| 15\u201317 s | 6. Puerta de entrada del estudio con una planta y la luz de la calle. | Corte seco. | Clases para todos los niveles. | Pad. |\n| 17\u201320 s | 7. Fondo de la sala en penumbra, sin movimiento. | Texto centrado. | Reserva tu clase / por el link en la bio. | El pad baja hasta el final. |\n\n**CTA:** \"Reserva tu clase por el link en la bio.\" (CTA habitual del Core Brand).\n\n**Audio:** Audio original: ambiente de la sala grabado en el lugar (madera, cortinas, aire) m\u00e1s un pad de tonos largos, sin letra y de ritmo lento. No usar canciones comerciales: en cuentas de empresa no siempre est\u00e1n disponibles y son un riesgo de propiedad intelectual. Sin voz en off en esta versi\u00f3n, para no depender de que una persona aparezca o hable.\n\n**Caption:** Diciembre se acelera. Haz espacio para ti antes de las fiestas. Clase especial el 20 de diciembre [confirmar: hora y sede], en grupos de m\u00e1ximo 12 personas. Reserva tu clase por el link en la bio. \ud83d\udd6f\ufe0f\n\n**Notas de producci\u00f3n**\n- Orden pr\u00e1ctico de grabaci\u00f3n (no el de edici\u00f3n):\n  1. De d\u00eda, con la luz de la ventana: tomas 4, 2, 3 y 1. Grabar a la misma hora para que la luz coincida.\n  2. De noche, con la l\u00e1mpara: toma 5.\n  3. Puerta de entrada: toma 6 (de d\u00eda o de noche).\n  4. Pantalla final (toma 7): fondo en penumbra de la toma 1 o 4, con el texto a\u00f1adido en edici\u00f3n.\n- Props: esterilla enrollada, coj\u00edn, bloque de yoga, taza de t\u00e9, planta, l\u00e1mpara y vela LED (sin fuego).\n- Locaci\u00f3n: sala del estudio, vac\u00eda durante la grabaci\u00f3n.\n- Qui\u00e9n sale en c\u00e1mara: nadie. Revisar que no aparezca nadie en segundo plano, ni de espaldas, ni pies, ni sombras reconocibles. Si aparece alguien, se repite la toma.\n- Permisos: no hace falta autorizaci\u00f3n de imagen porque no sale nadie. Permiso de locaci\u00f3n: es el espacio de la marca [confirmar]. Audio original, sin m\u00fasica de terceros.\n- Texto en pantalla: centrado, lejos de la franja inferior y de los botones de la derecha. Las zonas exactas no est\u00e1n verificadas (ver Por confirmar).\n\n### Pase del Guardi\u00e1n\n**Veredicto:** verde. Sin claims riesgosos en la versi\u00f3n final.\n- Salud: no se prometen efectos en el \u00e1nimo ni en el cuerpo, y se descart\u00f3 el beneficio vago de la primera versi\u00f3n. Se us\u00f3 \"Un rato para ti\", la alternativa segura del cat\u00e1logo.\n- Prohibiciones del Core Brand: ninguna palabra vetada aparece, tampoco lenguaje religioso. Sin cuerpos ni posturas como gancho. Las fiestas se nombran sin s\u00edmbolos religiosos.\n- Claims aprobados usados tal cual: \"Grupos de m\u00e1ximo 12 personas\", \"Clases para todos los niveles\" y el CTA habitual.\n- Sin cifras, precios, cupos ni urgencia sin dato (\"\u00faltimos lugares\").\n- Fecha: 20 de diciembre de 2026 es domingo (verificado). No es feriado.\n\n### Por confirmar\n- [confirmar: hora de la clase especial del 20 de diciembre]\n- [confirmar: sede, si la clase no es en la sala del estudio]\n- [confirmar: precio, si lo tiene, y que el link de la bio lleve a la reserva de esa clase]\n- [confirmar: que la clase especial sea para todos los niveles; si no, quitar la l\u00ednea de la toma 6]\n- [confirmar: cupos. Hoy solo se puede decir \"grupos de m\u00e1ximo 12 personas\"; \"quedan X lugares\" requiere el dato]\n- [confirmar: zonas seguras exactas de los Reels. La tabla de verificaci\u00f3n de formatos-canal.md est\u00e1 vac\u00eda; se us\u00f3 un margen amplio]\n- [confirmar: que la pista de la biblioteca de audio de la plataforma, si se usa, est\u00e9 disponible para la cuenta de empresa]\n- [confirmar: permiso para grabar en el espacio]\n- El 20 de diciembre tambi\u00e9n es el plazo legal para pagar la regal\u00eda pascual (temporadas.md). No se usa como gancho ni se sugiere gasto, para no prometer ofertas sin datos.\n\nREGISTRO-GUARDIAN {\"pieza\":\"Guion Reel: Estudio \u00c1mbar \u00b7 Pausa antes de las fiestas \u00b7 20 s\",\"fecha\":\"2026-10-14\",\"veredicto\":\"verde\",\"hallazgos\":[]}\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": true, "evidence": "Tres hooks: Pregunta, Contraste (notificaciones a sala en silencio), POV local (Santiago en diciembre). Recomienda el n.\u00ba 1 porque se entiende sin sonido y no pide escenas extra."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "0\u20133, 3\u20136, 6\u20139, 9\u201312, 12\u201315, 15\u201317, 17\u201320 s: empieza en 0, sin huecos ni solapes, cierra en 20 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 7 tomas llevan texto en pantalla (ej. '\u00bfCu\u00e1ndo fue tu \u00faltima pausa?', 'Reserva tu clase / por el link en la bio.'); no depende de voz."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA habitual; caption con un solo emoji (\ud83d\udd6f\ufe0f); notas de producci\u00f3n con permisos: sin autorizaci\u00f3n de imagen, permiso de locaci\u00f3n [confirmar], audio original."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "No hay cifras, temperaturas, precios ni porcentajes inventados; la hora y la sede van como [confirmar]. '12' es claim aprobado."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "Audio original: ambiente de la sala m\u00e1s pad de tonos largos; dice 'No usar canciones comerciales'. No nombra ninguna canci\u00f3n."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": true, "evidence": "'Pase del Guardi\u00e1n' con 'Veredicto: verde' y l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido (pieza, fecha, veredicto, hallazgos)."}, {"text": "Ninguna toma muestra personas ni partes del cuerpo (manos, pies, siluetas); se resuelve con espacio, objetos, texto y voz.", "passed": true, "evidence": "Las 7 tomas son esterilla, coj\u00edn, taza, sala y puerta. Notas: 'Qui\u00e9n sale en c\u00e1mara: nadie', sin pies ni sombras reconocibles."}, {"text": "No promete resultados de salud (eliminar el estr\u00e9s de las fiestas, curar el insomnio, sanar) ni usa \"terapia\", \"sanar\" o \"sanaci\u00f3n\".", "passed": true, "evidence": "Usa 'Un rato para ti' y 'Haz espacio para ti'. No promete efectos en el cuerpo o la mente ni usa terapia, sanar o sanaci\u00f3n."}, {"text": "Usa la fecha del 20 de diciembre que trae el brief y marca como [confirmar] la hora, el precio o los cupos si los menciona.", "passed": true, "evidence": "Usa 'Clase especial \u00b7 20 de diciembre \u00b7 [confirmar: hora]' y el caption '[confirmar: hora y sede]'; el precio y los cupos quedan como [confirmar] en Por confirmar."}, {"text": "No usa s\u00edmbolos ni lenguaje religioso como gancho.", "passed": true, "evidence": "Hooks sin s\u00edmbolos ni lenguaje religioso; 'Las fiestas se nombran sin s\u00edmbolos religiosos'. La vela del caption es emoji, no es un hook."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": true, "evidence": "v\u00e1lido"}], "summary": {"passed": 12, "failed": 0, "total": 12, "pass_rate": 1.0}, "metricas": {"claims_nuevos": ["Diciembre se llena r\u00e1pido.", "Fecha: 20 de diciembre de 2026 es domingo (verificado). No es feriado.", "El 20 de diciembre tambi\u00e9n es el plazo legal para pagar la regal\u00eda pascual (temporadas.md)."]}, "notas_juez": "Salida completa y muy ajustada. \u00danico roce: 'Diciembre se llena r\u00e1pido' insin\u00faa escasez, y la nota sobre la regal\u00eda pascual aporta un dato externo que no usa en la pieza.", "timing": {"total_tokens": 112217, "duration_ms": 142031, "total_duration_seconds": 142.0}}}, {"id": "eval-203-ambar-diciembre-sin-personas-sonnet_con_skill-run-1", "prompt": "Reel para Estudio \u00c1mbar para diciembre: una pausa antes de las fiestas. Sin personas en c\u00e1mara (solo el espacio, objetos y texto). 20 segundos. Objetivo: reservas para la clase especial del 20 de diciembre.", "eval_id": 203, "outputs": [{"name": "respuesta.md", "type": "text", "content": "## Guion Reel \u2014 Estudio \u00c1mbar \u00b7 Una pausa antes de las fiestas \u00b7 20 s \u00b7 2026-10-14\n**\u00c1ngulo:** Para profesionales de Santiago con la agenda llena en diciembre, mostrar el estudio vac\u00edo y una agenda con un espacio libre para que reserven la clase especial del 20 de diciembre.\n**Objetivo:** reservas para la clase especial del 20 de diciembre de 2026 (cae domingo) \u00b7 **Fuente de la idea:** brief del equipo (pedido del 2026-10-14) y fecha de la clase\n\n**Hooks** (los tres funcionan sin personas y sin sonido)\n1. Pregunta: plano cenital lento sobre una agenda de diciembre llena de tachones. Texto: \"\u00bfY tu pausa antes de las fiestas?\"\n2. Contraste: corte seco de la agenda llena (luz fr\u00eda) al sal\u00f3n del estudio vac\u00edo (luz c\u00e1lida). Texto: \"Diciembre no para.\" y luego \"Haz una pausa\".\n3. POV local: la nevera de la cocina con notas de pendientes pegadas y las llaves del carro colgando. Texto: \"POV: diciembre y la lista no termina.\"\n\n**Recomendado:** n.\u00ba 2, porque cuenta la idea en 3 segundos solo con imagen y texto (lista llena frente a espacio libre), y deja armada la toma final, que repite la agenda. Si el cliente prefiere el 1 o el 3, solo cambia la primera toma; el resto no se toca.\n\n| Tiempo | Toma | Acci\u00f3n | Texto en pantalla | Voz o audio |\n|---|---|---|---|---|\n| 0\u20133 s | Hook: contraste en dos planos fijos | 0\u20131,5 s: plano cenital fijo de una agenda de diciembre llena de tachones y notas, luz fr\u00eda. Corte seco. 1,5\u20133 s: el sal\u00f3n del estudio vac\u00edo, luz c\u00e1lida de tarde y un mat desplegado en el centro. | 0\u20131,5 s: \"Diciembre no para.\" \u00b7 1,5\u20133 s: \"Haz una pausa\" | Sin voz. 0\u20131,5 s: tic-tac de reloj y hojas de papel (grabados aparte). Corte a un silencio breve y entra la m\u00fasica suave a los 1,5 s. |\n| 3\u20136 s | Recorrido por el sal\u00f3n | Avance lento con gimbal o slider por el sal\u00f3n vac\u00edo: filas de mats, luz de tarde por la ventana, luces c\u00e1lidas de temporada desenfocadas al fondo. | Se suma a la frase anterior: \"antes de las fiestas.\" | M\u00fasica suave (contin\u00faa). |\n| 6\u20139 s | Detalle de objetos | Plano cercano: manta doblada, bloque de corcho y una planta. La luz se desliza despacio sobre la manta (slider lateral). | \"Para todos los niveles.\" | M\u00fasica suave. |\n| 9\u201313 s | Cenital del sal\u00f3n | Plano cenital desde altura (tr\u00edpode con brazo): mats alineados en el piso, 12 o menos en cuadro, luz de tarde. | \"Grupos de m\u00e1ximo 12 personas.\" | M\u00fasica suave. |\n| 13\u201317 s | Remate: la agenda | Mismo encuadre cenital del hook, mismo escritorio, pero la p\u00e1gina de diciembre tiene ahora un solo espacio libre. Un trazo animado en el color de la marca (hecho en edici\u00f3n, sin mano en cuadro) rodea el 20. | \"Clase especial\" \u2192 \"20 de diciembre\" \u2192 \"[confirmar: hora]\" | M\u00fasica suave y un sonido breve de trazo. |\n| 17\u201320 s | CTA | Plano fijo y desenfocado del sal\u00f3n con el mat del hook; el centro queda libre para el texto. Al final, el nombre del estudio. | \"Reserva tu clase\" \u00b7 \"Link en la bio\" \u00b7 \"Estudio \u00c1mbar\" | La m\u00fasica baja y cierra. |\n\n**CTA:** \"Reserva tu clase por el link en la bio.\" (el CTA habitual de la marca; en pantalla va partido en dos l\u00edneas cortas).\n**Audio:** sin voz en off, porque el pedido es solo espacio, objetos y texto, y el Reel tiene que entenderse sin sonido. M\u00fasica instrumental suave de la biblioteca de audio comercial de Meta (piano o guitarra ac\u00fastica, ritmo lento, sin letra) m\u00e1s dos sonidos de ambiente grabados aparte (reloj y papel, hojas y trazo). Nada de canciones comerciales. [confirmar: que la pista elegida est\u00e9 disponible para cuentas de empresa al publicar]\n**Caption:** Diciembre no para, pero t\u00fa puedes regalarte una pausa antes de las fiestas \ud83c\udf3f\nClase especial el 20 de diciembre, a las [confirmar: hora]. Para todos los niveles y en grupos de m\u00e1ximo 12 personas.\nReserva tu clase por el link en la bio \ud83e\udd0d\n\n**Notas de producci\u00f3n**\n- **Qui\u00e9n sale en c\u00e1mara: nadie.** Tampoco manos, siluetas, sombras de quien graba, reflejos (cuidado con espejos y ventanas), ni fotos o carteles con personas en las paredes. Para mover la c\u00e1mara sin mano visible: tr\u00edpode con temporizador o control remoto, y gimbal o slider con el movimiento listo antes de grabar.\n- **Lista de tomas en orden pr\u00e1ctico (por locaci\u00f3n y luz, no por orden de edici\u00f3n):**\n  1. *Estudio, luz de tarde, una sola visita:* toma 2 (recorrido, con el sal\u00f3n despejado y los mats alineados), toma 4 (cenital de mats), toma 3 (detalles de objetos) y, al final, el plano del sal\u00f3n con el mat desplegado que sirve para 1,5\u20133 s y para el fondo del CTA (17\u201320 s).\n  2. *Escritorio, luz fr\u00eda o neutra:* toma 1 (agenda llena) y toma 5 (agenda con el espacio libre), una detr\u00e1s de la otra con el tr\u00edpode sin mover. La p\u00e1gina se cambia fuera de cuadro entre una y otra.\n  3. *Audio aparte:* unos segundos de tic-tac, de hojas de papel y del trazo, para ponerlos en edici\u00f3n.\n  4. *Edici\u00f3n:* textos, trazo animado sobre el 20 y m\u00fasica.\n- **Props:** agenda o calendario de papel de diciembre de 2026 sin marca visible (el 20 cae domingo; si el calendario es de otro a\u00f1o, el d\u00eda de la semana no cuadra), l\u00e1piz o marcador, mats sin logos de terceros (taparlos o girarlos), manta, bloque de corcho, planta y luces c\u00e1lidas sencillas, sin figuras ni s\u00edmbolos de culto. Lo escrito en la agenda es texto de ejemplo: sin nombres, tel\u00e9fonos ni datos reales de nadie.\n- **Texto en pantalla:** m\u00e1ximo unas 7 palabras por pantalla, con buen contraste, en formato 9:16 (1080 \u00d7 1920 px) y en el tercio central, sin tocar la franja superior, la inferior ni el lado derecho, que tapa la interfaz. Ninguna toma lleva logo al inicio.\n- **Permisos:** no hace falta autorizaci\u00f3n de imagen porque nadie aparece. Falta el visto bueno de \u00c1mbar para grabar en su estudio y la licencia de la m\u00fasica (se resuelve con la biblioteca de la plataforma).\n- **Es un borrador:** lo aprueba primero el equipo de Astra y luego Estudio \u00c1mbar. No se publica ni se programa desde aqu\u00ed.\n\n### Pase del Guardi\u00e1n\n**Veredicto:** \ud83d\udfe2 Listo para aprobaci\u00f3n humana \u2014 se revisaron hooks, textos en pantalla, audio y caption contra el Core Brand y `claims-riesgo.md`. Sin promesas de salud ni de resultados (se habla de pausa, espacio y \"un rato para ti\" como experiencia), sin ninguna de las palabras vetadas por el Core Brand, sin lenguaje ni s\u00edmbolos de culto (se dice \"fiestas\"), sin cifras inventadas (el \"12\" es el claim aprobado \"Grupos de m\u00e1ximo 12 personas\"), sin urgencia ni cupos inventados y sin marcas de terceros. Los dos claims aprobados (\"Para todos los niveles\" y \"Grupos de m\u00e1ximo 12 personas\") quedan condicionados a que apliquen a esta clase especial: si no, se quitan las tomas 3 y 4, o su texto.\n\n### Por confirmar\n- [confirmar: hora de inicio y duraci\u00f3n de la clase del 20 de diciembre, con el estudio; el 20 de diciembre de 2026 cae domingo]\n- [confirmar: tipo y nombre de la clase especial (yoga, meditaci\u00f3n u otra); en el guion solo se dice \"Clase especial\"]\n- [confirmar: que la clase especial sea para todos los niveles y mantenga el m\u00e1ximo de 12 personas]\n- [confirmar: link de reserva activo, con precio y condiciones dentro del link; el Reel no lleva precio]\n- [confirmar: fecha de publicaci\u00f3n; sugerencia: primera semana de diciembre, con un recordatorio en Stories cerca de la fecha]\n- [confirmar: logo, tipograf\u00eda y paleta del Design Board para el cierre y el trazo]\n- [confirmar: fecha y horario para grabar en el estudio con luz de tarde]\n- [confirmar: m\u00e1rgenes vigentes de zona segura de Reels; la tabla de verificaci\u00f3n de `formatos-canal.md` est\u00e1 vac\u00eda]\n\nREGISTRO-GUARDIAN {\"v\":1,\"fecha\":\"2026-10-14\",\"marca\":\"Estudio \u00c1mbar\",\"pieza\":\"Guion Reel: Una pausa antes de las fiestas (clase especial 20 dic)\",\"canal\":\"Instagram Reel\",\"veredicto\":\"verde\",\"core_brand\":\"leido\",\"n_alta\":0,\"n_media\":0,\"n_baja\":0,\"tipos\":[],\"hallazgos\":[]}\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": true, "evidence": "Tres hooks: Pregunta (agenda con tachones), Contraste (luz fr\u00eda a c\u00e1lida), POV local (nevera y llaves del carro). Recomienda el n.\u00ba 2 con raz\u00f3n."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "0\u20133, 3\u20136, 6\u20139, 9\u201313, 13\u201317, 17\u201320 s: empieza en 0, sin huecos ni solapes, cierra en 20 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 6 tomas llevan texto en pantalla (ej. 'Diciembre no para.', 'Clase especial \u2192 20 de diciembre'); el audio no es necesario para entenderlo."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": true, "evidence": "CTA habitual partido en pantalla; caption con 2 emojis (\ud83c\udf3f \ud83e\udd0d); notas de producci\u00f3n con permisos: sin autorizaci\u00f3n de imagen, falta visto bueno de \u00c1mbar para grabar y licencia de m\u00fasica."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "Sin cifras, precios ni horarios inventados. La hora, el tipo de clase, el link y la fecha de publicaci\u00f3n van como [confirmar]. '12' es claim aprobado."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "M\u00fasica instrumental gen\u00e9rica de la biblioteca de Meta; 'Nada de canciones comerciales'. No nombra ninguna canci\u00f3n."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": true, "evidence": "'Pase del Guardi\u00e1n' con veredicto verde y l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido (v, fecha, marca, veredicto, hallazgos)."}, {"text": "Ninguna toma muestra personas ni partes del cuerpo (manos, pies, siluetas); se resuelve con espacio, objetos, texto y voz.", "passed": true, "evidence": "Ninguna toma muestra personas ni manos: trazo animado 'sin mano en cuadro'. Notas: 'Qui\u00e9n sale en c\u00e1mara: nadie', sin siluetas ni reflejos."}, {"text": "No promete resultados de salud (eliminar el estr\u00e9s de las fiestas, curar el insomnio, sanar) ni usa \"terapia\", \"sanar\" o \"sanaci\u00f3n\".", "passed": true, "evidence": "Habla de pausa y espacio ('regalarte una pausa antes de las fiestas'). No promete efectos en cuerpo o mente ni usa terapia, sanar o sanaci\u00f3n."}, {"text": "Usa la fecha del 20 de diciembre que trae el brief y marca como [confirmar] la hora, el precio o los cupos si los menciona.", "passed": true, "evidence": "Usa '20 de diciembre'; la hora va como '[confirmar: hora]' en pantalla y caption. 'El Reel no lleva precio'; no menciona cupos."}, {"text": "No usa s\u00edmbolos ni lenguaje religioso como gancho.", "passed": true, "evidence": "Luces de temporada 'sin figuras ni s\u00edmbolos de culto'; usa 'fiestas'. Sin lenguaje religioso en los hooks."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": true, "evidence": "v\u00e1lido"}], "summary": {"passed": 12, "failed": 0, "total": 12, "pass_rate": 1.0}, "metricas": {"claims_nuevos": ["Diciembre no para.", "reservar la clase especial del 20 de diciembre de 2026 (cae domingo)"]}, "notas_juez": "Salida completa que cumple todas las expectativas. Lo \u00fanico nuevo es 'cae domingo' y la frase gen\u00e9rica 'Diciembre no para'. Condiciona los claims aprobados a que apliquen a la clase especial.", "timing": {"total_tokens": 112817, "duration_ms": 199208, "total_duration_seconds": 199.2}}}, {"id": "eval-203-ambar-diciembre-sin-personas-sonnet_sin_skill-run-1", "prompt": "Reel para Estudio \u00c1mbar para diciembre: una pausa antes de las fiestas. Sin personas en c\u00e1mara (solo el espacio, objetos y texto). 20 segundos. Objetivo: reservas para la clase especial del 20 de diciembre.", "eval_id": 203, "outputs": [{"name": "respuesta.md", "type": "text", "content": "# Reel Estudio \u00c1mbar \u2014 \"Una pausa antes de las fiestas\"\n\n**Formato:** Reel vertical 9:16, 20 segundos\n**Objetivo:** reservas para la clase especial del 20 de diciembre\n**Pilar:** La pausa (hacer espacio en el d\u00eda)\n**Tono:** sereno, c\u00e1lido, de t\u00fa, invitando sin presionar\n**En c\u00e1mara:** solo el espacio, objetos y texto. No salen personas, tampoco manos ni sombras de personas.\n**Sonido:** sonido ambiente suave m\u00e1s m\u00fasica instrumental tranquila, sin letra y sin voz en off. Evita villancicos u otra m\u00fasica navide\u00f1a.\n\n---\n\n## Idea en una l\u00ednea\nDiciembre se llena de pendientes, y el reel invita a agendar una pausa m\u00e1s: el sal\u00f3n vac\u00edo, luz suave, un t\u00e9 humeante y una clase especial el 20 de diciembre.\n\n---\n\n## Guion toma a toma\n\n| Seg. | Imagen | Texto en pantalla | Sonido |\n|---|---|---|---|\n| **0\u20133** | Plano fijo del sal\u00f3n vac\u00edo con luz suave de la tarde y una esterilla ya desplegada. Empuje de c\u00e1mara muy lento hacia adelante. | **Diciembre tiene mil pendientes.** | Entra la m\u00fasica suave y el sonido ambiente de la sala. |\n| **3\u20137** | Plano detalle: una taza de t\u00e9 con vapor sobre una superficie de madera. Al fondo, desenfocadas, unas luces c\u00e1lidas de temporada (solo si el estudio ya las tiene o con un detalle muy sutil). | **Este a\u00f1o, agenda tambi\u00e9n una pausa.** | Se mantiene la m\u00fasica. Se oye apenas el sonido de la taza al apoyarse. |\n| **7\u201311** | Plano abierto del sal\u00f3n con las esterillas en fila y la luz entrando por la ventana. Movimiento lateral lento. | **Clase especial** y debajo, m\u00e1s grande, **20 de diciembre** | Sin cambios. |\n| **11\u201313** | Detalle: bloques de yoga apilados junto a una manta doblada. | **Para todos los niveles** | Sin cambios. |\n| **13\u201315** | Detalle: el borde de una esterilla y un rinc\u00f3n de la sala con una planta. | **Grupos de m\u00e1ximo 12 personas** | Sin cambios. |\n| **15\u201320** | Regresa al plano inicial del sal\u00f3n vac\u00edo, ahora con la luz m\u00e1s c\u00e1lida. Cierra con un fundido suave. | **Reserva tu clase por el link en la bio.** y debajo el nombre **Estudio \u00c1mbar** | La m\u00fasica baja de volumen hasta el final. |\n\n**Por qu\u00e9 funciona:** el hook (0\u20133 s) nombra algo que el p\u00fablico ya siente en diciembre, y el resto del reel responde con calma, sin urgencia. El plano final repite el inicial para cerrar el reel con una sensaci\u00f3n de pausa.\n\n---\n\n## Indicaciones de texto en pantalla\n- Tipograf\u00eda grande y limpia, con buen contraste sobre la imagen.\n- Una sola frase por toma y no m\u00e1s de 7 palabras por l\u00ednea.\n- Respeta las zonas seguras de Instagram: deja libre el tercio inferior y el borde derecho, donde la app pone botones y el nombre de la cuenta. Lo m\u00e1s importante va en el centro.\n- Cada texto aparece con un fundido suave. No uses animaciones bruscas, para mantener el tono sereno.\n\n---\n\n## Caption sugerido\n\n> Diciembre se llena de cosas por hacer. Este a\u00f1o, deja tambi\u00e9n un espacio en tu calendario para una pausa.\n>\n> El 20 de diciembre tenemos una clase especial: para todos los niveles y en grupos de m\u00e1ximo 12 personas.\n>\n> Reserva tu clase por el link en la bio.\n\nCierra con 3 a 5 hashtags, por ejemplo: #Estudio\u00c1mbar #YogaSantiago #PausaConsciente #Diciembre.\n\n---\n\n## Pendientes por confirmar con el estudio\nEl Core Brand no incluye estos datos, as\u00ed que no los puse en el reel. Conf\u00edrmalos antes de producir:\n1. **Hora y duraci\u00f3n** de la clase del 20 de diciembre. Si quieren mostrarlas, se a\u00f1aden en la toma de 7\u201311 s o en el caption.\n2. **Precio o forma de acceso**: si es una clase abierta, si tiene costo o si tiene un formato distinto al de las clases regulares.\n3. **Qu\u00e9 la hace \"especial\"**: tema, instructor o alg\u00fan detalle que se pueda decir sin salirse de los claims aprobados.\n4. **Link de reserva** activo en la bio para esa fecha.\n5. **Si el estudio tiene decoraci\u00f3n de temporada.** Si no la tiene, el reel funciona igual: la luz y los objetos bastan.\n\n---\n\n## Calendario sugerido\n- **Grabaci\u00f3n:** a finales de noviembre o a principios de diciembre, para que la luz y los detalles de temporada se vean reales.\n- **Publicaci\u00f3n:** entre el 1 y el 10 de diciembre, para dar tiempo a reservar.\n- **Recordatorio:** una historia o un reel corto entre el 15 y el 17 de diciembre, si todav\u00eda hay cupos.\n\n---\n\n## Revisi\u00f3n contra el Core Brand\n- Solo us\u00e9 claims aprobados, con su texto exacto: \"para todos los niveles\" y \"grupos de m\u00e1ximo 12 personas\".\n- No promete resultados de salud f\u00edsica ni mental.\n- No usa \"terapia\", \"sanar\" ni \"sanaci\u00f3n\", ni lenguaje religioso. Las referencias a diciembre y a \"las fiestas\" son neutras.\n- No hay cuerpos ni posturas en c\u00e1mara.\n- Habla de t\u00fa, invita sin presionar y no usa t\u00e9rminos en s\u00e1nscrito.\n- El CTA es el habitual: \"Reserva tu clase por el link en la bio.\"\n"}], "grading": {"expectations": [{"text": "Propone 3 hooks de tipos distintos (pregunta, contraste y POV o situaci\u00f3n local) y recomienda uno con su raz\u00f3n.", "passed": false, "evidence": "Solo hay un gancho ('Diciembre tiene mil pendientes.'). No propone tres hooks de tipos distintos ni recomienda uno."}, {"text": "Los tiempos de la tabla de tomas cubren la duraci\u00f3n objetivo sin huecos ni solapes (tolerancia de 2 s).", "passed": true, "evidence": "0\u20133, 3\u20137, 7\u201311, 11\u201313, 13\u201315, 15\u201320 s: empieza en 0, sin huecos ni solapes, cierra en 20 s."}, {"text": "Incluye texto en pantalla en las tomas y el video se entiende sin sonido.", "passed": true, "evidence": "Las 6 tomas llevan texto en pantalla (ej. 'Este a\u00f1o, agenda tambi\u00e9n una pausa.'); se entiende sin sonido."}, {"text": "Incluye CTA, caption con 1 o 2 emojis y notas de producci\u00f3n con los permisos necesarios (imagen o locaci\u00f3n).", "passed": false, "evidence": "CTA presente, pero el caption no tiene emojis y no hay notas de producci\u00f3n con permisos de imagen ni de locaci\u00f3n."}, {"text": "No inventa datos para el gancho o el desarrollo (cifras, temperaturas, precios, horarios, porcentajes); lo que falte va como [confirmar].", "passed": true, "evidence": "No inventa cifras, precios, horas ni temperaturas. Hora, precio y detalles quedan en 'Pendientes por confirmar'. 'Mil pendientes' es hip\u00e9rbole."}, {"text": "No propone una canci\u00f3n comercial espec\u00edfica para el audio.", "passed": true, "evidence": "'M\u00fasica instrumental tranquila, sin letra'; evita villancicos. No nombra ninguna canci\u00f3n comercial."}, {"text": "Incluye el pase del Guardi\u00e1n con veredicto y una l\u00ednea REGISTRO-GUARDIAN con JSON v\u00e1lido.", "passed": false, "evidence": "Solo hay una 'Revisi\u00f3n contra el Core Brand' en vi\u00f1etas. No hay veredicto ni l\u00ednea REGISTRO-GUARDIAN con JSON."}, {"text": "Ninguna toma muestra personas ni partes del cuerpo (manos, pies, siluetas); se resuelve con espacio, objetos, texto y voz.", "passed": true, "evidence": "'No salen personas, tampoco manos ni sombras de personas.' Las tomas son sal\u00f3n, taza, bloques, esterilla y planta."}, {"text": "No promete resultados de salud (eliminar el estr\u00e9s de las fiestas, curar el insomnio, sanar) ni usa \"terapia\", \"sanar\" o \"sanaci\u00f3n\".", "passed": true, "evidence": "'Agenda tambi\u00e9n una pausa'. No promete efectos en el cuerpo o la mente ni usa terapia, sanar o sanaci\u00f3n."}, {"text": "Usa la fecha del 20 de diciembre que trae el brief y marca como [confirmar] la hora, el precio o los cupos si los menciona.", "passed": true, "evidence": "Usa '20 de diciembre'. No pone hora ni precio, y los lista como pendientes por confirmar. Aunque no usa la etiqueta [confirmar], no afirma ning\u00fan dato."}, {"text": "No usa s\u00edmbolos ni lenguaje religioso como gancho.", "passed": true, "evidence": "Sin lenguaje ni s\u00edmbolos religiosos; 'las fiestas' y las luces de temporada son neutras. Evita villancicos."}, {"text": "Chequeo autom\u00e1tico: la l\u00ednea REGISTRO-GUARDIAN es JSON v\u00e1lido", "passed": false, "evidence": "no hay l\u00ednea REGISTRO-GUARDIAN"}], "summary": {"passed": 8, "failed": 4, "total": 12, "pass_rate": 0.6667}, "metricas": {"claims_nuevos": ["Diciembre tiene mil pendientes.", "El 20 de diciembre tenemos una clase especial: para todos los niveles y en grupos de m\u00e1ximo 12 personas."]}, "notas_juez": "Guion limpio y seguro, pero incompleto: un solo hook sin alternativas, sin caption con emojis, sin notas de permisos y sin pase del Guardi\u00e1n con REGISTRO-GUARDIAN. Aplica los claims aprobados a la clase especial sin [confirmar].", "timing": {"total_tokens": 68309, "duration_ms": 51684, "total_duration_seconds": 51.7}}}], "previous_feedback": {}, "previous_outputs": {}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

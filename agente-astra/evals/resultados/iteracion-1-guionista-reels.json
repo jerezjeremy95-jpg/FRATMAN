@@ -1,0 +1,23 @@
+[
+  {
+    "config": "haiku_con_skill",
+    "runs": 3,
+    "pass_rate": 0.967,
+    "tokens_prom": 114258,
+    "segundos_prom": 153.0
+  },
+  {
+    "config": "sonnet_con_skill",
+    "runs": 3,
+    "pass_rate": 1.0,
+    "tokens_prom": 107595,
+    "segundos_prom": 185.2
+  },
+  {
+    "config": "sonnet_sin_skill",
+    "runs": 3,
+    "pass_rate": 0.634,
+    "tokens_prom": 68766,
+    "segundos_prom": 55.7
+  }
+]

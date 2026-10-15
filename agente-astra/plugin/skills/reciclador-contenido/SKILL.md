@@ -55,7 +55,7 @@ Revisa el paquete completo con el criterio de `references/claims-riesgo.md`, com
 - Extraer la pieza de un archivo o de un DB largo: subagente `agente-astra:extractor-piezas` (Haiku).
 - Escribir las adaptaciones: subagente `agente-astra:redactor-multicanal` (Sonnet). Pásale la materia prima, el inventario de claims, el Core Brand y la ruta de `references/formatos-canal.md`.
 - Verificación mecánica: subagente `agente-astra:verificador-formato` (Haiku), con la ruta de `scripts/verificar_copy.py`.
-- Pase del Guardián en marcas de salud, bienestar, alimentos o alcohol: subagente `agente-astra:auditor-claims` (Opus), con la ruta de `references/claims-riesgo.md`. En las demás marcas, hazlo tú.
+- Pase del Guardián cuando la pieza toca salud (promete algo al cuerpo o a la mente), alcohol, datos personales, sorteos o menores, o va a pauta pagada: subagente `agente-astra:auditor-claims` (Opus), con la ruta de `references/claims-riesgo.md`. En las demás piezas, hazlo tú.
 
 ## Formato de salida
 

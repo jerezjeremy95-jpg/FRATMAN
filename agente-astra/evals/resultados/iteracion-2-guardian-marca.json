@@ -1,0 +1,38 @@
+[
+  {
+    "config": "haiku_con_skill",
+    "runs": 1,
+    "pass_rate": 1.0,
+    "tokens_prom": 107166,
+    "segundos_prom": 97.5,
+    "deteccion": "5/5",
+    "deteccion_pct": 100.0,
+    "severidad_ok_pct": 100.0,
+    "altos_como_altos": "1/1",
+    "altos_pct": 100.0,
+    "falsos_positivos_controles": 0,
+    "falsos_positivos_total": 0,
+    "veredictos_ok": "1/1",
+    "registro_ok": "1/1",
+    "corregidas_limpias": "1/1",
+    "correcciones_con_claims_nuevos": "0/1"
+  },
+  {
+    "config": "opus_con_skill",
+    "runs": 1,
+    "pass_rate": 1.0,
+    "tokens_prom": 102192,
+    "segundos_prom": 146.4,
+    "deteccion": "9/9",
+    "deteccion_pct": 100.0,
+    "severidad_ok_pct": 100.0,
+    "altos_como_altos": "5/5",
+    "altos_pct": 100.0,
+    "falsos_positivos_controles": 0,
+    "falsos_positivos_total": 0,
+    "veredictos_ok": "1/1",
+    "registro_ok": "1/1",
+    "corregidas_limpias": "1/1",
+    "correcciones_con_claims_nuevos": "0/1"
+  }
+]
